@@ -1,0 +1,2886 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Complejo Deportivo — Panel de Recepción</title>
+  <style>
+    /* ============================================================
+       VARIABLES GLOBALES
+       Cambiá estos valores para personalizar colores y dimensiones
+       sin tocar el resto del CSS.
+    ============================================================ */
+    :root {
+      --bg:           #0f172a;
+      --surface:      #1e293b;
+      --surface-2:    #334155;
+      --border:       #475569;
+      --text:         #f1f5f9;
+      --text-muted:   #94a3b8;
+
+      /* Un color por estado: el nombre y el fondo de la tarjeta */
+      --disponible:    #2dd4bf;  --disponible-bg:  #134e4a;
+      --pendiente:     #eab308;  --pendiente-bg:   #713f12;
+      --reservado:     #3b82f6;  --reservado-bg:   #1e3a8a;
+      --bloqueado:     #94a3b8;  --bloqueado-bg:   #1e293b;
+      --rechazado:     #ef4444;  --rechazado-bg:   #7f1d1d;
+      --pagado:        #4ade80;  --pagado-bg:      #14532d;
+
+      /* Cada fila de la grilla representa 30 minutos */
+      --cell-h: 44px;
+      --col-time: 64px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ============================================================
+       HEADER
+    ============================================================ */
+    .header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .header__brand { display: flex; align-items: center; gap: 12px; }
+    .header__icon {
+      width: 38px; height: 38px;
+      background: var(--disponible);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+    }
+    .header__title   { font-size: 1.1rem; font-weight: 700; }
+    .header__sub     { font-size: 0.75rem; color: var(--text-muted); margin-top: 1px; }
+    .header__time {
+      font-size: 1.35rem;
+      font-weight: 300;
+      letter-spacing: .08em;
+      color: var(--text);
+      font-variant-numeric: tabular-nums;
+      font-family: 'Segoe UI', 'SF Pro Display', system-ui, sans-serif;
+      opacity: .9;
+    }
+
+    /* ============================================================
+       BARRA DE FECHA
+    ============================================================ */
+    .datebar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .datebar__btn {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 6px 14px;
+      border-radius: 7px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-family: inherit;
+      transition: background .15s;
+    }
+    .datebar__btn:hover { background: var(--border); }
+    .datebar__label {
+      font-weight: 600;
+      font-size: 0.95rem;
+      min-width: 240px;
+      text-align: center;
+    }
+    .datebar__today {
+      background: transparent;
+      border: 1px solid var(--disponible);
+      color: var(--disponible);
+      padding: 6px 14px;
+      border-radius: 7px;
+      cursor: pointer;
+      font-size: 0.82rem;
+      font-weight: 600;
+      font-family: inherit;
+    }
+
+    /* ============================================================
+       LEYENDA DE ESTADOS
+    ============================================================ */
+    .legend {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      padding: 10px 24px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+    }
+    .legend__item { display: flex; align-items: center; gap: 7px; font-size: 0.78rem; color: var(--text-muted); }
+    .legend__dot  { width: 11px; height: 11px; border-radius: 3px; flex-shrink: 0; }
+
+    /* ============================================================
+       CONTENEDOR DE LA GRILLA
+    ============================================================ */
+    .grid-wrap  { padding: 20px 24px; overflow-x: auto; }
+    .grid-inner { display: flex; min-width: 560px; }
+
+    /* Columna de horas (eje Y) */
+    .time-col        { width: var(--col-time); flex-shrink: 0; }
+    .time-col__hdr   { height: 52px; display: flex; align-items: center; justify-content: center;
+                       font-size: 0.72rem; color: var(--text-muted); font-weight: 600;
+                       text-transform: uppercase; letter-spacing: .05em; }
+    .time-col__tick  { height: var(--cell-h); display: flex; align-items: flex-start;
+                       justify-content: flex-end; padding-right: 10px; padding-top: 3px;
+                       font-size: 0.72rem; color: var(--text-muted);
+                       border-top: 1px solid var(--border); }
+    .time-col__tick--half { border-top: 1px dashed rgba(255,255,255,0.05); }
+
+    /* Columna de una cancha */
+    .court-col       { flex: 1; min-width: 140px; border-left: 1px solid var(--border); }
+    .court-col__hdr  {
+      height: 52px;
+      background: var(--surface);
+      border-bottom: 2px solid var(--border);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 6px 8px;
+    }
+    .court-col__name { font-weight: 700; font-size: 0.9rem; }
+    .court-col__info { font-size: 0.72rem; color: var(--text-muted); margin-top: 2px; }
+
+    /* Área de turnos dentro de la columna */
+    .slots-area      { position: relative; }
+
+    /* Líneas de fondo de la grilla (decorativas) */
+    .grid-line       { position: absolute; left: 0; right: 0; height: var(--cell-h);
+                       border-top: 1px solid rgba(255,255,255,0.04); }
+    .grid-line--half { border-top: 1px dashed rgba(255,255,255,0.025); }
+
+    /* ============================================================
+       TARJETA DE TURNO
+    ============================================================ */
+    .slot-card {
+      position: absolute;
+      left: 3px; right: 3px;
+      border-radius: 6px;
+      padding: 5px 8px;
+      cursor: pointer;
+      font-size: 0.78rem;
+      font-weight: 600;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 1px;
+      overflow: hidden;
+      border: 1px solid transparent;
+      transition: filter .15s, transform .1s;
+      z-index: 1;
+    }
+    .slot-card:hover { filter: brightness(1.18); transform: scale(1.015); z-index: 5; }
+    .slot-card__time  { font-size: 0.67rem; opacity: .75; font-weight: 400; }
+    .slot-card__label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .slot-card__price { font-size: 0.67rem; opacity: .65; }
+
+    /* Colores por estado — misma lógica: color de texto + color de fondo */
+    .slot--disponible { background: var(--disponible-bg); color: var(--disponible); border-color: var(--disponible); }
+    .slot--pendiente  { background: var(--pendiente-bg);  color: var(--pendiente);  border-color: var(--pendiente); }
+    .slot--reservado  { background: var(--reservado-bg);  color: var(--reservado);  border-color: var(--reservado); }
+    .slot--bloqueado  { background: var(--bloqueado-bg);  color: var(--bloqueado);  border-color: var(--border); }
+    .slot--rechazado  { background: var(--rechazado-bg);  color: var(--rechazado);  border-color: var(--rechazado); }
+    .slot--pagado     { background: var(--pagado-bg);     color: var(--pagado);     border-color: var(--pagado); }
+
+    /* ============================================================
+       MODAL
+    ============================================================ */
+    .overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.72);
+      z-index: 100;
+      display: none;
+      align-items: center; justify-content: center;
+      padding: 16px;
+    }
+    .overlay.active { display: flex; }
+
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      width: 100%; max-width: 460px;
+      max-height: 92vh;
+      overflow-y: auto;
+      animation: popIn .2s ease;
+    }
+    @keyframes popIn {
+      from { opacity: 0; transform: scale(.95) translateY(8px); }
+      to   { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    .modal__head {
+      padding: 18px 22px 14px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: flex-start; justify-content: space-between; gap: 10px;
+    }
+    .modal__title  { font-size: 1.05rem; font-weight: 700; }
+    .modal__sub    { font-size: 0.8rem; color: var(--text-muted); margin-top: 2px; }
+    .modal__close  { background: none; border: none; color: var(--text-muted);
+                     font-size: 1.3rem; cursor: pointer; padding: 0 2px; flex-shrink: 0; }
+    .modal__close:hover { color: var(--text); }
+    .modal__body   { padding: 18px 22px; }
+    .modal__foot   { padding: 14px 22px 18px; border-top: 1px solid var(--border);
+                     display: flex; gap: 8px; flex-wrap: wrap; }
+
+    /* Badge de estado en el modal */
+    .badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 3px 11px; border-radius: 20px;
+      font-size: 0.75rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .04em;
+      margin-bottom: 14px;
+    }
+    .badge--disponible { background: var(--disponible-bg); color: var(--disponible); }
+    .badge--pendiente  { background: var(--pendiente-bg);  color: var(--pendiente); }
+    .badge--reservado  { background: var(--reservado-bg);  color: var(--reservado); }
+    .badge--bloqueado  { background: var(--bloqueado-bg);  color: var(--bloqueado); }
+    .badge--rechazado  { background: var(--rechazado-bg);  color: var(--rechazado); }
+    .badge--pagado     { background: var(--pagado-bg);     color: var(--pagado); }
+
+    /* Grilla de info en el modal */
+    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 18px; }
+    .info-item__label { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;
+                        letter-spacing: .05em; margin-bottom: 3px; }
+    .info-item__val   { font-size: 0.92rem; font-weight: 600; }
+
+    /* Aviso de penalización por cancelación */
+    .cancel-warn {
+      background: rgba(234,179,8,.1);
+      border: 1px solid rgba(234,179,8,.35);
+      border-radius: 8px;
+      padding: 10px 13px;
+      font-size: 0.8rem;
+      color: #fde68a;
+      margin-bottom: 16px;
+    }
+
+    /* Formulario de nueva reserva */
+    .form-group        { margin-bottom: 14px; }
+    .form-group label  { display: block; font-size: 0.8rem; color: var(--text-muted);
+                         margin-bottom: 5px; font-weight: 500; }
+    .form-group input  {
+      width: 100%;
+      background: var(--surface-2); border: 1px solid var(--border);
+      color: var(--text); padding: 9px 11px; border-radius: 8px;
+      font-size: 0.88rem; font-family: inherit;
+      transition: border-color .15s;
+    }
+    .form-group input:focus      { outline: none; border-color: var(--reservado); }
+    .form-group input::placeholder { color: var(--text-muted); }
+
+    /* ============================================================
+       BOTONES
+    ============================================================ */
+    .btn {
+      padding: 8px 16px; border-radius: 8px; border: none;
+      font-size: 0.85rem; font-weight: 600; cursor: pointer;
+      font-family: inherit; white-space: nowrap;
+      transition: filter .15s, transform .1s;
+    }
+    .btn:hover  { filter: brightness(1.1); }
+    .btn:active { transform: scale(.97); }
+
+    .btn--primary   { background: var(--reservado);   color: #fff; }
+    .btn--success   { background: var(--disponible);  color: #0a1f0a; }
+    .btn--warning   { background: var(--pendiente);   color: #1a1200; }
+    .btn--danger    { background: var(--rechazado);   color: #fff; }
+    .btn--ghost     { background: var(--surface-2);   color: var(--text); border: 1px solid var(--border); }
+    .btn--lock      { background: var(--bloqueado-bg); color: var(--text-muted); border: 1px solid var(--border); }
+    .btn--paid      { background: var(--pagado);      color: #0a1f0a; }
+
+    /* ============================================================
+       TOASTS
+    ============================================================ */
+    .toasts {
+      position: fixed; bottom: 20px; right: 20px;
+      display: flex; flex-direction: column; gap: 8px; z-index: 200;
+    }
+    .toast {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; padding: 11px 16px;
+      font-size: 0.84rem; max-width: 300px;
+      display: flex; align-items: center; gap: 9px;
+      animation: toastIn .22s ease;
+      box-shadow: 0 6px 20px rgba(0,0,0,.45);
+      transition: opacity .3s;
+    }
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .toast--success { border-left: 4px solid var(--disponible); }
+    .toast--error   { border-left: 4px solid var(--rechazado); }
+    .toast--info    { border-left: 4px solid var(--reservado); }
+    .toast--warning { border-left: 4px solid var(--pendiente); }
+
+    /* ============================================================
+       NAVEGACIÓN DE PESTAÑAS
+    ============================================================ */
+    .tabs {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      padding: 0 24px;
+    }
+    .tab-btn {
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: var(--text-muted);
+      padding: 13px 18px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: color .15s, border-color .15s;
+      margin-bottom: -1px;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+    .tab-btn:hover { color: var(--text); }
+    .tab-btn.active { color: var(--text); border-bottom-color: var(--reservado); }
+    .tab-btn__badge {
+      background: var(--pendiente-bg);
+      color: var(--pendiente);
+      font-size: 0.68rem;
+      padding: 1px 6px;
+      border-radius: 10px;
+      font-weight: 700;
+    }
+
+    /* Sistema de vistas: oculta las secciones que no corresponden */
+    body[data-view='clientes'] .datebar,
+    body[data-view='clientes'] .legend,
+    body[data-view='clientes'] .grid-wrap { display: none; }
+    #view-clientes { display: none; }
+    body[data-view='clientes'] #view-clientes { display: block; }
+
+    body[data-view='reportes'] .datebar,
+    body[data-view='reportes'] .legend,
+    body[data-view='reportes'] .grid-wrap { display: none; }
+    #view-reportes { display: none; }
+    body[data-view='reportes'] #view-reportes { display: block; }
+
+    body[data-view='admin'] .datebar,
+    body[data-view='admin'] .legend,
+    body[data-view='admin'] .grid-wrap { display: none; }
+    #view-admin { display: none; }
+    body[data-view='admin'] #view-admin { display: block; }
+
+    /* ============================================================
+       PANEL DE CLIENTES — BARRA DE HERRAMIENTAS
+    ============================================================ */
+    .cl-toolbar {
+      padding: 16px 24px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+    }
+    .cl-search {
+      flex: 1;
+      min-width: 200px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 9px 14px 9px 36px;
+      border-radius: 8px;
+      font-size: 0.88rem;
+      font-family: inherit;
+      transition: border-color .15s;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%2394a3b8' viewBox='0 0 16 16'%3E%3Cpath d='M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: 11px center;
+    }
+    .cl-search:focus { outline: none; border-color: var(--reservado); }
+    .cl-search::placeholder { color: var(--text-muted); }
+
+    /* ============================================================
+       PANEL DE CLIENTES — ESTADÍSTICAS
+    ============================================================ */
+    .cl-stats {
+      display: flex;
+      gap: 12px;
+      padding: 16px 24px;
+      flex-wrap: wrap;
+    }
+    .cl-stat {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 20px;
+      min-width: 130px;
+    }
+    .cl-stat__num { font-size: 1.6rem; font-weight: 700; line-height: 1; }
+    .cl-stat__lbl { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;
+                    letter-spacing: .05em; margin-top: 4px; }
+
+    /* ============================================================
+       PANEL DE CLIENTES — TARJETAS
+    ============================================================ */
+    .cl-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+      gap: 12px;
+      padding: 0 24px 24px;
+    }
+    .cl-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      cursor: pointer;
+      transition: border-color .15s, transform .1s, box-shadow .15s;
+    }
+    .cl-card:hover {
+      border-color: var(--reservado);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0,0,0,.3);
+    }
+    .cl-card__head { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+    .cl-card__avatar {
+      width: 42px; height: 42px;
+      border-radius: 10px;
+      background: var(--reservado-bg);
+      color: var(--reservado);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.95rem; font-weight: 800; flex-shrink: 0;
+      letter-spacing: -.02em;
+    }
+    .cl-card__name  { font-weight: 700; font-size: 0.95rem; }
+    .cl-card__phone { font-size: 0.78rem; color: var(--text-muted); margin-top: 2px; }
+    .cl-card__foot  { display: flex; gap: 6px; flex-wrap: wrap;
+                      padding-top: 12px; border-top: 1px solid var(--border); }
+    .cl-chip {
+      background: var(--surface-2);
+      border-radius: 6px;
+      padding: 3px 9px;
+      font-size: 0.72rem;
+      color: var(--text-muted);
+    }
+    .cl-chip--activo  { background: var(--reservado-bg); color: var(--reservado); }
+    .cl-chip--pagado  { background: var(--pagado-bg);    color: var(--pagado); }
+    .cl-chip--hoy     { background: var(--pendiente-bg); color: var(--pendiente); }
+
+    /* Estado vacío */
+    .cl-empty { text-align: center; padding: 60px 24px; color: var(--text-muted); }
+    .cl-empty__icon { font-size: 3rem; margin-bottom: 12px; opacity: .4; }
+    .cl-empty__msg  { font-size: 0.9rem; }
+
+    /* ============================================================
+       MODAL DE DETALLE / EDICIÓN DE CLIENTE
+    ============================================================ */
+    .cl-modal-avatar {
+      width: 52px; height: 52px;
+      border-radius: 12px;
+      background: var(--reservado-bg);
+      color: var(--reservado);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.2rem; font-weight: 800;
+      flex-shrink: 0;
+    }
+    .modal-section-lbl {
+      font-size: 0.7rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .06em;
+      color: var(--text-muted);
+      margin: 18px 0 8px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* Tabla de historial */
+    .hist-wrap { max-height: 260px; overflow-y: auto; border-radius: 8px;
+                 border: 1px solid var(--border); }
+    .hist-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+    .hist-table th {
+      position: sticky; top: 0;
+      text-align: left; padding: 8px 10px;
+      background: var(--surface-2);
+      color: var(--text-muted); font-size: 0.68rem;
+      text-transform: uppercase; letter-spacing: .05em;
+      border-bottom: 1px solid var(--border);
+    }
+    .hist-table td { padding: 9px 10px; border-bottom: 1px solid rgba(255,255,255,.04); vertical-align: middle; }
+    .hist-table tr:last-child td { border-bottom: none; }
+    .hist-table tr:hover td { background: rgba(255,255,255,.03); }
+    .hist-empty { text-align: center; padding: 24px; color: var(--text-muted); font-size: 0.82rem; }
+
+    /* Form de nuevo/editar cliente (reutiliza .form-group del modal) */
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    /* ============================================================
+       REPORTES — BARRA DE PERÍODO
+    ============================================================ */
+    .report-toolbar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .period-tabs { display: flex; gap: 4px; }
+    .period-btn {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 6px 14px;
+      border-radius: 7px;
+      cursor: pointer;
+      font-size: 0.82rem;
+      font-weight: 600;
+      font-family: inherit;
+      transition: background .15s, color .15s, border-color .15s;
+    }
+    .period-btn:hover  { color: var(--text); }
+    .period-btn.active { background: var(--reservado-bg); color: var(--reservado); border-color: var(--reservado); }
+    .period-nav {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-left: auto;
+    }
+    .period-label {
+      font-weight: 600;
+      font-size: 0.9rem;
+      min-width: 220px;
+      text-align: center;
+    }
+
+    /* ============================================================
+       REPORTES — KPIs
+    ============================================================ */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      padding: 16px 24px;
+    }
+    .kpi-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px 20px;
+    }
+    .kpi-card__num { font-size: 1.9rem; font-weight: 700; line-height: 1; }
+    .kpi-card__lbl { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;
+                     letter-spacing: .05em; margin-top: 5px; }
+    .kpi-card__sub { font-size: 0.75rem; color: var(--text-muted); margin-top: 4px; }
+    .kpi-bar       { height: 5px; background: var(--surface-2); border-radius: 3px; margin-top: 6px; overflow: hidden; }
+    .kpi-bar__fill { height: 100%; background: var(--disponible); border-radius: 3px;
+                     transition: width .4s ease; }
+
+    /* ============================================================
+       REPORTES — SECCIONES Y GRÁFICOS
+    ============================================================ */
+    .report-body { padding: 0 24px 32px; display: flex; flex-direction: column; gap: 16px; }
+
+    .report-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .report-section__title {
+      padding: 14px 18px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* Gráfico de barras horizontales */
+    .chart-wrap { padding: 16px 18px; display: flex; flex-direction: column; gap: 10px; }
+    .chart-row  { display: flex; align-items: center; gap: 10px; }
+    .chart-row__label {
+      width: 80px;
+      flex-shrink: 0;
+      font-size: 0.76rem;
+      color: var(--text-muted);
+      text-align: right;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .chart-row__track {
+      flex: 1;
+      height: 10px;
+      background: var(--surface-2);
+      border-radius: 5px;
+      overflow: hidden;
+    }
+    .chart-row__fill {
+      height: 100%;
+      background: var(--pagado);
+      border-radius: 5px;
+      transition: width .4s ease;
+      min-width: 2px;
+    }
+    .chart-row__fill--reservado { background: var(--reservado); }
+    .chart-row__fill--pendiente { background: var(--pendiente); }
+    .chart-row__value {
+      width: 90px;
+      flex-shrink: 0;
+      font-size: 0.76rem;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    /* Grilla de canchas */
+    .cancha-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1px;
+                   background: var(--border); }
+    .cancha-card { padding: 16px 18px; background: var(--surface); }
+    .cancha-card__name  { font-weight: 700; font-size: 0.95rem; }
+    .cancha-card__sport { font-size: 0.72rem; color: var(--text-muted); margin-top: 2px; margin-bottom: 8px; }
+    .cancha-card__ing   { font-size: 1.3rem; font-weight: 700; margin-bottom: 4px; }
+
+    /* Top clientes */
+    .top-clientes { padding: 8px 0; }
+    .top-cliente  {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 18px;
+      border-bottom: 1px solid rgba(255,255,255,.04);
+    }
+    .top-cliente:last-child { border-bottom: none; }
+    .top-cliente__rank   { font-size: 0.75rem; color: var(--text-muted); width: 20px; text-align: center;
+                           font-weight: 700; flex-shrink: 0; }
+    .top-cliente__avatar { width: 34px; height: 34px; border-radius: 8px;
+                           background: var(--reservado-bg); color: var(--reservado);
+                           display: flex; align-items: center; justify-content: center;
+                           font-size: 0.78rem; font-weight: 800; flex-shrink: 0; }
+    .top-cliente__info   { flex: 1; min-width: 0; }
+    .top-cliente__name   { font-size: 0.88rem; font-weight: 600;
+                           white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .top-cliente__phone  { font-size: 0.72rem; color: var(--text-muted); }
+    .top-cliente__stats  { display: flex; flex-direction: column; align-items: flex-end;
+                           gap: 2px; font-size: 0.75rem; color: var(--text-muted); flex-shrink: 0; }
+    .top-cliente__stats strong { font-size: 0.88rem; color: var(--pagado); }
+
+    /* ============================================================
+       PANEL DE ADMINISTRACIÓN
+    ============================================================ */
+    .admin-wrap { padding: 20px 24px 32px; display: flex; flex-direction: column; gap: 16px; }
+
+    .admin-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .admin-section__hdr {
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .admin-section__title {
+      font-size: 0.78rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .05em;
+      color: var(--text-muted);
+    }
+    .admin-section__body { padding: 20px; }
+
+    /* Grilla de tarjetas de cancha */
+    .admin-courts {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 12px;
+    }
+    .admin-court {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      transition: border-color .15s;
+      display: flex; flex-direction: column;
+    }
+    .admin-court:hover        { border-color: var(--reservado); }
+    .admin-court.inactiva     { opacity: .4; }
+    .admin-court__icon  { font-size: 1.8rem; margin-bottom: 8px; display: block; }
+    .admin-court__name  { font-weight: 700; font-size: 1rem; }
+    .admin-court__sport { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
+    .admin-court__chips { display: flex; gap: 6px; margin: 10px 0; flex-wrap: wrap; }
+    .admin-court__price { font-size: 1.25rem; font-weight: 700; color: var(--pagado); }
+    .admin-court__foot  {
+      display: flex; gap: 8px; align-items: center;
+      margin-top: auto; padding-top: 12px; border-top: 1px solid var(--border);
+    }
+
+    /* Toggle activa/inactiva */
+    .toggle-wrap { display: flex; align-items: center; gap: 7px; font-size: 0.75rem; color: var(--text-muted); }
+    .toggle      { position: relative; display: inline-block; width: 36px; height: 20px; flex-shrink: 0; }
+    .toggle input { opacity: 0; width: 0; height: 0; }
+    .toggle__rail {
+      position: absolute; cursor: pointer; inset: 0;
+      background: var(--surface-2); border: 1px solid var(--border);
+      border-radius: 20px; transition: .2s;
+    }
+    .toggle__rail::before {
+      content: ''; position: absolute;
+      height: 14px; width: 14px; left: 2px; bottom: 2px;
+      background: var(--text-muted); border-radius: 50%; transition: .2s;
+    }
+    .toggle input:checked + .toggle__rail { background: var(--disponible-bg); border-color: var(--disponible); }
+    .toggle input:checked + .toggle__rail::before { transform: translateX(16px); background: var(--disponible); }
+
+    /* Select en formularios */
+    .form-select {
+      width: 100%;
+      background: var(--surface-2); border: 1px solid var(--border);
+      color: var(--text); padding: 9px 32px 9px 11px;
+      border-radius: 8px; font-size: 0.88rem; font-family: inherit;
+      cursor: pointer; transition: border-color .15s;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2394a3b8' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 11px center;
+    }
+    .form-select:focus { outline: none; border-color: var(--reservado); }
+    .form-select option { background: var(--surface); color: var(--text); }
+
+    /* Configuración del complejo */
+    .config-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; margin-bottom: 16px; }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="header__brand">
+      <div class="header__icon">🏟</div>
+      <div>
+        <div class="header__title">Costanera Club</div>
+        <div class="header__sub">Gestión de Reservas</div>
+      </div>
+    </div>
+    <div class="header__time" id="reloj"></div>
+  </header>
+
+  <!-- PESTAÑAS DE NAVEGACIÓN -->
+  <nav class="tabs">
+    <button class="tab-btn active" data-view="recepcion">Recepción</button>
+    <button class="tab-btn" data-view="clientes">
+      Clientes
+      <span class="tab-btn__badge" id="badgePendientes" style="display:none"></span>
+    </button>
+    <button class="tab-btn" data-view="reportes">Reportes</button>
+    <button class="tab-btn" data-view="admin">Administración</button>
+  </nav>
+
+  <!-- NAVEGACIÓN DE FECHA -->
+  <div class="datebar">
+    <button class="datebar__btn" id="btnPrev">← Anterior</button>
+    <div class="datebar__label" id="lblFecha">Cargando…</div>
+    <button class="datebar__btn" id="btnNext">Siguiente →</button>
+    <button class="datebar__today" id="btnHoy">Hoy</button>
+  </div>
+
+  <!-- LEYENDA -->
+  <div class="legend">
+    <div class="legend__item"><span class="legend__dot" style="background:var(--disponible)"></span>Disponible</div>
+    <div class="legend__item"><span class="legend__dot" style="background:var(--pendiente)"></span>Pendiente</div>
+    <div class="legend__item"><span class="legend__dot" style="background:var(--reservado)"></span>Reservado</div>
+    <div class="legend__item"><span class="legend__dot" style="background:var(--bloqueado)"></span>Bloqueado</div>
+    <div class="legend__item"><span class="legend__dot" style="background:var(--rechazado)"></span>Rechazado</div>
+    <div class="legend__item"><span class="legend__dot" style="background:var(--pagado)"></span>Pagado</div>
+  </div>
+
+  <!-- GRILLA -->
+  <div class="grid-wrap">
+    <div class="grid-inner" id="gridInner">
+      <!-- Generado por JavaScript -->
+    </div>
+  </div>
+
+  <!-- VISTA: CLIENTES -->
+  <div id="view-clientes">
+
+    <!-- Barra de búsqueda + botón nuevo -->
+    <div class="cl-toolbar">
+      <input class="cl-search" id="clSearch" type="search"
+             placeholder="Buscar por nombre o teléfono…" autocomplete="off" />
+      <button class="btn btn--primary" id="btnNuevoCliente">+ Nuevo cliente</button>
+    </div>
+
+    <!-- Estadísticas rápidas -->
+    <div class="cl-stats" id="clStats"></div>
+
+    <!-- Grilla de tarjetas -->
+    <div class="cl-grid" id="clGrid"></div>
+
+  </div>
+
+  <!-- VISTA: REPORTES -->
+  <div id="view-reportes">
+
+    <!-- Selector de período + navegación -->
+    <div class="report-toolbar">
+      <div class="period-tabs">
+        <button class="period-btn active" data-periodo="diario">Diario</button>
+        <button class="period-btn" data-periodo="semanal">Semanal</button>
+        <button class="period-btn" data-periodo="mensual">Mensual</button>
+        <button class="period-btn" data-periodo="anual">Anual</button>
+      </div>
+      <div class="period-nav">
+        <button class="datebar__btn" id="rPrev">←</button>
+        <span class="period-label" id="rLabel">—</span>
+        <button class="datebar__btn" id="rNext">→</button>
+        <button class="datebar__today" id="rHoy">Hoy</button>
+      </div>
+    </div>
+
+    <!-- KPI cards -->
+    <div class="kpi-grid" id="rKpis"></div>
+
+    <!-- Gráficos + tablas -->
+    <div class="report-body" id="rBody"></div>
+
+  </div>
+
+  <!-- VISTA: ADMINISTRACIÓN -->
+  <div id="view-admin">
+    <div class="admin-wrap">
+
+      <!-- CANCHAS -->
+      <div class="admin-section">
+        <div class="admin-section__hdr">
+          <div class="admin-section__title">Canchas</div>
+          <button class="btn btn--primary" id="btnNuevaCancha">+ Nueva cancha</button>
+        </div>
+        <div class="admin-section__body">
+          <div class="admin-courts" id="adminCourts"></div>
+        </div>
+      </div>
+
+      <!-- CONFIGURACIÓN -->
+      <div class="admin-section">
+        <div class="admin-section__hdr">
+          <div class="admin-section__title">Configuración del complejo</div>
+        </div>
+        <div class="admin-section__body">
+          <div class="config-grid">
+            <div class="form-group">
+              <label for="cfgNombre">Nombre del complejo</label>
+              <input id="cfgNombre" type="text" placeholder="Complejo Deportivo" autocomplete="off" />
+            </div>
+            <div class="form-group">
+              <label for="cfgApertura">Hora de apertura</label>
+              <input id="cfgApertura" type="time" />
+            </div>
+            <div class="form-group">
+              <label for="cfgCierre">Hora de cierre</label>
+              <input id="cfgCierre" type="time" />
+            </div>
+          </div>
+          <button class="btn btn--success" id="btnGuardarConfig">Guardar configuración</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MODAL -->
+  <div class="overlay" id="overlay">
+    <div class="modal" id="modal">
+      <div class="modal__head">
+        <div>
+          <div class="modal__title" id="mTitle">—</div>
+          <div class="modal__sub"   id="mSub">—</div>
+        </div>
+        <button class="modal__close" id="mClose">✕</button>
+      </div>
+      <div class="modal__body" id="mBody"></div>
+      <div class="modal__foot" id="mFoot"></div>
+    </div>
+  </div>
+
+  <!-- TOASTS -->
+  <div class="toasts" id="toasts"></div>
+
+<script>
+/* ====================================================================
+   CONFIGURACIÓN
+   Valores que definen el comportamiento global del sistema.
+   Cambiá estos sin tocar el resto del código.
+==================================================================== */
+const CONFIG = {
+  HORA_APERTURA:  '11:00',  // Primer slot del día
+  HORA_CIERRE:    '22:00',  // No puede empezar ningún turno después de esto
+  MINUTOS_BASE:   30,        // Altura de cada fila = 30 minutos
+  CELL_H_PX:      44,        // Debe coincidir con --cell-h del CSS
+  HS_CANCELACION: 3,         // Horas antes del turno para cancelar sin cargo
+};
+
+/* ====================================================================
+   CAPA DE DATOS  ─  LocalStorage
+
+   ¡IMPORTANTE PARA LA MIGRACIÓN!
+   Estas son las ÚNICAS funciones que tocan el almacenamiento.
+   Cuando pasemos a un backend real, solo hay que reemplazar el cuerpo
+   de estas funciones por llamadas fetch() a la API REST.
+   El resto del código (negocio + UI) no necesita cambiar.
+
+   Contrato de cada función: igual al que tendría un endpoint REST.
+==================================================================== */
+const DB = {
+  KEYS: {
+    CANCHAS:  'rd_canchas',
+    TURNOS:   'rd_turnos',
+    RESERVAS: 'rd_reservas',
+    CLIENTES: 'rd_clientes',
+  },
+
+  // --- Helpers internos de lectura/escritura (no exponer al exterior) ---
+  _get(key)       { try { return JSON.parse(localStorage.getItem(key)) || []; } catch { return []; } },
+  _set(key, data) { localStorage.setItem(key, JSON.stringify(data)); },
+
+  /* ------------------------------------------------------------------
+     CANCHAS
+  ------------------------------------------------------------------ */
+  /** Devuelve todas las canchas. Futuro: GET /api/canchas */
+  obtenerCanchas() {
+    return this._get(this.KEYS.CANCHAS);
+  },
+
+  /** Devuelve una cancha por id. Futuro: GET /api/canchas/:id */
+  obtenerCanchaPorId(id) {
+    return this.obtenerCanchas().find(c => c.id === id) || null;
+  },
+
+  /** Guarda una cancha nueva. Futuro: POST /api/canchas */
+  guardarCancha(cancha) {
+    const lista = this.obtenerCanchas();
+    lista.push(cancha);
+    this._set(this.KEYS.CANCHAS, lista);
+    return cancha;
+  },
+
+  /** Actualiza campos de una cancha. Futuro: PATCH /api/canchas/:id */
+  actualizarCancha(id, cambios) {
+    const lista = this.obtenerCanchas();
+    const i = lista.findIndex(c => c.id === id);
+    if (i === -1) return null;
+    lista[i] = { ...lista[i], ...cambios };
+    this._set(this.KEYS.CANCHAS, lista);
+    return lista[i];
+  },
+
+  /** Elimina una cancha por id. Futuro: DELETE /api/canchas/:id */
+  eliminarCancha(id) {
+    this._set(this.KEYS.CANCHAS, this.obtenerCanchas().filter(c => c.id !== id));
+  },
+
+  /** Devuelve la configuración global del complejo. Futuro: GET /api/config */
+  obtenerConfig() {
+    try { return JSON.parse(localStorage.getItem('rd_config')) || {}; } catch { return {}; }
+  },
+
+  /** Guarda la configuración global. Futuro: PUT /api/config */
+  guardarConfig(cfg) {
+    localStorage.setItem('rd_config', JSON.stringify(cfg));
+    return cfg;
+  },
+
+  /* ------------------------------------------------------------------
+     TURNOS
+  ------------------------------------------------------------------ */
+  /** Devuelve todos los turnos. Futuro: GET /api/turnos */
+  obtenerTodosTurnos() {
+    return this._get(this.KEYS.TURNOS);
+  },
+
+  /** Devuelve los turnos de una fecha. Futuro: GET /api/turnos?fecha=YYYY-MM-DD */
+  obtenerTurnosPorFecha(fecha) {
+    return this.obtenerTodosTurnos().filter(t => t.fecha === fecha);
+  },
+
+  /** Devuelve un turno por id. Futuro: GET /api/turnos/:id */
+  obtenerTurnoPorId(id) {
+    return this.obtenerTodosTurnos().find(t => t.id === id) || null;
+  },
+
+  /** Guarda un turno nuevo. Futuro: POST /api/turnos */
+  guardarTurno(turno) {
+    const lista = this.obtenerTodosTurnos();
+    lista.push(turno);
+    this._set(this.KEYS.TURNOS, lista);
+    return turno;
+  },
+
+  /** Actualiza campos de un turno existente. Futuro: PATCH /api/turnos/:id */
+  actualizarTurno(id, cambios) {
+    const lista = this.obtenerTodosTurnos();
+    const i = lista.findIndex(t => t.id === id);
+    if (i === -1) return null;
+    lista[i] = { ...lista[i], ...cambios };
+    this._set(this.KEYS.TURNOS, lista);
+    return lista[i];
+  },
+
+  /* ------------------------------------------------------------------
+     RESERVAS
+  ------------------------------------------------------------------ */
+  /** Devuelve todas las reservas. Futuro: GET /api/reservas */
+  obtenerReservas() {
+    return this._get(this.KEYS.RESERVAS);
+  },
+
+  /** Devuelve la reserva activa asociada a un turno (ignora canceladas/rechazadas). Futuro: GET /api/reservas?turnoId=X&estado=activa */
+  obtenerReservaPorTurno(turnoId) {
+    return this.obtenerReservas().find(
+      r => r.turnoId === turnoId && r.estado !== 'cancelada' && r.estado !== 'rechazada'
+    ) || null;
+  },
+
+  /** Guarda una reserva nueva. Futuro: POST /api/reservas */
+  guardarReserva(reserva) {
+    const lista = this.obtenerReservas();
+    lista.push(reserva);
+    this._set(this.KEYS.RESERVAS, lista);
+    return reserva;
+  },
+
+  /** Actualiza campos de una reserva. Futuro: PATCH /api/reservas/:id */
+  actualizarReserva(id, cambios) {
+    const lista = this.obtenerReservas();
+    const i = lista.findIndex(r => r.id === id);
+    if (i === -1) return null;
+    lista[i] = { ...lista[i], ...cambios };
+    this._set(this.KEYS.RESERVAS, lista);
+    return lista[i];
+  },
+
+  /* ------------------------------------------------------------------
+     CLIENTES
+  ------------------------------------------------------------------ */
+  /** Devuelve todos los clientes. Futuro: GET /api/clientes */
+  obtenerClientes() {
+    return this._get(this.KEYS.CLIENTES);
+  },
+
+  /** Devuelve un cliente por id. Futuro: GET /api/clientes/:id */
+  obtenerClientePorId(id) {
+    return this.obtenerClientes().find(c => c.id === id) || null;
+  },
+
+  /** Devuelve un cliente por teléfono (identificador único). Futuro: GET /api/clientes?telefono=X */
+  obtenerClientePorTelefono(telefono) {
+    return this.obtenerClientes().find(c => c.telefono === telefono.trim()) || null;
+  },
+
+  /** Guarda un cliente nuevo. Futuro: POST /api/clientes */
+  guardarCliente(cliente) {
+    const lista = this.obtenerClientes();
+    lista.push(cliente);
+    this._set(this.KEYS.CLIENTES, lista);
+    return cliente;
+  },
+
+  /** Actualiza campos de un cliente. Futuro: PATCH /api/clientes/:id */
+  actualizarCliente(id, cambios) {
+    const lista = this.obtenerClientes();
+    const i = lista.findIndex(c => c.id === id);
+    if (i === -1) return null;
+    lista[i] = { ...lista[i], ...cambios };
+    this._set(this.KEYS.CLIENTES, lista);
+    return lista[i];
+  },
+
+  /** Elimina un cliente por id. Futuro: DELETE /api/clientes/:id */
+  eliminarCliente(id) {
+    const lista = this.obtenerClientes().filter(c => c.id !== id);
+    this._set(this.KEYS.CLIENTES, lista);
+  },
+
+  /** Devuelve todas las reservas de un cliente. Futuro: GET /api/reservas?clienteId=X */
+  obtenerReservasPorCliente(clienteId) {
+    return this.obtenerReservas().filter(r => r.clienteId === clienteId);
+  },
+};
+
+/* ====================================================================
+   UTILIDADES
+==================================================================== */
+
+/** Genera un ID único local. El backend lo reemplazaría con UUID o autoincrement. */
+function uid(prefijo = 'id') {
+  return `${prefijo}_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+}
+
+/** Convierte "HH:MM" a minutos desde medianoche. */
+function hm(hora) {
+  const [h, m] = hora.split(':').map(Number);
+  return h * 60 + m;
+}
+
+/** Convierte minutos desde medianoche a "HH:MM". */
+function mh(min) {
+  return `${String(Math.floor(min / 60)).padStart(2,'0')}:${String(min % 60).padStart(2,'0')}`;
+}
+
+/** Devuelve la fecha de hoy como "YYYY-MM-DD". */
+function hoy() {
+  return new Date().toISOString().split('T')[0];
+}
+
+/** Suma días a una fecha "YYYY-MM-DD". offset puede ser negativo. */
+function sumarDias(fecha, offset) {
+  const [y, m, d] = fecha.split('-').map(Number);
+  return new Date(Date.UTC(y, m - 1, d + offset)).toISOString().split('T')[0];
+}
+
+/** Formatea "YYYY-MM-DD" a texto legible en español. */
+function formatFecha(fecha) {
+  const [y, m, d] = fecha.split('-').map(Number);
+  const f = new Date(Date.UTC(y, m - 1, d));
+  const s = f.toLocaleDateString('es-AR', {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC',
+  });
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+/* ====================================================================
+   LÓGICA DE NEGOCIO
+
+   Las reglas del sistema viven acá.
+   No saben nada de HTML ni de cómo se muestran los datos.
+   Solo reciben datos, aplican reglas, y llaman a DB.
+==================================================================== */
+
+/**
+ * Crea una reserva desde recepción para un turno disponible.
+ * Retorna { turno, reserva, cliente } o lanza Error.
+ * Futuro: POST /api/reservas (el backend valida y confirma).
+ */
+function crearReserva(turnoId, datosCliente) {
+  const turno = DB.obtenerTurnoPorId(turnoId);
+  if (!turno)                       throw new Error('Turno no encontrado.');
+  if (turno.estado !== 'disponible') throw new Error('El turno ya no está disponible.');
+
+  // Si el teléfono ya existe, reutilizamos ese cliente en lugar de crear uno nuevo
+  const telefono = datosCliente.telefono.trim();
+  const clienteExistente = DB.obtenerClientePorTelefono(telefono);
+  const cliente = clienteExistente || DB.guardarCliente({
+    id:       uid('cl'),
+    nombre:   datosCliente.nombre.trim(),
+    telefono,
+    creadoEn: new Date().toISOString(),
+  });
+
+  const reserva = DB.guardarReserva({
+    id:            uid('r'),
+    turnoId,
+    clienteId:     cliente.id,
+    fechaCreacion: new Date().toISOString(),
+    estadoPago:    'pendiente',
+  });
+
+  // Recepción confirma directamente → estado "reservado"
+  const turnoActualizado = DB.actualizarTurno(turnoId, { estado: 'reservado' });
+  return { turno: turnoActualizado, reserva, cliente };
+}
+
+/**
+ * Aprueba una reserva en estado pendiente (creada por el cliente desde app).
+ * El turno pasa de "pendiente" a "reservado".
+ * Futuro: PATCH /api/reservas/:id { accion: 'aprobar' }
+ */
+function aprobarReserva(turnoId) {
+  const reserva = DB.obtenerReservaPorTurno(turnoId);
+  if (!reserva) throw new Error('No existe reserva para este turno.');
+  DB.actualizarTurno(turnoId, { estado: 'reservado' });
+  return reserva;
+}
+
+/**
+ * Rechaza una reserva → turno queda "rechazado".
+ * Futuro: PATCH /api/reservas/:id { accion: 'rechazar' }
+ */
+function rechazarReserva(turnoId) {
+  DB.actualizarTurno(turnoId, { estado: 'rechazado' });
+  const reserva = DB.obtenerReservaPorTurno(turnoId);
+  if (reserva) DB.actualizarReserva(reserva.id, { estado: 'rechazada' });
+  return reserva;
+}
+
+/**
+ * Cancela una reserva aplicando la regla de penalización:
+ *   - Más de 3 hs antes → sin cargo.
+ *   - Menos de 3 hs antes → se cobra 50%.
+ * El turno siempre vuelve a "disponible".
+ * Retorna { cargo: bool, porcentaje: number, hsRestantes: number }
+ * Futuro: DELETE /api/reservas/:id (el backend calcula el cargo).
+ */
+function cancelarReserva(turnoId) {
+  const turno = DB.obtenerTurnoPorId(turnoId);
+  if (!turno) throw new Error('Turno no encontrado.');
+
+  const ahora        = new Date();
+  const fechaTurno   = new Date(`${turno.fecha}T${turno.horaInicio}:00`);
+  const hsRestantes  = (fechaTurno - ahora) / 3_600_000;
+
+  const cargo      = hsRestantes < CONFIG.HS_CANCELACION && hsRestantes > 0;
+  const porcentaje = cargo ? 50 : 0;
+
+  const reserva = DB.obtenerReservaPorTurno(turnoId);
+  if (reserva) DB.actualizarReserva(reserva.id, { estado: 'cancelada' });
+  DB.actualizarTurno(turnoId, { estado: 'disponible' });
+  return { cargo, porcentaje, hsRestantes: Math.max(0, hsRestantes) };
+}
+
+/**
+ * Bloquea un turno manualmente (mantenimiento, evento, etc.).
+ * Futuro: PATCH /api/turnos/:id { estado: 'bloqueado' }
+ */
+function bloquearTurno(turnoId) {
+  return DB.actualizarTurno(turnoId, { estado: 'bloqueado' });
+}
+
+/**
+ * Desbloquea un turno → vuelve a "disponible".
+ * Futuro: PATCH /api/turnos/:id { estado: 'disponible' }
+ */
+function desbloquearTurno(turnoId) {
+  return DB.actualizarTurno(turnoId, { estado: 'disponible' });
+}
+
+/**
+ * Marca un turno como pagado y actualiza el estadoPago de la reserva.
+ * Futuro: PATCH /api/reservas/:id { estadoPago: 'pagado' }
+ */
+function marcarPagado(turnoId) {
+  const reserva = DB.obtenerReservaPorTurno(turnoId);
+  if (reserva) DB.actualizarReserva(reserva.id, { estadoPago: 'pagado' });
+  return DB.actualizarTurno(turnoId, { estado: 'pagado' });
+}
+
+/* ====================================================================
+   GENERACIÓN DE TURNOS DEL DÍA
+
+   Por cada cancha y cada día, genera automáticamente los slots según
+   su duracionTurno. Es idempotente: no duplica si ya existen.
+   Futuro: el backend haría esto automáticamente al arrancar el día.
+==================================================================== */
+
+/**
+ * Genera y persiste los turnos del día para todas las canchas,
+ * solo si aún no existen. Seguro de llamar múltiples veces.
+ */
+function asegurarTurnosDia(fecha) {
+  const canchas  = DB.obtenerCanchas().filter(c => c.activa !== false);
+  const existentes = new Set(
+    DB.obtenerTurnosPorFecha(fecha).map(t => `${t.canchaId}_${t.horaInicio}`)
+  );
+
+  canchas.forEach(cancha => {
+    let cur     = hm(CONFIG.HORA_APERTURA);
+    const tope  = hm(CONFIG.HORA_CIERRE);
+
+    while (cur + cancha.duracionTurno <= tope) {
+      const inicio = mh(cur);
+      const fin    = mh(cur + cancha.duracionTurno);
+      const key    = `${cancha.id}_${inicio}`;
+
+      if (!existentes.has(key)) {
+        DB.guardarTurno({
+          id:         uid('t'),
+          canchaId:   cancha.id,
+          fecha,
+          horaInicio: inicio,
+          horaFin:    fin,
+          estado:     'disponible',
+        });
+        existentes.add(key); // evita duplicados en la misma llamada
+      }
+      cur += cancha.duracionTurno;
+    }
+  });
+}
+
+/* ====================================================================
+   DATOS DE PRUEBA (SEED)
+
+   Se cargan solo la primera vez que se abre la app (DB vacía).
+   Sirven para ver el sistema funcionando de inmediato.
+   En producción, esto no existiría: los datos vienen del backend.
+==================================================================== */
+
+function cargarDatosDePrueba() {
+  if (DB.obtenerCanchas().length > 0) return; // ya inicializado
+
+  // ── Canchas ────────────────────────────────────────────────────────
+  [
+    { id: 'c1', nombre: 'Pádel 1',  deporte: 'Pádel',  duracionTurno: 60, precio: 25000 },
+    { id: 'c2', nombre: 'Pádel 2',  deporte: 'Pádel',  duracionTurno: 60, precio: 25000 },
+    { id: 'c3', nombre: 'Fútbol 5', deporte: 'Fútbol', duracionTurno: 90, precio: 20000 },
+  ].forEach(c => DB.guardarCancha(c));
+
+  // ── Turnos del día de hoy ─────────────────────────────────────────
+  const fecha = hoy();
+  asegurarTurnosDia(fecha);
+  const turnos = DB.obtenerTurnosPorFecha(fecha);
+
+  // Helper para encontrar un turno por cancha y hora de inicio
+  const T = (canchaId, horaInicio) =>
+    turnos.find(t => t.canchaId === canchaId && t.horaInicio === horaInicio);
+
+  // ── Clientes de prueba ────────────────────────────────────────────
+  [
+    { id: 'cl1', nombre: 'Martín Gómez',    telefono: '11-4523-7890' },
+    { id: 'cl2', nombre: 'Laura Fernández', telefono: '11-3891-2345' },
+    { id: 'cl3', nombre: 'Carlos Ruiz',     telefono: '11-6701-9988' },
+    { id: 'cl4', nombre: 'Ana Martínez',    telefono: '11-2234-5567' },
+  ].forEach(c => DB.guardarCliente({ ...c, creadoEn: new Date().toISOString() }));
+
+  // ── Escenarios de ejemplo ─────────────────────────────────────────
+  //  Pádel 1 — 13:00 pagado
+  const t1 = T('c1','13:00');
+  if (t1) { DB.actualizarTurno(t1.id,{estado:'pagado'}); DB.guardarReserva({id:'r1',turnoId:t1.id,clienteId:'cl1',fechaCreacion:new Date().toISOString(),estadoPago:'pagado'}); }
+
+  // Pádel 1 — 15:00 pendiente (reserva desde app del cliente)
+  const t2 = T('c1','15:00');
+  if (t2) { DB.actualizarTurno(t2.id,{estado:'pendiente'}); DB.guardarReserva({id:'r2',turnoId:t2.id,clienteId:'cl2',fechaCreacion:new Date().toISOString(),estadoPago:'pendiente'}); }
+
+  // Pádel 1 — 17:00 reservado (sin pagar aún)
+  const t3 = T('c1','17:00');
+  if (t3) { DB.actualizarTurno(t3.id,{estado:'reservado'}); DB.guardarReserva({id:'r3',turnoId:t3.id,clienteId:'cl3',fechaCreacion:new Date().toISOString(),estadoPago:'pendiente'}); }
+
+  // Pádel 1 — 20:00 bloqueado (mantenimiento de red)
+  const t4 = T('c1','20:00');
+  if (t4) DB.actualizarTurno(t4.id,{estado:'bloqueado'});
+
+  // Pádel 2 — 12:00 pendiente
+  const t5 = T('c2','12:00');
+  if (t5) { DB.actualizarTurno(t5.id,{estado:'pendiente'}); DB.guardarReserva({id:'r4',turnoId:t5.id,clienteId:'cl4',fechaCreacion:new Date().toISOString(),estadoPago:'pendiente'}); }
+
+  // Pádel 2 — 14:00 rechazado
+  const t6 = T('c2','14:00');
+  if (t6) DB.actualizarTurno(t6.id,{estado:'rechazado'});
+
+  // Pádel 2 — 19:00 pagado
+  const t7 = T('c2','19:00');
+  if (t7) { DB.actualizarTurno(t7.id,{estado:'pagado'}); DB.guardarReserva({id:'r5',turnoId:t7.id,clienteId:'cl1',fechaCreacion:new Date().toISOString(),estadoPago:'pagado'}); }
+
+  // Fútbol — 14:00 reservado (slot 14:00-15:30)
+  const t8 = T('c3','14:00');
+  if (t8) { DB.actualizarTurno(t8.id,{estado:'reservado'}); DB.guardarReserva({id:'r6',turnoId:t8.id,clienteId:'cl2',fechaCreacion:new Date().toISOString(),estadoPago:'pendiente'}); }
+
+  // Fútbol — 17:00 bloqueado
+  const t9 = T('c3','17:00');
+  if (t9) DB.actualizarTurno(t9.id,{estado:'bloqueado'});
+}
+
+/* ====================================================================
+   ESTADO DE LA INTERFAZ
+   Variables globales de UI (no son datos de negocio).
+==================================================================== */
+const UI = {
+  fechaActual:      hoy(),
+  turnoActivoId:    null,
+};
+
+/* ====================================================================
+   CAPA DE RENDERIZADO
+
+   Estas funciones SOLO construyen HTML y lo meten en el DOM.
+   No contienen lógica de negocio. Reciben datos ya procesados.
+==================================================================== */
+
+/**
+ * Dibuja la grilla completa del día actual.
+ * Limpia el contenedor, genera columna de horas y una columna por cancha.
+ */
+function renderGrilla() {
+  const container = document.getElementById('gridInner');
+  container.innerHTML = '';
+
+  const fecha   = UI.fechaActual;
+  asegurarTurnosDia(fecha);
+
+  const canchas   = DB.obtenerCanchas().filter(c => c.activa !== false);
+  const turnos    = DB.obtenerTurnosPorFecha(fecha);
+  const minInicio = hm(CONFIG.HORA_APERTURA);
+  const minFin    = hm(CONFIG.HORA_CIERRE);
+  const totalFilas = (minFin - minInicio) / CONFIG.MINUTOS_BASE;
+
+  // ── Columna de horas ───────────────────────────────────────────────
+  const colHoras = document.createElement('div');
+  colHoras.className = 'time-col';
+  colHoras.innerHTML = '<div class="time-col__hdr">Hora</div>';
+
+  for (let i = 0; i < totalFilas; i++) {
+    const min        = minInicio + i * CONFIG.MINUTOS_BASE;
+    const esMediaHora = (min % 60) !== 0;
+    const tick        = document.createElement('div');
+    tick.className    = 'time-col__tick' + (esMediaHora ? ' time-col__tick--half' : '');
+    if (!esMediaHora) tick.textContent = mh(min);
+    colHoras.appendChild(tick);
+  }
+  container.appendChild(colHoras);
+
+  // ── Columna por cancha ─────────────────────────────────────────────
+  canchas.forEach(cancha => {
+    const col = document.createElement('div');
+    col.className = 'court-col';
+
+    col.innerHTML = `
+      <div class="court-col__hdr">
+        <div class="court-col__name">${cancha.nombre}</div>
+        <div class="court-col__info">${cancha.deporte} · $${cancha.precio.toLocaleString('es-AR')} · ${cancha.duracionTurno} min</div>
+      </div>`;
+
+    // Área de slots con altura total fija
+    const area = document.createElement('div');
+    area.className = 'slots-area';
+    area.style.height = `${totalFilas * CONFIG.CELL_H_PX}px`;
+
+    // Líneas de fondo (decorativas, marcan la grilla)
+    for (let i = 0; i < totalFilas; i++) {
+      const min        = minInicio + i * CONFIG.MINUTOS_BASE;
+      const esMediaHora = (min % 60) !== 0;
+      const linea       = document.createElement('div');
+      linea.className   = 'grid-line' + (esMediaHora ? ' grid-line--half' : '');
+      linea.style.top   = `${i * CONFIG.CELL_H_PX}px`;
+      area.appendChild(linea);
+    }
+
+    // Tarjetas de turnos de esta cancha
+    turnos
+      .filter(t => t.canchaId === cancha.id)
+      .forEach(turno => area.appendChild(crearTarjeta(turno, cancha, minInicio)));
+
+    col.appendChild(area);
+    container.appendChild(col);
+  });
+
+  // Actualiza el label de la fecha en la barra
+  document.getElementById('lblFecha').textContent = formatFecha(fecha);
+}
+
+/**
+ * Crea y retorna el elemento DOM de una tarjeta de turno.
+ * Calcula su posición y altura a partir del tiempo del turno.
+ */
+function crearTarjeta(turno, cancha, minInicio) {
+  const topMin = hm(turno.horaInicio) - minInicio;
+  const durMin = hm(turno.horaFin)    - hm(turno.horaInicio);
+
+  const top    = (topMin / CONFIG.MINUTOS_BASE) * CONFIG.CELL_H_PX;
+  const altura = (durMin  / CONFIG.MINUTOS_BASE) * CONFIG.CELL_H_PX - 4; // -4px de margen
+
+  // Solo buscar cliente para estados que realmente tienen una reserva activa
+  const ESTADOS_CON_CLIENTE = ['pendiente', 'reservado', 'pagado'];
+  const reserva = ESTADOS_CON_CLIENTE.includes(turno.estado)
+    ? DB.obtenerReservaPorTurno(turno.id)
+    : null;
+  const cliente = reserva ? DB.obtenerClientePorId(reserva.clienteId) : null;
+
+  const card = document.createElement('div');
+  card.className        = `slot-card slot--${turno.estado}`;
+  card.style.top        = `${top + 2}px`;
+  card.style.height     = `${altura}px`;
+  card.dataset.turnoId  = turno.id;
+
+  const etiqueta = LABELS[turno.estado] || turno.estado;
+  const linea2   = cliente ? cliente.nombre : etiqueta;
+
+  card.innerHTML = `
+    <div class="slot-card__time">${turno.horaInicio} – ${turno.horaFin}</div>
+    <div class="slot-card__label">${linea2}</div>
+    ${turno.estado === 'disponible' ? `<div class="slot-card__price">$${cancha.precio.toLocaleString('es-AR')}</div>` : ''}
+  `;
+
+  card.addEventListener('click', () => abrirModal(turno.id));
+  return card;
+}
+
+// Textos de etiqueta por estado (se usan en tarjetas y modales)
+const LABELS = {
+  disponible: 'Disponible',
+  pendiente:  'Pendiente',
+  reservado:  'Reservado',
+  bloqueado:  'Bloqueado',
+  rechazado:  'Rechazado',
+  pagado:     'Pagado ✓',
+};
+
+/* ====================================================================
+   MODAL
+==================================================================== */
+
+/**
+ * Abre el modal con los datos del turno y los botones de acción
+ * correspondientes a su estado actual.
+ */
+function abrirModal(turnoId) {
+  UI.turnoActivoId = turnoId;
+
+  const turno   = DB.obtenerTurnoPorId(turnoId);
+  const cancha  = DB.obtenerCanchaPorId(turno.canchaId);
+  const ESTADOS_CON_CLIENTE = ['pendiente', 'reservado', 'pagado'];
+  const reserva = ESTADOS_CON_CLIENTE.includes(turno.estado)
+    ? DB.obtenerReservaPorTurno(turnoId)
+    : null;
+  const cliente = reserva ? DB.obtenerClientePorId(reserva.clienteId) : null;
+
+  document.getElementById('mTitle').textContent = cancha.nombre;
+  document.getElementById('mSub').textContent   =
+    `${formatFecha(turno.fecha)} · ${turno.horaInicio} – ${turno.horaFin}`;
+
+  // ── Cuerpo ────────────────────────────────────────────────────────
+  let body = `<div class="badge badge--${turno.estado}">${LABELS[turno.estado]}</div>`;
+
+  body += `<div class="info-grid">
+    <div class="info-item"><div class="info-item__label">Cancha</div><div class="info-item__val">${cancha.nombre}</div></div>
+    <div class="info-item"><div class="info-item__label">Deporte</div><div class="info-item__val">${cancha.deporte}</div></div>
+    <div class="info-item"><div class="info-item__label">Horario</div><div class="info-item__val">${turno.horaInicio} – ${turno.horaFin}</div></div>
+    <div class="info-item"><div class="info-item__label">Precio</div><div class="info-item__val">$${cancha.precio.toLocaleString('es-AR')}</div></div>`;
+
+  if (cliente) {
+    body += `
+      <div class="info-item"><div class="info-item__label">Cliente</div><div class="info-item__val">${cliente.nombre}</div></div>
+      <div class="info-item"><div class="info-item__label">Teléfono</div><div class="info-item__val">${cliente.telefono}</div></div>`;
+
+    if (reserva) {
+      body += `
+        <div class="info-item"><div class="info-item__label">Pago</div><div class="info-item__val">${reserva.estadoPago === 'pagado' ? '✓ Pagado' : 'Pendiente'}</div></div>`;
+    }
+  }
+  body += `</div>`;
+
+  // Si es disponible, mostramos el formulario para crear reserva
+  if (turno.estado === 'disponible') {
+    body += `
+      <div class="form-group">
+        <label for="iNombre">Nombre del cliente</label>
+        <input id="iNombre" type="text" placeholder="Ej: Juan García" autocomplete="off" minlength="3" />
+      </div>
+      <div class="form-group">
+        <label for="iTel">Teléfono</label>
+        <input id="iTel" type="tel" placeholder="Ej: 1134567890" autocomplete="off" maxlength="10" inputmode="numeric" />
+      </div>`;
+  }
+
+  document.getElementById('mBody').innerHTML = body;
+
+  // Foco automático en el campo nombre si es disponible
+  if (turno.estado === 'disponible') {
+    setTimeout(() => document.getElementById('iNombre')?.focus(), 50);
+  }
+
+  // ── Botones de acción ────────────────────────────────────────────
+  const foot = document.getElementById('mFoot');
+  foot.innerHTML = '';
+
+  botonesParaEstado(turno.estado, turnoId).forEach(({ texto, cls, fn }) => {
+    const btn = document.createElement('button');
+    btn.className   = `btn btn--${cls}`;
+    btn.textContent = texto;
+    btn.addEventListener('click', fn);
+    foot.appendChild(btn);
+  });
+
+  // Botón Cerrar siempre presente
+  const btnCerrar = document.createElement('button');
+  btnCerrar.className   = 'btn btn--ghost';
+  btnCerrar.textContent = 'Cerrar';
+  btnCerrar.addEventListener('click', cerrarModal);
+  foot.appendChild(btnCerrar);
+
+  document.getElementById('overlay').classList.add('active');
+}
+
+/**
+ * Define qué botones de acción se muestran según el estado del turno.
+ * Retorna array de { texto, cls (variante CSS), fn (función) }.
+ */
+function botonesParaEstado(estado, turnoId) {
+  switch (estado) {
+    case 'disponible':
+      return [
+        { texto: 'Confirmar reserva', cls: 'primary', fn: () => acConfirmar(turnoId) },
+        { texto: 'Bloquear turno',    cls: 'lock',    fn: () => acBloquear(turnoId) },
+      ];
+    case 'pendiente':
+      return [
+        { texto: 'Aprobar',          cls: 'success', fn: () => acAprobar(turnoId) },
+        { texto: 'Rechazar',         cls: 'danger',  fn: () => acRechazar(turnoId) },
+        { texto: 'Cancelar reserva', cls: 'warning', fn: () => acCancelar(turnoId) },
+      ];
+    case 'reservado':
+      return [
+        { texto: 'Marcar como pagado', cls: 'paid',    fn: () => acPagar(turnoId) },
+        { texto: 'Cancelar reserva',   cls: 'warning', fn: () => acCancelar(turnoId) },
+      ];
+    case 'bloqueado':
+      return [
+        { texto: 'Desbloquear', cls: 'success', fn: () => acDesbloquear(turnoId) },
+      ];
+    case 'pagado':
+      return [
+        { texto: 'Cancelar y reembolsar', cls: 'warning', fn: () => acCancelar(turnoId) },
+      ];
+    case 'rechazado':
+      return [
+        { texto: 'Reabrir como disponible', cls: 'success', fn: () => acDesbloquear(turnoId) },
+      ];
+    default:
+      return [];
+  }
+}
+
+/** Cierra el modal y limpia el estado de UI. */
+function cerrarModal() {
+  document.getElementById('overlay').classList.remove('active');
+  UI.turnoActivoId = null;
+}
+
+/* ====================================================================
+   ACCIONES DE USUARIO
+
+   Puente entre los botones del modal y la lógica de negocio.
+   Muestran feedback (toasts) y refrescan la grilla.
+==================================================================== */
+
+function acConfirmar(turnoId) {
+  const nombre   = document.getElementById('iNombre')?.value.trim();
+  const telefono = document.getElementById('iTel')?.value.trim();
+
+  if (!nombre || nombre.length < 3) {
+    toast('El nombre debe tener al menos 3 letras.', 'warning'); return;
+  }
+  // Solo dígitos, entre 8 y 10 caracteres
+  if (!/^\d{8,10}$/.test(telefono)) {
+    toast('El teléfono debe tener entre 8 y 10 dígitos (solo números).', 'warning'); return;
+  }
+  try {
+    const { cliente } = crearReserva(turnoId, { nombre, telefono });
+    cerrarModal();
+    renderGrilla();
+    toast(`Reserva confirmada para ${cliente.nombre}`, 'success');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+function acAprobar(turnoId) {
+  try {
+    aprobarReserva(turnoId);
+    cerrarModal(); renderGrilla();
+    toast('Reserva aprobada.', 'success');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+function acRechazar(turnoId) {
+  rechazarReserva(turnoId);
+  cerrarModal(); renderGrilla();
+  toast('Reserva rechazada. El turno está rechazado.', 'info');
+}
+
+function acCancelar(turnoId) {
+  const { cargo, porcentaje, hsRestantes } = cancelarReserva(turnoId);
+  cerrarModal(); renderGrilla();
+  if (cargo) {
+    toast(`Cancelación tardía: se cobra el ${porcentaje}% (faltan ${hsRestantes.toFixed(1)} hs).`, 'warning', 5000);
+  } else {
+    toast('Cancelado sin cargo. Turno disponible nuevamente.', 'success');
+  }
+}
+
+function acBloquear(turnoId) {
+  bloquearTurno(turnoId);
+  cerrarModal(); renderGrilla();
+  toast('Turno bloqueado.', 'info');
+}
+
+function acDesbloquear(turnoId) {
+  desbloquearTurno(turnoId);
+  cerrarModal(); renderGrilla();
+  toast('Turno disponible nuevamente.', 'success');
+}
+
+function acPagar(turnoId) {
+  marcarPagado(turnoId);
+  cerrarModal(); renderGrilla();
+  // Actualizar stats de ingresos si el panel de clientes está montado
+  if (document.getElementById('clStats')) renderStatsClientes();
+  toast('Pago registrado. ✓', 'success');
+}
+
+/* ====================================================================
+   NOTIFICACIONES (TOASTS)
+==================================================================== */
+
+/**
+ * Muestra un mensaje flotante en la esquina inferior derecha.
+ * tipo: 'success' | 'error' | 'info' | 'warning'
+ * duracion: ms antes de desaparecer (default 3000)
+ */
+function toast(msg, tipo = 'info', duracion = 3000) {
+  const iconos = { success: '✓', error: '✗', info: 'ℹ', warning: '⚠' };
+  const el = document.createElement('div');
+  el.className = `toast toast--${tipo}`;
+  el.innerHTML = `<span>${iconos[tipo]}</span><span>${msg}</span>`;
+  document.getElementById('toasts').appendChild(el);
+  setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 300); }, duracion);
+}
+
+/* ====================================================================
+   RELOJ EN TIEMPO REAL
+==================================================================== */
+function actualizarReloj() {
+  document.getElementById('reloj').textContent =
+    new Date().toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+}
+
+/* ====================================================================
+   LÓGICA DE NEGOCIO — CLIENTES
+==================================================================== */
+
+/**
+ * Calcula las estadísticas de un cliente a partir de sus reservas.
+ * Retorna { total, activas, pagadas, totalGastado, ultimaFecha }
+ * Futuro: GET /api/clientes/:id/stats
+ */
+function obtenerEstadisticasCliente(clienteId) {
+  const reservas = DB.obtenerReservasPorCliente(clienteId);
+  const hoyStr   = hoy();
+  let totalGastado = 0;
+  let ultimaFecha  = null;
+  let activas      = 0;
+  let pagadas      = 0;
+
+  reservas.forEach(r => {
+    const turno  = DB.obtenerTurnoPorId(r.turnoId);
+    const cancha = turno ? DB.obtenerCanchaPorId(turno.canchaId) : null;
+
+    if (turno && cancha) {
+      // Contar reservas activas (en curso o futuras con turno vigente)
+      if (['reservado', 'pendiente'].includes(turno.estado)) activas++;
+      // Contar y sumar pagadas
+      if (turno.estado === 'pagado' || r.estadoPago === 'pagado') {
+        pagadas++;
+        totalGastado += cancha.precio;
+      }
+      // Fecha más reciente
+      if (!ultimaFecha || turno.fecha > ultimaFecha) ultimaFecha = turno.fecha;
+    }
+  });
+
+  return { total: reservas.length, activas, pagadas, totalGastado, ultimaFecha };
+}
+
+/**
+ * Devuelve el historial enriquecido de un cliente (reserva + turno + cancha),
+ * ordenado de más reciente a más antiguo.
+ * Futuro: GET /api/clientes/:id/historial
+ */
+function obtenerHistorialCliente(clienteId) {
+  return DB.obtenerReservasPorCliente(clienteId)
+    .map(r => {
+      const turno  = DB.obtenerTurnoPorId(r.turnoId);
+      const cancha = turno ? DB.obtenerCanchaPorId(turno.canchaId) : null;
+      return { reserva: r, turno, cancha };
+    })
+    .filter(item => item.turno && item.cancha)
+    .sort((a, b) => b.turno.fecha.localeCompare(a.turno.fecha));
+}
+
+/**
+ * Guarda los cambios de un cliente existente.
+ * Lanza Error si el nombre o teléfono no cumplen las validaciones.
+ * Futuro: PATCH /api/clientes/:id
+ */
+function editarCliente(id, datos) {
+  const nombre   = datos.nombre.trim();
+  const telefono = datos.telefono.trim();
+  if (nombre.length < 3)             throw new Error('El nombre debe tener al menos 3 letras.');
+  if (!/^\d{8,10}$/.test(telefono))  throw new Error('El teléfono debe tener entre 8 y 10 dígitos.');
+  // Verificar que el teléfono no lo use otro cliente distinto
+  const otro = DB.obtenerClientePorTelefono(telefono);
+  if (otro && otro.id !== id)        throw new Error(`El teléfono ${telefono} ya está registrado a nombre de ${otro.nombre}.`);
+  return DB.actualizarCliente(id, { nombre, telefono });
+}
+
+/**
+ * Elimina un cliente solo si no tiene reservas activas.
+ * Futuro: DELETE /api/clientes/:id
+ */
+function borrarCliente(clienteId) {
+  const stats = obtenerEstadisticasCliente(clienteId);
+  if (stats.activas > 0)
+    throw new Error(`Este cliente tiene ${stats.activas} reserva(s) activa(s). Cancelalas antes de eliminar.`);
+  DB.eliminarCliente(clienteId);
+}
+
+/* ====================================================================
+   RENDERIZADO — PANEL DE CLIENTES
+==================================================================== */
+
+/**
+ * Genera las iniciales del nombre para el avatar.
+ * "Juan García" → "JG"
+ */
+function iniciales(nombre) {
+  return nombre.trim().split(/\s+/).slice(0, 2).map(p => p[0].toUpperCase()).join('');
+}
+
+/**
+ * Renderiza las estadísticas globales del panel (totales de clientes,
+ * reservas activas hoy, ingresos del mes).
+ */
+function renderStatsClientes() {
+  const clientes = DB.obtenerClientes();
+  const hoyStr   = hoy();
+  const mesActual = hoyStr.slice(0, 7); // "YYYY-MM"
+
+  let activasHoy  = 0;
+  let ingresosMes = 0;
+
+  DB.obtenerTurnosPorFecha(hoyStr).forEach(t => {
+    if (['reservado', 'pendiente', 'pagado'].includes(t.estado)) activasHoy++;
+  });
+
+  DB.obtenerReservas().forEach(r => {
+    if (r.estadoPago === 'pagado') {
+      const turno  = DB.obtenerTurnoPorId(r.turnoId);
+      const cancha = turno ? DB.obtenerCanchaPorId(turno.canchaId) : null;
+      if (turno && cancha && turno.fecha.startsWith(mesActual)) {
+        ingresosMes += cancha.precio;
+      }
+    }
+  });
+
+  document.getElementById('clStats').innerHTML = `
+    <div class="cl-stat">
+      <div class="cl-stat__num">${clientes.length}</div>
+      <div class="cl-stat__lbl">Clientes registrados</div>
+    </div>
+    <div class="cl-stat">
+      <div class="cl-stat__num">${activasHoy}</div>
+      <div class="cl-stat__lbl">Reservas hoy</div>
+    </div>
+    <div class="cl-stat">
+      <div class="cl-stat__num">$${ingresosMes.toLocaleString('es-AR')}</div>
+      <div class="cl-stat__lbl">Ingresos del mes</div>
+    </div>
+  `;
+}
+
+/**
+ * Renderiza la grilla de tarjetas de clientes, opcionalmente filtrada
+ * por un texto de búsqueda (nombre o teléfono).
+ */
+function renderClientes(filtro = '') {
+  renderStatsClientes();
+
+  const hoyStr  = hoy();
+  let clientes  = DB.obtenerClientes();
+  const query   = filtro.toLowerCase().trim();
+
+  if (query) {
+    clientes = clientes.filter(c =>
+      c.nombre.toLowerCase().includes(query) || c.telefono.includes(query)
+    );
+  }
+
+  // Ordenar alfabéticamente
+  clientes.sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
+
+  const grid = document.getElementById('clGrid');
+
+  if (clientes.length === 0) {
+    grid.innerHTML = `
+      <div class="cl-empty" style="grid-column:1/-1">
+        <div class="cl-empty__icon">👤</div>
+        <div class="cl-empty__msg">${query ? 'No se encontraron clientes con ese criterio.' : 'Todavía no hay clientes registrados.'}</div>
+      </div>`;
+    return;
+  }
+
+  grid.innerHTML = '';
+  clientes.forEach(cliente => {
+    const stats      = obtenerEstadisticasCliente(cliente.id);
+    const turnosHoy  = DB.obtenerTurnosPorFecha(hoyStr);
+    const tieneHoy   = DB.obtenerReservasPorCliente(cliente.id)
+      .some(r => turnosHoy.find(t => t.id === r.turnoId && ['reservado','pendiente','pagado'].includes(t.estado)));
+
+    const card = document.createElement('div');
+    card.className = 'cl-card';
+    card.innerHTML = `
+      <div class="cl-card__head">
+        <div class="cl-card__avatar">${iniciales(cliente.nombre)}</div>
+        <div>
+          <div class="cl-card__name">${cliente.nombre}</div>
+          <div class="cl-card__phone">${cliente.telefono}</div>
+        </div>
+      </div>
+      <div class="cl-card__foot">
+        <span class="cl-chip">${stats.total} reserva${stats.total !== 1 ? 's' : ''}</span>
+        ${stats.pagadas > 0 ? `<span class="cl-chip cl-chip--pagado">${stats.pagadas} pagada${stats.pagadas !== 1 ? 's' : ''}</span>` : ''}
+        ${stats.activas > 0 ? `<span class="cl-chip cl-chip--activo">${stats.activas} activa${stats.activas !== 1 ? 's' : ''}</span>` : ''}
+        ${tieneHoy ? `<span class="cl-chip cl-chip--hoy">Hoy</span>` : ''}
+      </div>`;
+    card.addEventListener('click', () => abrirDetalleCliente(cliente.id));
+    grid.appendChild(card);
+  });
+}
+
+/**
+ * Abre el modal con el detalle completo de un cliente:
+ * datos personales + historial de reservas.
+ */
+function abrirDetalleCliente(clienteId) {
+  const cliente  = DB.obtenerClientePorId(clienteId);
+  const stats    = obtenerEstadisticasCliente(clienteId);
+  const historial = obtenerHistorialCliente(clienteId);
+
+  document.getElementById('mTitle').innerHTML = `
+    <div style="display:flex;align-items:center;gap:12px">
+      <div class="cl-modal-avatar">${iniciales(cliente.nombre)}</div>
+      <div>${cliente.nombre}</div>
+    </div>`;
+  document.getElementById('mSub').textContent = cliente.telefono;
+
+  // ── Cuerpo ─────────────────────────────────────────────────────
+  let body = `
+    <div class="info-grid">
+      <div class="info-item"><div class="info-item__label">Total reservas</div><div class="info-item__val">${stats.total}</div></div>
+      <div class="info-item"><div class="info-item__label">Reservas activas</div><div class="info-item__val">${stats.activas}</div></div>
+      <div class="info-item"><div class="info-item__label">Total gastado</div><div class="info-item__val">$${stats.totalGastado.toLocaleString('es-AR')}</div></div>
+      <div class="info-item"><div class="info-item__label">Última reserva</div><div class="info-item__val">${stats.ultimaFecha ? formatFecha(stats.ultimaFecha) : '—'}</div></div>
+    </div>
+    <div class="modal-section-lbl">Historial de reservas</div>`;
+
+  if (historial.length === 0) {
+    body += `<div class="hist-empty">Este cliente no tiene reservas registradas.</div>`;
+  } else {
+    body += `
+      <div class="hist-wrap">
+        <table class="hist-table">
+          <thead>
+            <tr>
+              <th>Fecha</th><th>Cancha</th><th>Horario</th><th>Estado</th><th>Monto</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${historial.map(({ turno, cancha }) => `
+              <tr>
+                <td>${formatFecha(turno.fecha)}</td>
+                <td>${cancha.nombre}</td>
+                <td>${turno.horaInicio} – ${turno.horaFin}</td>
+                <td><span class="badge badge--${turno.estado}" style="margin:0;padding:2px 8px;font-size:.68rem">${LABELS[turno.estado]}</span></td>
+                <td>$${cancha.precio.toLocaleString('es-AR')}</td>
+              </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>`;
+  }
+
+  document.getElementById('mBody').innerHTML = body;
+
+  // ── Botones ────────────────────────────────────────────────────
+  const foot = document.getElementById('mFoot');
+  foot.innerHTML = '';
+
+  const btnEditar = document.createElement('button');
+  btnEditar.className   = 'btn btn--primary';
+  btnEditar.textContent = 'Editar datos';
+  btnEditar.addEventListener('click', () => abrirFormCliente(clienteId));
+  foot.appendChild(btnEditar);
+
+  const btnEliminar = document.createElement('button');
+  btnEliminar.className   = 'btn btn--danger';
+  btnEliminar.textContent = 'Eliminar cliente';
+  btnEliminar.addEventListener('click', () => acEliminarCliente(clienteId));
+  foot.appendChild(btnEliminar);
+
+  const btnCerrar = document.createElement('button');
+  btnCerrar.className   = 'btn btn--ghost';
+  btnCerrar.textContent = 'Cerrar';
+  btnCerrar.addEventListener('click', cerrarModal);
+  foot.appendChild(btnCerrar);
+
+  document.getElementById('overlay').classList.add('active');
+}
+
+/**
+ * Abre el formulario de creación o edición de cliente.
+ * Si clienteId es null → nuevo cliente. Si tiene valor → editar.
+ */
+function abrirFormCliente(clienteId = null) {
+  const cliente   = clienteId ? DB.obtenerClientePorId(clienteId) : null;
+  const esNuevo   = !cliente;
+
+  document.getElementById('mTitle').textContent = esNuevo ? 'Nuevo cliente' : 'Editar cliente';
+  document.getElementById('mSub').textContent   = esNuevo ? 'Completá los datos del cliente.' : 'Modificá los datos y guardá.';
+
+  document.getElementById('mBody').innerHTML = `
+    <div class="form-row">
+      <div class="form-group" style="grid-column:1/-1">
+        <label for="fNombre">Nombre completo</label>
+        <input id="fNombre" type="text" placeholder="Ej: Juan García"
+               value="${cliente ? cliente.nombre : ''}" autocomplete="off" />
+      </div>
+    </div>
+    <div class="form-group">
+      <label for="fTel">Teléfono</label>
+      <input id="fTel" type="tel" placeholder="Ej: 1134567890"
+             value="${cliente ? cliente.telefono : ''}" maxlength="10" inputmode="numeric" />
+    </div>`;
+
+  const foot = document.getElementById('mFoot');
+  foot.innerHTML = '';
+
+  const btnGuardar = document.createElement('button');
+  btnGuardar.className   = 'btn btn--success';
+  btnGuardar.textContent = esNuevo ? 'Crear cliente' : 'Guardar cambios';
+  btnGuardar.addEventListener('click', () => {
+    const nombre   = document.getElementById('fNombre').value;
+    const telefono = document.getElementById('fTel').value;
+    try {
+      if (esNuevo) {
+        if (nombre.trim().length < 3)            { toast('El nombre debe tener al menos 3 letras.', 'warning'); return; }
+        if (!/^\d{8,10}$/.test(telefono.trim())) { toast('El teléfono debe tener entre 8 y 10 dígitos.', 'warning'); return; }
+        const existente = DB.obtenerClientePorTelefono(telefono.trim());
+        if (existente) { toast(`El teléfono ya está registrado a nombre de ${existente.nombre}.`, 'error'); return; }
+        DB.guardarCliente({ id: uid('cl'), nombre: nombre.trim(), telefono: telefono.trim(), creadoEn: new Date().toISOString() });
+        cerrarModal();
+        renderClientes(document.getElementById('clSearch').value);
+        toast(`Cliente "${nombre.trim()}" creado.`, 'success');
+      } else {
+        editarCliente(clienteId, { nombre, telefono });
+        cerrarModal();
+        renderClientes(document.getElementById('clSearch').value);
+        toast('Datos actualizados.', 'success');
+      }
+    } catch (e) { toast(e.message, 'error'); }
+  });
+  foot.appendChild(btnGuardar);
+
+  if (!esNuevo) {
+    const btnVolver = document.createElement('button');
+    btnVolver.className   = 'btn btn--ghost';
+    btnVolver.textContent = '← Volver al detalle';
+    btnVolver.addEventListener('click', () => abrirDetalleCliente(clienteId));
+    foot.appendChild(btnVolver);
+  }
+
+  const btnCerrar = document.createElement('button');
+  btnCerrar.className   = 'btn btn--ghost';
+  btnCerrar.textContent = 'Cancelar';
+  btnCerrar.addEventListener('click', cerrarModal);
+  foot.appendChild(btnCerrar);
+
+  document.getElementById('overlay').classList.add('active');
+  setTimeout(() => document.getElementById('fNombre')?.focus(), 50);
+}
+
+/* ====================================================================
+   ACCIONES — CLIENTES
+==================================================================== */
+
+/** Elimina un cliente con confirmación visual. */
+function acEliminarCliente(clienteId) {
+  const cliente = DB.obtenerClientePorId(clienteId);
+  if (!confirm(`¿Eliminar a ${cliente.nombre}? Esta acción no se puede deshacer.`)) return;
+  try {
+    borrarCliente(clienteId);
+    cerrarModal();
+    renderClientes(document.getElementById('clSearch').value);
+    toast(`Cliente "${cliente.nombre}" eliminado.`, 'info');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+/* ====================================================================
+   REPORTES — ESTADO DE UI
+==================================================================== */
+const REPORT = {
+  periodo: 'diario',
+  ref:     hoy(),
+};
+
+/* ====================================================================
+   REPORTES — UTILIDADES DE FECHAS
+==================================================================== */
+
+/** Devuelve la fecha 'YYYY-MM-DD' del lunes de la semana que contiene 'fecha'. */
+function getLunes(fecha) {
+  const [y, m, d] = fecha.split('-').map(Number);
+  const dt  = new Date(Date.UTC(y, m - 1, d));
+  const dow = dt.getUTCDay();
+  const diff = dow === 0 ? -6 : 1 - dow;
+  dt.setUTCDate(dt.getUTCDate() + diff);
+  return dt.toISOString().split('T')[0];
+}
+
+/** Devuelve array de todas las fechas 'YYYY-MM-DD' entre desde y hasta inclusive. */
+function getFechasEnRango(desde, hasta) {
+  const out = [];
+  let cur = desde;
+  while (cur <= hasta) { out.push(cur); cur = sumarDias(cur, 1); }
+  return out;
+}
+
+/** Devuelve { desde, hasta } para el período y referencia dados. */
+function getRango(periodo, ref) {
+  switch (periodo) {
+    case 'diario':  return { desde: ref, hasta: ref };
+    case 'semanal': { const l = getLunes(ref); return { desde: l, hasta: sumarDias(l, 6) }; }
+    case 'mensual': {
+      const [y, m] = ref.split('-').map(Number);
+      const desde = `${String(y).padStart(4,'0')}-${String(m).padStart(2,'0')}-01`;
+      const hasta = new Date(Date.UTC(y, m, 0)).toISOString().split('T')[0];
+      return { desde, hasta };
+    }
+    case 'anual': {
+      const y = ref.split('-')[0];
+      return { desde: `${y}-01-01`, hasta: `${y}-12-31` };
+    }
+  }
+}
+
+/** Mueve la referencia del reporte al período anterior (-1) o siguiente (+1). */
+function navReporte(dir) {
+  const { periodo, ref } = REPORT;
+  if (periodo === 'diario')  { REPORT.ref = sumarDias(ref, dir); }
+  if (periodo === 'semanal') { REPORT.ref = sumarDias(ref, dir * 7); }
+  if (periodo === 'mensual') {
+    const [y, m] = ref.split('-').map(Number);
+    REPORT.ref = new Date(Date.UTC(y, m - 1 + dir, 1)).toISOString().split('T')[0];
+  }
+  if (periodo === 'anual') {
+    REPORT.ref = `${parseInt(ref) + dir}-01-01`;
+  }
+  renderReportes();
+}
+
+/** Formatea una fecha como "17 abr". */
+function fCorta(fecha) {
+  const [y, m, d] = fecha.split('-').map(Number);
+  const meses = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  return `${d} ${meses[m - 1]}`;
+}
+
+/** Etiqueta legible del período activo. */
+function labelPeriodo(periodo, ref) {
+  const { desde, hasta } = getRango(periodo, ref);
+  if (periodo === 'diario')  return formatFecha(desde);
+  if (periodo === 'semanal') return `${fCorta(desde)} — ${fCorta(hasta)}`;
+  if (periodo === 'mensual') {
+    const [y, m] = desde.split('-').map(Number);
+    const s = new Date(Date.UTC(y, m-1, 1))
+      .toLocaleDateString('es-AR', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+    return s.charAt(0).toUpperCase() + s.slice(1);
+  }
+  if (periodo === 'anual') return desde.split('-')[0];
+}
+
+/* ====================================================================
+   REPORTES — SEGMENTOS DEL GRÁFICO
+   Divide el período en barras según la granularidad del período.
+==================================================================== */
+
+/**
+ * Genera los segmentos del gráfico de barras según el período.
+ * Diario → una barra por cancha.
+ * Semanal → una barra por día.
+ * Mensual → una barra por semana del mes.
+ * Anual → una barra por mes.
+ */
+function calcularSegmentos(desde, hasta, periodo) {
+  const DIAS  = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+  const MESES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+
+  if (periodo === 'diario') {
+    return DB.obtenerCanchas().map(c => ({
+      label: c.nombre, desde, hasta, canchaId: c.id, ingresos: 0, ocupados: 0,
+    }));
+  }
+  if (periodo === 'semanal') {
+    return getFechasEnRango(desde, hasta).map(f => {
+      const [y, m, d] = f.split('-').map(Number);
+      const dow = new Date(Date.UTC(y, m-1, d)).getUTCDay();
+      return { label: DIAS[dow], desde: f, hasta: f, ingresos: 0, ocupados: 0 };
+    });
+  }
+  if (periodo === 'mensual') {
+    const [y, m] = desde.split('-').map(Number);
+    const lastDay = new Date(Date.UTC(y, m, 0)).getUTCDate();
+    const segs = [];
+    for (let s = 1; s <= lastDay; s += 7) {
+      const e = Math.min(s + 6, lastDay);
+      segs.push({
+        label: `${s}–${e}`,
+        desde: `${String(y).padStart(4,'0')}-${String(m).padStart(2,'0')}-${String(s).padStart(2,'0')}`,
+        hasta: `${String(y).padStart(4,'0')}-${String(m).padStart(2,'0')}-${String(e).padStart(2,'0')}`,
+        ingresos: 0, ocupados: 0,
+      });
+    }
+    return segs;
+  }
+  if (periodo === 'anual') {
+    const y = parseInt(desde.split('-')[0]);
+    return Array.from({ length: 12 }, (_, i) => {
+      const mp = String(i + 1).padStart(2, '0');
+      const lastD = new Date(Date.UTC(y, i + 1, 0)).toISOString().split('T')[0];
+      return { label: MESES[i], desde: `${y}-${mp}-01`, hasta: lastD, ingresos: 0, ocupados: 0 };
+    });
+  }
+  return [];
+}
+
+/* ====================================================================
+   REPORTES — CÁLCULO DE ESTADÍSTICAS
+==================================================================== */
+
+/**
+ * Calcula todas las métricas del período: KPIs, por cancha, segmentos,
+ * top clientes y detalle de turnos.
+ * Futuro: GET /api/reportes?desde=X&hasta=Y&periodo=Z
+ */
+function calcularStats(desde, hasta, periodo) {
+  const canchas    = DB.obtenerCanchas();
+  const todasRes   = DB.obtenerReservas();
+  const clientes   = DB.obtenerClientes();
+  const fechas     = getFechasEnRango(desde, hasta);
+  const turnos     = DB.obtenerTodosTurnos().filter(t => t.fecha >= desde && t.fecha <= hasta);
+  const segs       = calcularSegmentos(desde, hasta, periodo);
+
+  // Total teórico: slots que podrían existir aunque no estén generados
+  let totalTeorico = 0;
+  canchas.forEach(c => {
+    totalTeorico += Math.floor((hm(CONFIG.HORA_CIERRE) - hm(CONFIG.HORA_APERTURA)) / c.duracionTurno) * fechas.length;
+  });
+
+  // Inicializar acumuladores por cancha
+  const porCancha = {};
+  canchas.forEach(c => {
+    const xDia = Math.floor((hm(CONFIG.HORA_CIERRE) - hm(CONFIG.HORA_APERTURA)) / c.duracionTurno);
+    porCancha[c.id] = { cancha: c, ingresos: 0, ocupados: 0, teorico: xDia * fechas.length };
+  });
+
+  let ingresosCobrados = 0, ingresosPrevistos = 0, turnosOcupados = 0, cancelaciones = 0;
+  const detalle = [];
+
+  turnos.forEach(t => {
+    const cancha  = DB.obtenerCanchaPorId(t.canchaId);
+    if (!cancha) return;
+
+    const reserva = todasRes.find(r =>
+      r.turnoId === t.id && r.estado !== 'cancelada' && r.estado !== 'rechazada'
+    );
+    const cliente = reserva ? clientes.find(c => c.id === reserva.clienteId) : null;
+
+    if (!['disponible','bloqueado'].includes(t.estado)) turnosOcupados++;
+    if (t.estado === 'rechazado') cancelaciones++;
+
+    if (t.estado === 'pagado') {
+      ingresosCobrados  += cancha.precio;
+      ingresosPrevistos += cancha.precio;
+      porCancha[t.canchaId].ingresos += cancha.precio;
+      porCancha[t.canchaId].ocupados++;
+    } else if (['reservado','pendiente'].includes(t.estado)) {
+      ingresosPrevistos += cancha.precio;
+      porCancha[t.canchaId].ocupados++;
+    }
+
+    // Acumular en el segmento correcto
+    const seg = segs.find(s =>
+      t.fecha >= s.desde && t.fecha <= s.hasta &&
+      (!s.canchaId || s.canchaId === t.canchaId)
+    );
+    if (seg) {
+      if (t.estado === 'pagado') seg.ingresos += cancha.precio;
+      if (!['disponible','bloqueado'].includes(t.estado)) seg.ocupados++;
+    }
+
+    detalle.push({ turno: t, cancha, reserva, cliente });
+  });
+
+  // Ordenar detalle: más reciente primero
+  detalle.sort((a, b) =>
+    b.turno.fecha !== a.turno.fecha
+      ? b.turno.fecha.localeCompare(a.turno.fecha)
+      : a.turno.horaInicio.localeCompare(b.turno.horaInicio)
+  );
+
+  // Top 5 clientes por monto pagado
+  const acCliente = {};
+  todasRes.forEach(r => {
+    if (r.estado === 'cancelada' || r.estado === 'rechazada') return;
+    const t = turnos.find(x => x.id === r.turnoId);
+    if (!t) return;
+    const c = DB.obtenerCanchaPorId(t.canchaId);
+    if (!c) return;
+    if (!acCliente[r.clienteId]) acCliente[r.clienteId] = { reservas: 0, pagado: 0 };
+    acCliente[r.clienteId].reservas++;
+    if (r.estadoPago === 'pagado') acCliente[r.clienteId].pagado += c.precio;
+  });
+
+  const topClientes = Object.entries(acCliente)
+    .map(([cid, s]) => ({ cliente: clientes.find(c => c.id === cid), ...s }))
+    .filter(x => x.cliente)
+    .sort((a, b) => b.pagado - a.pagado || b.reservas - a.reservas)
+    .slice(0, 5);
+
+  const ocupacionPct = totalTeorico > 0 ? Math.round(turnosOcupados / totalTeorico * 100) : 0;
+
+  return {
+    ingresosCobrados, ingresosPrevistos,
+    turnosOcupados, totalTeorico, cancelaciones, ocupacionPct,
+    segmentos: segs, porCancha, topClientes, detalle,
+  };
+}
+
+/* ====================================================================
+   REPORTES — RENDERIZADO
+==================================================================== */
+
+/** Renderiza el panel completo de reportes. */
+function renderReportes() {
+  const { periodo, ref } = REPORT;
+  const { desde, hasta } = getRango(periodo, ref);
+  document.getElementById('rLabel').textContent = labelPeriodo(periodo, ref);
+  const stats = calcularStats(desde, hasta, periodo);
+  renderKpis(stats);
+  renderReporteBody(stats, periodo);
+}
+
+/** Renderiza los 4 KPI cards. */
+function renderKpis(stats) {
+  const { ingresosCobrados, ingresosPrevistos, turnosOcupados, totalTeorico, cancelaciones, ocupacionPct } = stats;
+  document.getElementById('rKpis').innerHTML = `
+    <div class="kpi-card">
+      <div class="kpi-card__num">$${ingresosCobrados.toLocaleString('es-AR')}</div>
+      <div class="kpi-card__lbl">Ingresos cobrados</div>
+      <div class="kpi-card__sub">Previsto: $${ingresosPrevistos.toLocaleString('es-AR')}</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-card__num">${turnosOcupados}</div>
+      <div class="kpi-card__lbl">Turnos con actividad</div>
+      <div class="kpi-card__sub">de ${totalTeorico} posibles</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-card__num">${ocupacionPct}%</div>
+      <div class="kpi-card__lbl">Ocupación</div>
+      <div class="kpi-card__sub">
+        <div class="kpi-bar"><div class="kpi-bar__fill" style="width:${ocupacionPct}%"></div></div>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-card__num">${cancelaciones}</div>
+      <div class="kpi-card__lbl">Cancelaciones</div>
+      <div class="kpi-card__sub">turnos rechazados</div>
+    </div>`;
+}
+
+/** Renderiza las secciones de gráficos, por cancha, top clientes y detalle. */
+function renderReporteBody(stats, periodo) {
+  const grafTitulos = {
+    diario: 'Ingresos por cancha',
+    semanal: 'Ingresos por día de la semana',
+    mensual: 'Ingresos por semana del mes',
+    anual: 'Ingresos por mes',
+  };
+
+  const maxSeg = Math.max(...stats.segmentos.map(s => s.ingresos), 1);
+  let html = '';
+
+  // ── Gráfico de tendencia ─────────────────────────────────────────
+  html += `<div class="report-section">
+    <div class="report-section__title">${grafTitulos[periodo]}</div>
+    <div class="chart-wrap">`;
+
+  stats.segmentos.forEach(s => {
+    const pct = Math.round(s.ingresos / maxSeg * 100);
+    html += `
+      <div class="chart-row">
+        <div class="chart-row__label">${s.label}</div>
+        <div class="chart-row__track"><div class="chart-row__fill" style="width:${pct || 0}%"></div></div>
+        <div class="chart-row__value">${s.ingresos > 0 ? '$' + s.ingresos.toLocaleString('es-AR') : '—'}</div>
+      </div>`;
+  });
+  html += `</div></div>`;
+
+  // ── Por cancha ────────────────────────────────────────────────────
+  const canchas = Object.values(stats.porCancha);
+  const maxIng  = Math.max(...canchas.map(c => c.ingresos), 1);
+
+  html += `<div class="report-section">
+    <div class="report-section__title">Por cancha</div>
+    <div class="cancha-grid">`;
+
+  canchas.forEach(({ cancha, ingresos, ocupados, teorico }) => {
+    const pctIng  = Math.round(ingresos / maxIng * 100);
+    const pctOcup = teorico > 0 ? Math.round(ocupados / teorico * 100) : 0;
+    html += `
+      <div class="cancha-card">
+        <div class="cancha-card__name">${cancha.nombre}</div>
+        <div class="cancha-card__sport">${cancha.deporte} · ${cancha.duracionTurno} min</div>
+        <div class="cancha-card__ing">$${ingresos.toLocaleString('es-AR')}</div>
+        <div class="chart-row" style="margin-top:8px">
+          <div class="chart-row__label">Ingresos</div>
+          <div class="chart-row__track"><div class="chart-row__fill" style="width:${pctIng}%"></div></div>
+        </div>
+        <div class="chart-row" style="margin-top:6px">
+          <div class="chart-row__label">Ocup.</div>
+          <div class="chart-row__track"><div class="chart-row__fill chart-row__fill--reservado" style="width:${pctOcup}%"></div></div>
+          <div class="chart-row__value">${pctOcup}%</div>
+        </div>
+      </div>`;
+  });
+  html += `</div></div>`;
+
+  // ── Top clientes ──────────────────────────────────────────────────
+  if (stats.topClientes.length > 0) {
+    html += `<div class="report-section">
+      <div class="report-section__title">Top clientes del período</div>
+      <div class="top-clientes">`;
+    stats.topClientes.forEach(({ cliente, reservas, pagado }, i) => {
+      html += `
+        <div class="top-cliente">
+          <span class="top-cliente__rank">${i + 1}</span>
+          <div class="top-cliente__avatar">${iniciales(cliente.nombre)}</div>
+          <div class="top-cliente__info">
+            <div class="top-cliente__name">${cliente.nombre}</div>
+            <div class="top-cliente__phone">${cliente.telefono}</div>
+          </div>
+          <div class="top-cliente__stats">
+            <span>${reservas} reserva${reservas !== 1 ? 's' : ''}</span>
+            <strong>$${pagado.toLocaleString('es-AR')}</strong>
+          </div>
+        </div>`;
+    });
+    html += `</div></div>`;
+  }
+
+  // ── Detalle de turnos ─────────────────────────────────────────────
+  const activos = stats.detalle.filter(d => !['disponible','bloqueado'].includes(d.turno.estado));
+
+  html += `<div class="report-section">
+    <div class="report-section__title">Detalle de turnos${activos.length > 0 ? ` (${activos.length})` : ''}</div>`;
+
+  if (activos.length === 0) {
+    html += `<div style="text-align:center;padding:40px;color:var(--text-muted);font-size:.88rem">Sin actividad en este período.</div>`;
+  } else {
+    html += `<div class="hist-wrap" style="max-height:360px">
+      <table class="hist-table">
+        <thead><tr><th>Fecha</th><th>Cancha</th><th>Horario</th><th>Cliente</th><th>Estado</th><th>Monto</th></tr></thead>
+        <tbody>
+          ${activos.map(({ turno, cancha, cliente }) => `
+            <tr>
+              <td>${fCorta(turno.fecha)}</td>
+              <td>${cancha.nombre}</td>
+              <td>${turno.horaInicio}–${turno.horaFin}</td>
+              <td>${cliente ? cliente.nombre : '—'}</td>
+              <td><span class="badge badge--${turno.estado}" style="margin:0;padding:2px 8px;font-size:.68rem">${LABELS[turno.estado]}</span></td>
+              <td>$${cancha.precio.toLocaleString('es-AR')}</td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+  }
+  html += `</div>`;
+
+  document.getElementById('rBody').innerHTML = html;
+}
+
+/* ====================================================================
+   SISTEMA DE PESTAÑAS
+==================================================================== */
+
+/**
+ * Cambia la vista activa (recepcion | clientes) y actualiza las tabs.
+ * Mutua exclusión: solo una vista visible a la vez.
+ */
+function cambiarVista(vista) {
+  document.body.setAttribute('data-view', vista);
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.view === vista);
+  });
+  if (vista === 'recepcion') renderGrilla();
+  if (vista === 'clientes')  renderClientes();
+  if (vista === 'reportes')  renderReportes();
+  if (vista === 'admin')     renderAdmin();
+}
+
+/**
+ * Actualiza el badge de pendientes en la pestaña de Recepción.
+ * Se llama al inicializar y cada vez que cambia un estado.
+ */
+function actualizarBadgePendientes() {
+  const pendientes = DB.obtenerTurnosPorFecha(hoy()).filter(t => t.estado === 'pendiente').length;
+  const badge = document.getElementById('badgePendientes');
+  badge.style.display = pendientes > 0 ? '' : 'none';
+  badge.textContent   = pendientes;
+}
+
+/* ====================================================================
+   ADMINISTRACIÓN — LÓGICA Y RENDERIZADO
+==================================================================== */
+
+/** Devuelve el emoji que representa un deporte. */
+function iconoDeporte(deporte) {
+  const map = { 'Pádel':'🎾', 'Fútbol':'⚽', 'Tenis':'🎾', 'Básquet':'🏀', 'Voley':'🏐', 'Natación':'🏊' };
+  return map[deporte] || '🏟';
+}
+
+/**
+ * Valida y crea una cancha nueva.
+ * Lanza Error si los datos no son válidos.
+ * Futuro: POST /api/canchas
+ */
+function crearCanchaAdmin(datos) {
+  validarDatosCancha(datos);
+  return DB.guardarCancha({
+    id:            uid('c'),
+    nombre:        datos.nombre.trim(),
+    deporte:       datos.deporte.trim(),
+    duracionTurno: Number(datos.duracion),
+    precio:        Number(datos.precio),
+    activa:        true,
+    creadoEn:      new Date().toISOString(),
+  });
+}
+
+/**
+ * Valida y actualiza una cancha existente.
+ * Futuro: PATCH /api/canchas/:id
+ */
+function editarCanchaAdmin(id, datos) {
+  validarDatosCancha(datos);
+  return DB.actualizarCancha(id, {
+    nombre:        datos.nombre.trim(),
+    deporte:       datos.deporte.trim(),
+    duracionTurno: Number(datos.duracion),
+    precio:        Number(datos.precio),
+  });
+}
+
+/** Valida los campos comunes de un formulario de cancha. */
+function validarDatosCancha(datos) {
+  if (!datos.nombre?.trim() || datos.nombre.trim().length < 2)
+    throw new Error('El nombre debe tener al menos 2 caracteres.');
+  if (!datos.deporte?.trim() || datos.deporte.trim().length < 2)
+    throw new Error('El deporte debe tener al menos 2 caracteres.');
+  if (![60, 90].includes(Number(datos.duracion)))
+    throw new Error('La duración debe ser 60 o 90 minutos.');
+  if (!datos.precio || Number(datos.precio) <= 0)
+    throw new Error('El precio debe ser mayor a cero.');
+}
+
+/**
+ * Elimina una cancha si no tiene reservas activas asociadas.
+ * Futuro: DELETE /api/canchas/:id
+ */
+function eliminarCanchaAdmin(canchaId) {
+  const turnosActivos = DB.obtenerTodosTurnos().filter(
+    t => t.canchaId === canchaId && ['reservado','pendiente','pagado'].includes(t.estado)
+  );
+  if (turnosActivos.length > 0)
+    throw new Error(`Esta cancha tiene ${turnosActivos.length} turno(s) activo(s). Cancelalos antes de eliminar.`);
+  DB.eliminarCancha(canchaId);
+}
+
+/**
+ * Aplica la configuración guardada al CONFIG global y a la UI.
+ * Se llama al inicializar y al guardar cambios.
+ */
+function aplicarConfig() {
+  const cfg = DB.obtenerConfig();
+  if (cfg.horaApertura) CONFIG.HORA_APERTURA = cfg.horaApertura;
+  if (cfg.horaCierre)   CONFIG.HORA_CIERRE   = cfg.horaCierre;
+  if (cfg.nombre) {
+    document.querySelector('.header__title').textContent = cfg.nombre;
+  }
+}
+
+/**
+ * Renderiza el panel de administración completo:
+ * lista de canchas + formulario de configuración.
+ */
+function renderAdmin() {
+  renderCanchasAdmin();
+  cargarFormConfig();
+}
+
+/** Renderiza las tarjetas de canchas en el panel admin. */
+function renderCanchasAdmin() {
+  const canchas = DB.obtenerCanchas();
+  const grid    = document.getElementById('adminCourts');
+
+  if (canchas.length === 0) {
+    grid.innerHTML = `<div style="color:var(--text-muted);font-size:.88rem;padding:8px 0">
+      No hay canchas registradas. Creá una con el botón +.</div>`;
+    return;
+  }
+
+  grid.innerHTML = '';
+  canchas.forEach(cancha => {
+    const activa = cancha.activa !== false;
+    const card   = document.createElement('div');
+    card.className = 'admin-court' + (activa ? '' : ' inactiva');
+
+    card.innerHTML = `
+      <span class="admin-court__icon">${iconoDeporte(cancha.deporte)}</span>
+      <div class="admin-court__name">${cancha.nombre}</div>
+      <div class="admin-court__sport">${cancha.deporte}</div>
+      <div class="admin-court__chips">
+        <span class="cl-chip">${cancha.duracionTurno} min</span>
+      </div>
+      <div class="admin-court__price">$${cancha.precio.toLocaleString('es-AR')}</div>
+      <div class="admin-court__foot">
+        <button class="btn btn--ghost" style="font-size:.8rem;padding:6px 12px"
+          data-accion="editar" data-id="${cancha.id}">Editar</button>
+        <button class="btn btn--danger" style="font-size:.8rem;padding:6px 10px"
+          data-accion="eliminar" data-id="${cancha.id}">✕</button>
+        <label class="toggle-wrap" style="margin-left:auto" title="${activa ? 'Desactivar' : 'Activar'} cancha">
+          <span>${activa ? 'Activa' : 'Inactiva'}</span>
+          <label class="toggle">
+            <input type="checkbox" ${activa ? 'checked' : ''}
+              data-accion="toggle" data-id="${cancha.id}" />
+            <span class="toggle__rail"></span>
+          </label>
+        </label>
+      </div>`;
+    grid.appendChild(card);
+  });
+
+  // Delegación de eventos en la grilla
+  grid.onclick = e => {
+    const btn = e.target.closest('[data-accion]');
+    if (!btn) return;
+    const { accion, id } = btn.dataset;
+    if (accion === 'editar')   abrirFormCancha(id);
+    if (accion === 'eliminar') acEliminarCancha(id);
+  };
+  grid.onchange = e => {
+    const input = e.target.closest('[data-accion="toggle"]');
+    if (input) acToggleCancha(input.dataset.id, input.checked);
+  };
+}
+
+/**
+ * Abre el modal con el formulario para crear o editar una cancha.
+ * canchaId = null → nueva cancha.
+ */
+function abrirFormCancha(canchaId = null) {
+  const cancha  = canchaId ? DB.obtenerCanchaPorId(canchaId) : null;
+  const esNueva = !cancha;
+
+  document.getElementById('mTitle').textContent = esNueva ? 'Nueva cancha' : 'Editar cancha';
+  document.getElementById('mSub').textContent   = esNueva
+    ? 'Completá los datos de la cancha.'
+    : `Modificá los datos de ${cancha.nombre}.`;
+
+  document.getElementById('mBody').innerHTML = `
+    <div class="form-group">
+      <label for="fCNombre">Nombre de la cancha</label>
+      <input id="fCNombre" type="text" placeholder="Ej: Pádel 3"
+             value="${cancha ? cancha.nombre : ''}" autocomplete="off" />
+    </div>
+    <div class="form-group">
+      <label for="fCDeporte">Deporte</label>
+      <input id="fCDeporte" type="text" placeholder="Ej: Pádel, Fútbol, Tenis…"
+             value="${cancha ? cancha.deporte : ''}" autocomplete="off" />
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label for="fCDuracion">Duración del turno</label>
+        <select id="fCDuracion" class="form-select">
+          <option value="60" ${!cancha || cancha.duracionTurno === 60 ? 'selected' : ''}>60 minutos</option>
+          <option value="90" ${cancha?.duracionTurno === 90 ? 'selected' : ''}>90 minutos</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="fCPrecio">Precio por turno ($)</label>
+        <input id="fCPrecio" type="number" min="1" placeholder="Ej: 2500"
+               value="${cancha ? cancha.precio : ''}" />
+      </div>
+    </div>`;
+
+  const foot = document.getElementById('mFoot');
+  foot.innerHTML = '';
+
+  const btnGuardar = document.createElement('button');
+  btnGuardar.className   = 'btn btn--success';
+  btnGuardar.textContent = esNueva ? 'Crear cancha' : 'Guardar cambios';
+  btnGuardar.addEventListener('click', () => {
+    const datos = {
+      nombre:   document.getElementById('fCNombre').value,
+      deporte:  document.getElementById('fCDeporte').value,
+      duracion: document.getElementById('fCDuracion').value,
+      precio:   document.getElementById('fCPrecio').value,
+    };
+    try {
+      if (esNueva) {
+        crearCanchaAdmin(datos);
+        cerrarModal(); renderCanchasAdmin();
+        toast(`Cancha "${datos.nombre.trim()}" creada.`, 'success');
+      } else {
+        editarCanchaAdmin(canchaId, datos);
+        cerrarModal(); renderCanchasAdmin();
+        toast('Cancha actualizada.', 'success');
+      }
+    } catch (e) { toast(e.message, 'error'); }
+  });
+  foot.appendChild(btnGuardar);
+
+  const btnCancelar = document.createElement('button');
+  btnCancelar.className   = 'btn btn--ghost';
+  btnCancelar.textContent = 'Cancelar';
+  btnCancelar.addEventListener('click', cerrarModal);
+  foot.appendChild(btnCancelar);
+
+  document.getElementById('overlay').classList.add('active');
+  setTimeout(() => document.getElementById('fCNombre')?.focus(), 50);
+}
+
+/** Activa o desactiva una cancha. */
+function acToggleCancha(canchaId, activa) {
+  DB.actualizarCancha(canchaId, { activa });
+  renderCanchasAdmin();
+  // Refrescar la grilla si está visible para reflejar el cambio
+  if (document.body.getAttribute('data-view') === 'recepcion') renderGrilla();
+  toast(`Cancha ${activa ? 'activada' : 'desactivada'}.`, 'info');
+}
+
+/** Elimina una cancha con confirmación. */
+function acEliminarCancha(canchaId) {
+  const cancha = DB.obtenerCanchaPorId(canchaId);
+  if (!confirm(`¿Eliminar la cancha "${cancha.nombre}"? Esta acción no se puede deshacer.`)) return;
+  try {
+    eliminarCanchaAdmin(canchaId);
+    renderCanchasAdmin();
+    toast(`Cancha "${cancha.nombre}" eliminada.`, 'info');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+/** Carga los valores actuales en el formulario de configuración. */
+function cargarFormConfig() {
+  const cfg = DB.obtenerConfig();
+  document.getElementById('cfgNombre').value   = cfg.nombre       || 'Complejo Deportivo';
+  document.getElementById('cfgApertura').value = cfg.horaApertura || CONFIG.HORA_APERTURA;
+  document.getElementById('cfgCierre').value   = cfg.horaCierre   || CONFIG.HORA_CIERRE;
+}
+
+/** Guarda la configuración del complejo y la aplica al instante. */
+function acGuardarConfig() {
+  const nombre   = document.getElementById('cfgNombre').value.trim();
+  const apertura = document.getElementById('cfgApertura').value;
+  const cierre   = document.getElementById('cfgCierre').value;
+
+  if (!nombre)   { toast('El nombre del complejo no puede estar vacío.', 'warning'); return; }
+  if (!apertura || !cierre) { toast('Completá los horarios de apertura y cierre.', 'warning'); return; }
+  if (apertura >= cierre)   { toast('La hora de apertura debe ser anterior al cierre.', 'error'); return; }
+
+  DB.guardarConfig({ nombre, horaApertura: apertura, horaCierre: cierre });
+  aplicarConfig();
+  toast('Configuración guardada.', 'success');
+}
+
+/* ====================================================================
+   EVENT LISTENERS
+==================================================================== */
+document.getElementById('btnPrev').addEventListener('click', () => {
+  UI.fechaActual = sumarDias(UI.fechaActual, -1); renderGrilla();
+});
+document.getElementById('btnNext').addEventListener('click', () => {
+  UI.fechaActual = sumarDias(UI.fechaActual, +1); renderGrilla();
+});
+document.getElementById('btnHoy').addEventListener('click', () => {
+  UI.fechaActual = hoy(); renderGrilla();
+});
+
+// Tabs
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => cambiarVista(btn.dataset.view));
+});
+
+// Búsqueda de clientes (filtra en tiempo real)
+document.getElementById('clSearch').addEventListener('input', e => {
+  renderClientes(e.target.value);
+});
+
+// Botón nuevo cliente
+document.getElementById('btnNuevoCliente').addEventListener('click', () => abrirFormCliente(null));
+
+// Admin — nueva cancha
+document.getElementById('btnNuevaCancha').addEventListener('click', () => abrirFormCancha(null));
+
+// Admin — guardar configuración
+document.getElementById('btnGuardarConfig').addEventListener('click', acGuardarConfig);
+
+// Selector de período (Diario / Semanal / Mensual / Anual)
+document.querySelectorAll('.period-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    REPORT.periodo = btn.dataset.periodo;
+    // Al cambiar período, anclar la referencia a hoy para no quedar en fechas raras
+    REPORT.ref = hoy();
+    renderReportes();
+  });
+});
+
+// Navegación de período (← →)
+document.getElementById('rPrev').addEventListener('click', () => navReporte(-1));
+document.getElementById('rNext').addEventListener('click', () => navReporte(+1));
+document.getElementById('rHoy').addEventListener('click', () => { REPORT.ref = hoy(); renderReportes(); });
+
+// Cerrar modal al hacer clic en el fondo oscuro
+document.getElementById('overlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('overlay')) cerrarModal();
+});
+document.getElementById('mClose').addEventListener('click', cerrarModal);
+
+// Cerrar con Escape
+document.addEventListener('keydown', e => { if (e.key === 'Escape') cerrarModal(); });
+
+// Enter en el formulario de nueva reserva dispara la confirmación
+document.getElementById('modal').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && UI.turnoActivoId) {
+    const turno = DB.obtenerTurnoPorId(UI.turnoActivoId);
+    if (turno?.estado === 'disponible') acConfirmar(UI.turnoActivoId);
+  }
+});
+
+/* ====================================================================
+   INICIALIZACIÓN
+   Punto de entrada del sistema.
+==================================================================== */
+function inicializar() {
+  cargarDatosDePrueba();       // Solo carga si la DB está vacía
+  aplicarConfig();             // Aplica nombre y horarios guardados
+  document.body.setAttribute('data-view', 'recepcion');
+  renderGrilla();
+  actualizarBadgePendientes();
+  actualizarReloj();
+  setInterval(actualizarReloj, 1000);
+}
+
+inicializar();
+</script>
+</body>
+</html>
