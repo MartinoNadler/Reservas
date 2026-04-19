@@ -273,29 +273,31 @@
 
     .modal {
       background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      width: 100%; max-width: 460px;
+      border: 1px solid rgba(255,255,255,.09);
+      border-radius: 16px;
+      width: 100%; max-width: 480px;
       max-height: 92vh;
       overflow-y: auto;
       animation: popIn .2s ease;
+      box-shadow: 0 20px 60px rgba(0,0,0,.5);
     }
     @keyframes popIn {
-      from { opacity: 0; transform: scale(.95) translateY(8px); }
+      from { opacity: 0; transform: scale(.96) translateY(10px); }
       to   { opacity: 1; transform: scale(1) translateY(0); }
     }
     .modal__head {
-      padding: 18px 22px 14px;
-      border-bottom: 1px solid var(--border);
+      padding: 20px 24px 16px;
+      border-bottom: 1px solid rgba(255,255,255,.06);
       display: flex; align-items: flex-start; justify-content: space-between; gap: 10px;
     }
-    .modal__title  { font-size: 1.05rem; font-weight: 700; }
-    .modal__sub    { font-size: 0.8rem; color: var(--text-muted); margin-top: 2px; }
-    .modal__close  { background: none; border: none; color: var(--text-muted);
-                     font-size: 1.3rem; cursor: pointer; padding: 0 2px; flex-shrink: 0; }
-    .modal__close:hover { color: var(--text); }
-    .modal__body   { padding: 18px 22px; }
-    .modal__foot   { padding: 14px 22px 18px; border-top: 1px solid var(--border);
+    .modal__title  { font-size: 1.08rem; font-weight: 700; letter-spacing: -.01em; }
+    .modal__sub    { font-size: 0.78rem; color: var(--text-muted); margin-top: 3px; opacity: .8; }
+    .modal__close  { background: rgba(255,255,255,.06); border: none; color: var(--text-muted);
+                     font-size: 1rem; cursor: pointer; padding: 5px 7px; flex-shrink: 0;
+                     border-radius: 7px; transition: background .15s, color .15s; line-height: 1; }
+    .modal__close:hover { background: rgba(255,255,255,.12); color: var(--text); }
+    .modal__body   { padding: 20px 24px; }
+    .modal__foot   { padding: 14px 24px 20px; border-top: 1px solid rgba(255,255,255,.06);
                      display: flex; gap: 8px; flex-wrap: wrap; }
 
     /* Badge de estado en el modal */
@@ -450,141 +452,153 @@
        PANEL DE CLIENTES — BARRA DE HERRAMIENTAS
     ============================================================ */
     .cl-toolbar {
-      padding: 16px 24px;
+      padding: 18px 28px;
       display: flex;
-      gap: 12px;
+      gap: 10px;
       align-items: center;
       flex-wrap: wrap;
-      border-bottom: 1px solid var(--border);
+      border-bottom: 1px solid rgba(255,255,255,.06);
       background: var(--surface);
     }
     .cl-search {
       flex: 1;
       min-width: 200px;
-      background: var(--surface-2);
-      border: 1px solid var(--border);
+      background: var(--bg);
+      border: 1px solid rgba(255,255,255,.08);
       color: var(--text);
-      padding: 9px 14px 9px 36px;
-      border-radius: 8px;
+      padding: 10px 14px 10px 38px;
+      border-radius: 10px;
       font-size: 0.88rem;
       font-family: inherit;
-      transition: border-color .15s;
+      transition: border-color .2s, box-shadow .2s;
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%2394a3b8' viewBox='0 0 16 16'%3E%3Cpath d='M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z'/%3E%3C/svg%3E");
       background-repeat: no-repeat;
-      background-position: 11px center;
+      background-position: 12px center;
     }
-    .cl-search:focus { outline: none; border-color: var(--reservado); }
-    .cl-search::placeholder { color: var(--text-muted); }
+    .cl-search:focus {
+      outline: none;
+      border-color: rgba(59,130,246,.5);
+      box-shadow: 0 0 0 3px rgba(59,130,246,.1);
+    }
+    .cl-search::placeholder { color: var(--text-muted); opacity: .6; }
 
     /* ============================================================
        PANEL DE CLIENTES — ESTADÍSTICAS
     ============================================================ */
     .cl-stats {
       display: flex;
-      gap: 12px;
-      padding: 16px 24px;
+      gap: 10px;
+      padding: 20px 28px;
       flex-wrap: wrap;
+      border-bottom: 1px solid rgba(255,255,255,.04);
     }
     .cl-stat {
       background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 14px 20px;
+      border: 1px solid rgba(255,255,255,.07);
+      border-radius: 12px;
+      padding: 16px 22px;
       min-width: 130px;
+      transition: border-color .15s;
     }
-    .cl-stat__num { font-size: 1.6rem; font-weight: 700; line-height: 1; }
-    .cl-stat__lbl { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;
-                    letter-spacing: .05em; margin-top: 4px; }
+    .cl-stat:hover { border-color: rgba(255,255,255,.14); }
+    .cl-stat__num { font-size: 1.8rem; font-weight: 700; line-height: 1; letter-spacing: -.02em; }
+    .cl-stat__lbl { font-size: 0.68rem; color: var(--text-muted); text-transform: uppercase;
+                    letter-spacing: .07em; margin-top: 5px; opacity: .7; }
 
     /* ============================================================
        PANEL DE CLIENTES — TARJETAS
     ============================================================ */
     .cl-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
-      gap: 12px;
-      padding: 0 24px 24px;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 14px;
+      padding: 20px 28px 28px;
     }
     .cl-card {
       background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 16px;
+      border: 1px solid rgba(255,255,255,.07);
+      border-radius: 14px;
+      padding: 18px;
       cursor: pointer;
-      transition: border-color .15s, transform .1s, box-shadow .15s;
+      transition: border-color .2s, box-shadow .2s, transform .15s;
     }
     .cl-card:hover {
-      border-color: var(--reservado);
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(0,0,0,.3);
+      border-color: rgba(59,130,246,.4);
+      box-shadow: 0 8px 28px rgba(0,0,0,.35);
+      transform: translateY(-1px);
     }
-    .cl-card__head { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+    .cl-card__head { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
     .cl-card__avatar {
-      width: 42px; height: 42px;
-      border-radius: 10px;
-      background: var(--reservado-bg);
+      width: 44px; height: 44px;
+      border-radius: 12px;
+      background: rgba(59,130,246,.15);
       color: var(--reservado);
       display: flex; align-items: center; justify-content: center;
-      font-size: 0.95rem; font-weight: 800; flex-shrink: 0;
+      font-size: 1rem; font-weight: 800; flex-shrink: 0;
       letter-spacing: -.02em;
+      border: 1px solid rgba(59,130,246,.2);
     }
-    .cl-card__name  { font-weight: 700; font-size: 0.95rem; }
-    .cl-card__phone { font-size: 0.78rem; color: var(--text-muted); margin-top: 2px; }
-    .cl-card__foot  { display: flex; gap: 6px; flex-wrap: wrap;
-                      padding-top: 12px; border-top: 1px solid var(--border); }
+    .cl-card__name  { font-weight: 700; font-size: 1rem; letter-spacing: -.01em; }
+    .cl-card__phone { font-size: 0.75rem; color: var(--text-muted); margin-top: 3px; opacity: .7; letter-spacing: .01em; }
+    .cl-card__foot  { display: flex; gap: 5px; flex-wrap: wrap;
+                      padding-top: 13px; border-top: 1px solid rgba(255,255,255,.05); }
     .cl-chip {
-      background: var(--surface-2);
-      border-radius: 6px;
-      padding: 3px 9px;
-      font-size: 0.72rem;
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.07);
+      border-radius: 20px;
+      padding: 3px 10px;
+      font-size: 0.7rem;
+      font-weight: 500;
       color: var(--text-muted);
     }
-    .cl-chip--activo  { background: var(--reservado-bg); color: var(--reservado); }
-    .cl-chip--pagado  { background: var(--pagado-bg);    color: var(--pagado); }
-    .cl-chip--hoy     { background: var(--pendiente-bg); color: var(--pendiente); }
+    .cl-chip--activo  { background: rgba(59,130,246,.12);  border-color: rgba(59,130,246,.2);  color: var(--reservado); }
+    .cl-chip--pagado  { background: rgba(74,222,128,.10);  border-color: rgba(74,222,128,.2);  color: var(--pagado); }
+    .cl-chip--hoy     { background: rgba(234,179,8,.10);   border-color: rgba(234,179,8,.2);   color: var(--pendiente); }
 
     /* Estado vacío */
-    .cl-empty { text-align: center; padding: 60px 24px; color: var(--text-muted); }
-    .cl-empty__icon { font-size: 3rem; margin-bottom: 12px; opacity: .4; }
-    .cl-empty__msg  { font-size: 0.9rem; }
+    .cl-empty { text-align: center; padding: 72px 24px; color: var(--text-muted); }
+    .cl-empty__icon { font-size: 3rem; margin-bottom: 14px; opacity: .3; }
+    .cl-empty__msg  { font-size: 0.9rem; opacity: .7; }
 
     /* ============================================================
        MODAL DE DETALLE / EDICIÓN DE CLIENTE
     ============================================================ */
     .cl-modal-avatar {
-      width: 52px; height: 52px;
-      border-radius: 12px;
-      background: var(--reservado-bg);
+      width: 54px; height: 54px;
+      border-radius: 14px;
+      background: rgba(59,130,246,.15);
       color: var(--reservado);
       display: flex; align-items: center; justify-content: center;
-      font-size: 1.2rem; font-weight: 800;
+      font-size: 1.25rem; font-weight: 800;
       flex-shrink: 0;
+      border: 1px solid rgba(59,130,246,.2);
     }
     .modal-section-lbl {
-      font-size: 0.7rem; font-weight: 700;
-      text-transform: uppercase; letter-spacing: .06em;
+      font-size: 0.68rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .08em;
       color: var(--text-muted);
-      margin: 18px 0 8px;
-      padding-bottom: 6px;
-      border-bottom: 1px solid var(--border);
+      margin: 20px 0 10px;
+      padding-bottom: 7px;
+      border-bottom: 1px solid rgba(255,255,255,.06);
+      opacity: .8;
     }
 
     /* Tabla de historial */
-    .hist-wrap { max-height: 260px; overflow-y: auto; border-radius: 8px;
-                 border: 1px solid var(--border); }
+    .hist-wrap { max-height: 280px; overflow-y: auto; border-radius: 10px;
+                 border: 1px solid rgba(255,255,255,.07); }
     .hist-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
     .hist-table th {
       position: sticky; top: 0;
-      text-align: left; padding: 8px 10px;
-      background: var(--surface-2);
-      color: var(--text-muted); font-size: 0.68rem;
-      text-transform: uppercase; letter-spacing: .05em;
-      border-bottom: 1px solid var(--border);
+      text-align: left; padding: 9px 12px;
+      background: rgba(255,255,255,.04);
+      color: var(--text-muted); font-size: 0.66rem;
+      text-transform: uppercase; letter-spacing: .06em;
+      border-bottom: 1px solid rgba(255,255,255,.06);
     }
-    .hist-table td { padding: 9px 10px; border-bottom: 1px solid rgba(255,255,255,.04); vertical-align: middle; }
+    .hist-table td { padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,.035); vertical-align: middle; }
     .hist-table tr:last-child td { border-bottom: none; }
-    .hist-table tr:hover td { background: rgba(255,255,255,.03); }
-    .hist-empty { text-align: center; padding: 24px; color: var(--text-muted); font-size: 0.82rem; }
+    .hist-table tr:hover td { background: rgba(255,255,255,.025); }
+    .hist-empty { text-align: center; padding: 28px; color: var(--text-muted); font-size: 0.82rem; opacity: .6; }
 
     /* Form de nuevo/editar cliente (reutiliza .form-group del modal) */
     .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
