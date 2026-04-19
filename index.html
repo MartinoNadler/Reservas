@@ -4,6 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
   <title>Complejo Deportivo — Panel de Recepción</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
   <style>
     /* ============================================================
        VARIABLES GLOBALES
@@ -34,7 +37,7 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      font-family: 'DM Sans', 'Segoe UI', system-ui, -apple-system, sans-serif;
       background: var(--bg);
       color: var(--text);
       min-height: 100vh;
@@ -45,8 +48,8 @@
     ============================================================ */
     .header {
       background: var(--surface);
-      border-bottom: 1px solid var(--border);
-      padding: 14px 24px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      padding: 18px 28px;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -61,14 +64,46 @@
     }
     .header__title   { font-size: 1.1rem; font-weight: 700; }
     .header__sub     { font-size: 0.75rem; color: var(--text-muted); margin-top: 1px; }
+
+    /* Reloj — jerarquía editorial */
     .header__time {
-      font-size: 1.35rem;
-      font-weight: 300;
-      letter-spacing: .08em;
-      color: var(--text);
+      display: flex;
+      align-items: baseline;
+      gap: 2px;
       font-variant-numeric: tabular-nums;
-      font-family: 'Segoe UI', 'SF Pro Display', system-ui, sans-serif;
-      opacity: .9;
+      font-family: 'DM Sans', system-ui, sans-serif;
+      line-height: 1;
+    }
+    .clock-main {
+      font-size: 1.75rem;
+      font-weight: 600;
+      color: #f8fafc;
+      letter-spacing: -.01em;
+    }
+    .clock-sep {
+      font-size: 1.75rem;
+      font-weight: 600;
+      color: #f8fafc;
+      letter-spacing: -.01em;
+    }
+    .clock-sec {
+      font-size: 1rem;
+      font-weight: 400;
+      color: rgba(248,250,252,.38);
+      letter-spacing: .01em;
+      align-self: flex-end;
+      margin-bottom: 2px;
+      margin-left: 1px;
+    }
+    .clock-meridiem {
+      font-size: 0.7rem;
+      font-weight: 500;
+      color: rgba(248,250,252,.3);
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      align-self: flex-end;
+      margin-bottom: 4px;
+      margin-left: 4px;
     }
 
     /* ============================================================
@@ -821,11 +856,14 @@
     @media (max-width: 640px) {
 
       /* Header */
-      .header          { padding: 10px 14px; }
+      .header          { padding: 12px 14px; }
       .header__icon    { width: 32px; height: 32px; font-size: 15px; border-radius: 8px; }
       .header__title   { font-size: 0.95rem; }
       .header__sub     { font-size: 0.68rem; }
-      .header__time    { font-size: 1rem; letter-spacing: .04em; }
+      .clock-main      { font-size: 1.3rem; }
+      .clock-sep       { font-size: 1.3rem; }
+      .clock-sec       { font-size: 0.8rem; }
+      .clock-meridiem  { font-size: 0.62rem; }
 
       /* Tabs — scroll horizontal sin scroll bar visible */
       .tabs            { padding: 0 6px; overflow-x: auto; -webkit-overflow-scrolling: touch;
@@ -888,6 +926,10 @@
       .header__sub     { display: none; }
       .tab-btn         { padding: 11px 8px; font-size: 0.75rem; }
       .datebar__label  { font-size: 0.75rem; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .loading-spinner { animation: none; }
     }
   </style>
 </head>
@@ -1873,8 +1915,15 @@ function toast(msg, tipo = 'info', duracion = 3000) {
    RELOJ EN TIEMPO REAL
 ==================================================================== */
 function actualizarReloj() {
-  document.getElementById('reloj').textContent =
-    new Date().toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  const now  = new Date();
+  const h    = String(now.getHours() % 12 || 12).padStart(2, '0');
+  const m    = String(now.getMinutes()).padStart(2, '0');
+  const s    = String(now.getSeconds()).padStart(2, '0');
+  const mer  = now.getHours() < 12 ? 'a.m.' : 'p.m.';
+  document.getElementById('reloj').innerHTML =
+    `<span class="clock-main">${h}<span class="clock-sep">:</span>${m}</span>` +
+    `<span class="clock-sec">:${s}</span>` +
+    `<span class="clock-meridiem">${mer}</span>`;
 }
 
 /* ====================================================================
