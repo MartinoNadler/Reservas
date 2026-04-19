@@ -1330,66 +1330,12 @@ function asegurarTurnosDia(fecha) {
 function cargarDatosDePrueba() {
   if (DB.obtenerCanchas().length > 0) return; // ya inicializado
 
-  // ── Canchas ────────────────────────────────────────────────────────
+  // Canchas por defecto — podés modificarlas o agregar más desde Administración
   [
-    { id: 'c1', nombre: 'Pádel 1',  deporte: 'Pádel',  duracionTurno: 60, precio: 25000 },
-    { id: 'c2', nombre: 'Pádel 2',  deporte: 'Pádel',  duracionTurno: 60, precio: 25000 },
-    { id: 'c3', nombre: 'Fútbol 5', deporte: 'Fútbol', duracionTurno: 90, precio: 20000 },
+    { id: 'c1', nombre: 'Pádel 1',  deporte: 'Pádel',  duracionTurno: 60, precio: 2500, activa: true },
+    { id: 'c2', nombre: 'Pádel 2',  deporte: 'Pádel',  duracionTurno: 60, precio: 2500, activa: true },
+    { id: 'c3', nombre: 'Fútbol 5', deporte: 'Fútbol', duracionTurno: 90, precio: 4000, activa: true },
   ].forEach(c => DB.guardarCancha(c));
-
-  // ── Turnos del día de hoy ─────────────────────────────────────────
-  const fecha = hoy();
-  asegurarTurnosDia(fecha);
-  const turnos = DB.obtenerTurnosPorFecha(fecha);
-
-  // Helper para encontrar un turno por cancha y hora de inicio
-  const T = (canchaId, horaInicio) =>
-    turnos.find(t => t.canchaId === canchaId && t.horaInicio === horaInicio);
-
-  // ── Clientes de prueba ────────────────────────────────────────────
-  [
-    { id: 'cl1', nombre: 'Martín Gómez',    telefono: '11-4523-7890' },
-    { id: 'cl2', nombre: 'Laura Fernández', telefono: '11-3891-2345' },
-    { id: 'cl3', nombre: 'Carlos Ruiz',     telefono: '11-6701-9988' },
-    { id: 'cl4', nombre: 'Ana Martínez',    telefono: '11-2234-5567' },
-  ].forEach(c => DB.guardarCliente({ ...c, creadoEn: new Date().toISOString() }));
-
-  // ── Escenarios de ejemplo ─────────────────────────────────────────
-  //  Pádel 1 — 13:00 pagado
-  const t1 = T('c1','13:00');
-  if (t1) { DB.actualizarTurno(t1.id,{estado:'pagado'}); DB.guardarReserva({id:'r1',turnoId:t1.id,clienteId:'cl1',fechaCreacion:new Date().toISOString(),estadoPago:'pagado'}); }
-
-  // Pádel 1 — 15:00 pendiente (reserva desde app del cliente)
-  const t2 = T('c1','15:00');
-  if (t2) { DB.actualizarTurno(t2.id,{estado:'pendiente'}); DB.guardarReserva({id:'r2',turnoId:t2.id,clienteId:'cl2',fechaCreacion:new Date().toISOString(),estadoPago:'pendiente'}); }
-
-  // Pádel 1 — 17:00 reservado (sin pagar aún)
-  const t3 = T('c1','17:00');
-  if (t3) { DB.actualizarTurno(t3.id,{estado:'reservado'}); DB.guardarReserva({id:'r3',turnoId:t3.id,clienteId:'cl3',fechaCreacion:new Date().toISOString(),estadoPago:'pendiente'}); }
-
-  // Pádel 1 — 20:00 bloqueado (mantenimiento de red)
-  const t4 = T('c1','20:00');
-  if (t4) DB.actualizarTurno(t4.id,{estado:'bloqueado'});
-
-  // Pádel 2 — 12:00 pendiente
-  const t5 = T('c2','12:00');
-  if (t5) { DB.actualizarTurno(t5.id,{estado:'pendiente'}); DB.guardarReserva({id:'r4',turnoId:t5.id,clienteId:'cl4',fechaCreacion:new Date().toISOString(),estadoPago:'pendiente'}); }
-
-  // Pádel 2 — 14:00 rechazado
-  const t6 = T('c2','14:00');
-  if (t6) DB.actualizarTurno(t6.id,{estado:'rechazado'});
-
-  // Pádel 2 — 19:00 pagado
-  const t7 = T('c2','19:00');
-  if (t7) { DB.actualizarTurno(t7.id,{estado:'pagado'}); DB.guardarReserva({id:'r5',turnoId:t7.id,clienteId:'cl1',fechaCreacion:new Date().toISOString(),estadoPago:'pagado'}); }
-
-  // Fútbol — 14:00 reservado (slot 14:00-15:30)
-  const t8 = T('c3','14:00');
-  if (t8) { DB.actualizarTurno(t8.id,{estado:'reservado'}); DB.guardarReserva({id:'r6',turnoId:t8.id,clienteId:'cl2',fechaCreacion:new Date().toISOString(),estadoPago:'pendiente'}); }
-
-  // Fútbol — 17:00 bloqueado
-  const t9 = T('c3','17:00');
-  if (t9) DB.actualizarTurno(t9.id,{estado:'bloqueado'});
 }
 
 /* ====================================================================
