@@ -1011,178 +1011,145 @@ const CONFIG = {
    Contrato de cada función: igual al que tendría un endpoint REST.
 ==================================================================== */
 const DB = {
-  KEYS: {
-    CANCHAS:  'rd_canchas',
-    TURNOS:   'rd_turnos',
-    RESERVAS: 'rd_reservas',
-    CLIENTES: 'rd_clientes',
+  _URL: 'https://ljsrakvyayjguwesmzoi.supabase.co/rest/v1',
+  _KEY: 'sb_publishable_fJb0jH0ENWv8ux7MBr3EdA_k1Mlt9p-',
+  _cache: { canchas: [], turnos: [], reservas: [], clientes: [], config: {} },
+
+  _h() {
+    return {
+      'apikey': this._KEY,
+      'Authorization': 'Bearer ' + this._KEY,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=representation',
+    };
   },
 
-  // --- Helpers internos de lectura/escritura (no exponer al exterior) ---
-  _get(key)       { try { return JSON.parse(localStorage.getItem(key)) || []; } catch { return []; } },
-  _set(key, data) { localStorage.setItem(key, JSON.stringify(data)); },
-
-  /* ------------------------------------------------------------------
-     CANCHAS
-  ------------------------------------------------------------------ */
-  /** Devuelve todas las canchas. Futuro: GET /api/canchas */
-  obtenerCanchas() {
-    return this._get(this.KEYS.CANCHAS);
+  async _q(path, opts = {}) {
+    const r = await fetch(this._URL + path, { headers: this._h(), ...opts });
+    if (!r.ok) throw new Error(`[DB] ${opts.method || 'GET'} ${path}: ${await r.text()}`);
+    const txt = await r.text();
+    return txt ? JSON.parse(txt) : null;
   },
 
-  /** Devuelve una cancha por id. Futuro: GET /api/canchas/:id */
-  obtenerCanchaPorId(id) {
-    return this.obtenerCanchas().find(c => c.id === id) || null;
+  _sync(fn) {
+    fn().catch(e => {
+      console.error(e);
+      toast('⚠ Error al guardar en la base de datos', 'error');
+    });
   },
 
-  /** Guarda una cancha nueva. Futuro: POST /api/canchas */
-  guardarCancha(cancha) {
-    const lista = this.obtenerCanchas();
-    lista.push(cancha);
-    this._set(this.KEYS.CANCHAS, lista);
-    return cancha;
+  /** Carga todos los datos desde Supabase al cache local. Llamar al iniciar. */
+  async cargarTodo() {
+    const [canchas, clientes, turnos, reservas, cfg] = await Promise.all([
+      this._q('/canchas'),
+      this._q('/clientes'),
+      this._q('/turnos'),
+      this._q('/reservas'),
+      this._q('/config'),
+    ]);
+    this._cache.canchas  = canchas  || [];
+    this._cache.clientes = clientes || [];
+    this._cache.turnos   = turnos   || [];
+    this._cache.reservas = reservas || [];
+    const raw = (cfg || [])[0] || {};
+    // Supabase guarda 'nombreComplejo', el resto del código usa 'nombre'
+    this._cache.config = raw.nombreComplejo ? { ...raw, nombre: raw.nombreComplejo } : raw;
   },
 
-  /** Actualiza campos de una cancha. Futuro: PATCH /api/canchas/:id */
+  // ─── CANCHAS ──────────────────────────────────────────────────────
+  obtenerCanchas()       { return [...this._cache.canchas]; },
+  obtenerCanchaPorId(id) { return this._cache.canchas.find(c => c.id === id) || null; },
+
+  guardarCancha(c) {
+    this._cache.canchas.push(c);
+    this._sync(() => this._q('/canchas', { method: 'POST', body: JSON.stringify(c) }));
+    return c;
+  },
   actualizarCancha(id, cambios) {
-    const lista = this.obtenerCanchas();
-    const i = lista.findIndex(c => c.id === id);
+    const i = this._cache.canchas.findIndex(c => c.id === id);
     if (i === -1) return null;
-    lista[i] = { ...lista[i], ...cambios };
-    this._set(this.KEYS.CANCHAS, lista);
-    return lista[i];
+    this._cache.canchas[i] = { ...this._cache.canchas[i], ...cambios };
+    this._sync(() => this._q(`/canchas?id=eq.${id}`, { method: 'PATCH', body: JSON.stringify(cambios) }));
+    return this._cache.canchas[i];
   },
-
-  /** Elimina una cancha por id. Futuro: DELETE /api/canchas/:id */
   eliminarCancha(id) {
-    this._set(this.KEYS.CANCHAS, this.obtenerCanchas().filter(c => c.id !== id));
+    this._cache.canchas = this._cache.canchas.filter(c => c.id !== id);
+    this._sync(() => this._q(`/canchas?id=eq.${id}`, { method: 'DELETE' }));
   },
 
-  /** Devuelve la configuración global del complejo. Futuro: GET /api/config */
-  obtenerConfig() {
-    try { return JSON.parse(localStorage.getItem('rd_config')) || {}; } catch { return {}; }
-  },
-
-  /** Guarda la configuración global. Futuro: PUT /api/config */
+  // ─── CONFIG ───────────────────────────────────────────────────────
+  obtenerConfig() { return { ...this._cache.config }; },
   guardarConfig(cfg) {
-    localStorage.setItem('rd_config', JSON.stringify(cfg));
-    return cfg;
+    // El resto del código usa 'nombre', Supabase usa 'nombreComplejo'
+    const sbCfg = { ...cfg };
+    if (sbCfg.nombre !== undefined) { sbCfg.nombreComplejo = sbCfg.nombre; delete sbCfg.nombre; }
+    this._cache.config = { ...this._cache.config, ...cfg };
+    this._sync(() => this._q('/config?id=eq.1', { method: 'PATCH', body: JSON.stringify(sbCfg) }));
+    return this._cache.config;
   },
 
-  /* ------------------------------------------------------------------
-     TURNOS
-  ------------------------------------------------------------------ */
-  /** Devuelve todos los turnos. Futuro: GET /api/turnos */
-  obtenerTodosTurnos() {
-    return this._get(this.KEYS.TURNOS);
-  },
+  // ─── TURNOS ───────────────────────────────────────────────────────
+  obtenerTodosTurnos()         { return [...this._cache.turnos]; },
+  obtenerTurnosPorFecha(fecha) { return this._cache.turnos.filter(t => t.fecha === fecha); },
+  obtenerTurnoPorId(id)        { return this._cache.turnos.find(t => t.id === id) || null; },
 
-  /** Devuelve los turnos de una fecha. Futuro: GET /api/turnos?fecha=YYYY-MM-DD */
-  obtenerTurnosPorFecha(fecha) {
-    return this.obtenerTodosTurnos().filter(t => t.fecha === fecha);
+  guardarTurno(t) {
+    this._cache.turnos.push(t);
+    this._sync(() => this._q('/turnos', { method: 'POST', body: JSON.stringify(t) }));
+    return t;
   },
-
-  /** Devuelve un turno por id. Futuro: GET /api/turnos/:id */
-  obtenerTurnoPorId(id) {
-    return this.obtenerTodosTurnos().find(t => t.id === id) || null;
-  },
-
-  /** Guarda un turno nuevo. Futuro: POST /api/turnos */
-  guardarTurno(turno) {
-    const lista = this.obtenerTodosTurnos();
-    lista.push(turno);
-    this._set(this.KEYS.TURNOS, lista);
-    return turno;
-  },
-
-  /** Actualiza campos de un turno existente. Futuro: PATCH /api/turnos/:id */
   actualizarTurno(id, cambios) {
-    const lista = this.obtenerTodosTurnos();
-    const i = lista.findIndex(t => t.id === id);
+    const i = this._cache.turnos.findIndex(t => t.id === id);
     if (i === -1) return null;
-    lista[i] = { ...lista[i], ...cambios };
-    this._set(this.KEYS.TURNOS, lista);
-    return lista[i];
+    this._cache.turnos[i] = { ...this._cache.turnos[i], ...cambios };
+    this._sync(() => this._q(`/turnos?id=eq.${id}`, { method: 'PATCH', body: JSON.stringify(cambios) }));
+    return this._cache.turnos[i];
   },
 
-  /* ------------------------------------------------------------------
-     RESERVAS
-  ------------------------------------------------------------------ */
-  /** Devuelve todas las reservas. Futuro: GET /api/reservas */
-  obtenerReservas() {
-    return this._get(this.KEYS.RESERVAS);
-  },
-
-  /** Devuelve la reserva activa asociada a un turno (ignora canceladas/rechazadas). Futuro: GET /api/reservas?turnoId=X&estado=activa */
+  // ─── RESERVAS ─────────────────────────────────────────────────────
+  obtenerReservas() { return [...this._cache.reservas]; },
   obtenerReservaPorTurno(turnoId) {
-    return this.obtenerReservas().find(
+    return this._cache.reservas.find(
       r => r.turnoId === turnoId && r.estado !== 'cancelada' && r.estado !== 'rechazada'
     ) || null;
   },
 
-  /** Guarda una reserva nueva. Futuro: POST /api/reservas */
-  guardarReserva(reserva) {
-    const lista = this.obtenerReservas();
-    lista.push(reserva);
-    this._set(this.KEYS.RESERVAS, lista);
-    return reserva;
+  guardarReserva(r) {
+    this._cache.reservas.push(r);
+    this._sync(() => this._q('/reservas', { method: 'POST', body: JSON.stringify(r) }));
+    return r;
   },
-
-  /** Actualiza campos de una reserva. Futuro: PATCH /api/reservas/:id */
   actualizarReserva(id, cambios) {
-    const lista = this.obtenerReservas();
-    const i = lista.findIndex(r => r.id === id);
+    const i = this._cache.reservas.findIndex(r => r.id === id);
     if (i === -1) return null;
-    lista[i] = { ...lista[i], ...cambios };
-    this._set(this.KEYS.RESERVAS, lista);
-    return lista[i];
+    this._cache.reservas[i] = { ...this._cache.reservas[i], ...cambios };
+    this._sync(() => this._q(`/reservas?id=eq.${id}`, { method: 'PATCH', body: JSON.stringify(cambios) }));
+    return this._cache.reservas[i];
   },
 
-  /* ------------------------------------------------------------------
-     CLIENTES
-  ------------------------------------------------------------------ */
-  /** Devuelve todos los clientes. Futuro: GET /api/clientes */
-  obtenerClientes() {
-    return this._get(this.KEYS.CLIENTES);
-  },
+  // ─── CLIENTES ─────────────────────────────────────────────────────
+  obtenerClientes()              { return [...this._cache.clientes]; },
+  obtenerClientePorId(id)        { return this._cache.clientes.find(c => c.id === id) || null; },
+  obtenerClientePorTelefono(tel) { return this._cache.clientes.find(c => c.telefono === tel.trim()) || null; },
 
-  /** Devuelve un cliente por id. Futuro: GET /api/clientes/:id */
-  obtenerClientePorId(id) {
-    return this.obtenerClientes().find(c => c.id === id) || null;
+  guardarCliente(c) {
+    this._cache.clientes.push(c);
+    this._sync(() => this._q('/clientes', { method: 'POST', body: JSON.stringify(c) }));
+    return c;
   },
-
-  /** Devuelve un cliente por teléfono (identificador único). Futuro: GET /api/clientes?telefono=X */
-  obtenerClientePorTelefono(telefono) {
-    return this.obtenerClientes().find(c => c.telefono === telefono.trim()) || null;
-  },
-
-  /** Guarda un cliente nuevo. Futuro: POST /api/clientes */
-  guardarCliente(cliente) {
-    const lista = this.obtenerClientes();
-    lista.push(cliente);
-    this._set(this.KEYS.CLIENTES, lista);
-    return cliente;
-  },
-
-  /** Actualiza campos de un cliente. Futuro: PATCH /api/clientes/:id */
   actualizarCliente(id, cambios) {
-    const lista = this.obtenerClientes();
-    const i = lista.findIndex(c => c.id === id);
+    const i = this._cache.clientes.findIndex(c => c.id === id);
     if (i === -1) return null;
-    lista[i] = { ...lista[i], ...cambios };
-    this._set(this.KEYS.CLIENTES, lista);
-    return lista[i];
+    this._cache.clientes[i] = { ...this._cache.clientes[i], ...cambios };
+    this._sync(() => this._q(`/clientes?id=eq.${id}`, { method: 'PATCH', body: JSON.stringify(cambios) }));
+    return this._cache.clientes[i];
   },
-
-  /** Elimina un cliente por id. Futuro: DELETE /api/clientes/:id */
   eliminarCliente(id) {
-    const lista = this.obtenerClientes().filter(c => c.id !== id);
-    this._set(this.KEYS.CLIENTES, lista);
+    this._cache.clientes = this._cache.clientes.filter(c => c.id !== id);
+    this._sync(() => this._q(`/clientes?id=eq.${id}`, { method: 'DELETE' }));
   },
-
-  /** Devuelve todas las reservas de un cliente. Futuro: GET /api/reservas?clienteId=X */
   obtenerReservasPorCliente(clienteId) {
-    return this.obtenerReservas().filter(r => r.clienteId === clienteId);
+    return this._cache.reservas.filter(r => r.clienteId === clienteId);
   },
 };
 
@@ -2882,8 +2849,14 @@ document.getElementById('modal').addEventListener('keydown', e => {
    INICIALIZACIÓN
    Punto de entrada del sistema.
 ==================================================================== */
-function inicializar() {
-  cargarDatosDePrueba();       // Solo carga si la DB está vacía
+async function inicializar() {
+  try {
+    await DB.cargarTodo();
+  } catch(e) {
+    console.error('Error al conectar con Supabase:', e);
+    toast('No se pudo conectar con la base de datos. Revisá tu conexión.', 'error', 6000);
+  }
+  cargarDatosDePrueba();       // Solo carga canchas si la DB está vacía (primer uso)
   aplicarConfig();             // Aplica nombre y horarios guardados
   document.body.setAttribute('data-view', 'recepcion');
   renderGrilla();
