@@ -796,6 +796,81 @@
     }
     .login-btn:hover { opacity: .85; }
     .login-error { font-size: .82rem; color: var(--rechazado); min-height: 18px; }
+
+    /* ============================================================
+       RESPONSIVE — MOBILE
+    ============================================================ */
+    @media (max-width: 640px) {
+
+      /* Header */
+      .header          { padding: 10px 14px; }
+      .header__icon    { width: 32px; height: 32px; font-size: 15px; border-radius: 8px; }
+      .header__title   { font-size: 0.95rem; }
+      .header__sub     { font-size: 0.68rem; }
+      .header__time    { font-size: 1rem; letter-spacing: .04em; }
+
+      /* Tabs — scroll horizontal sin scroll bar visible */
+      .tabs            { padding: 0 6px; overflow-x: auto; -webkit-overflow-scrolling: touch;
+                         scrollbar-width: none; }
+      .tabs::-webkit-scrollbar { display: none; }
+      .tab-btn         { padding: 11px 10px; font-size: 0.8rem; white-space: nowrap; flex-shrink: 0; }
+
+      /* Barra de fecha */
+      .datebar         { padding: 8px 12px; gap: 7px; }
+      .datebar__label  { min-width: 0; flex: 1; font-size: 0.8rem; }
+      .datebar__btn    { padding: 6px 10px; font-size: 0.8rem; }
+
+      /* Leyenda — más compacta */
+      .legend          { padding: 6px 12px; gap: 8px; }
+      .legend__item    { font-size: 0.7rem; }
+
+      /* Grilla de recepción */
+      .grid-wrap       { padding: 10px 6px; }
+
+      /* Modal — sube desde abajo como sheet */
+      .overlay         { padding: 0; align-items: flex-end; }
+      .modal           { border-radius: 16px 16px 0 0; max-width: 100%; max-height: 88vh; }
+      .modal__foot     { flex-direction: column; }
+      .modal__foot .btn { width: 100%; text-align: center; justify-content: center; }
+
+      /* Info grid en modal (2 col → 1 col) */
+      .info-grid       { grid-template-columns: 1fr; }
+
+      /* Formularios de 2 columnas → 1 columna */
+      .form-row        { grid-template-columns: 1fr; }
+
+      /* Panel de clientes */
+      .cl-toolbar      { padding: 12px 14px; }
+      .cl-stats        { padding: 12px 14px; gap: 8px; }
+      .cl-stat         { min-width: 0; flex: 1; padding: 12px 14px; }
+      .cl-stat__num    { font-size: 1.3rem; }
+      .cl-grid         { padding: 0 14px 20px; gap: 10px;
+                         grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
+
+      /* Reportes */
+      .rep-toolbar     { padding: 12px 14px; flex-wrap: wrap; }
+      .rep-body        { padding: 14px; }
+      .rep-stats       { gap: 8px; }
+      .rep-stat        { padding: 12px 14px; }
+
+      /* Admin */
+      .admin-body      { padding: 14px; }
+      .cancha-grid     { gap: 1px; }
+      .config-grid     { grid-template-columns: 1fr; }
+
+      /* View containers */
+      #view-clientes,
+      #view-reportes,
+      #view-admin      { padding-bottom: 20px; }
+    }
+
+    @media (max-width: 400px) {
+      /* En pantallas muy chicas ocultamos el reloj y el subtítulo */
+      .header__time    { display: none; }
+      .header__sub     { display: none; }
+      .tab-btn         { padding: 11px 8px; font-size: 0.75rem; }
+      .datebar__label  { font-size: 0.75rem; }
+    }
   </style>
 </head>
 <body>
