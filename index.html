@@ -1219,7 +1219,7 @@ function crearReserva(turnoId, datosCliente) {
     id:       uid('cl'),
     nombre:   datosCliente.nombre.trim(),
     telefono,
-    creadoEn: new Date().toISOString(),
+    fechaRegistro: new Date().toISOString(),
   });
 
   const reserva = DB.guardarReserva({
@@ -2043,7 +2043,7 @@ function abrirFormCliente(clienteId = null) {
         if (!/^\d{8,10}$/.test(telefono.trim())) { toast('El teléfono debe tener entre 8 y 10 dígitos.', 'warning'); return; }
         const existente = DB.obtenerClientePorTelefono(telefono.trim());
         if (existente) { toast(`El teléfono ya está registrado a nombre de ${existente.nombre}.`, 'error'); return; }
-        DB.guardarCliente({ id: uid('cl'), nombre: nombre.trim(), telefono: telefono.trim(), creadoEn: new Date().toISOString() });
+        DB.guardarCliente({ id: uid('cl'), nombre: nombre.trim(), telefono: telefono.trim(), fechaRegistro: new Date().toISOString() });
         cerrarModal();
         renderClientes(document.getElementById('clSearch').value);
         toast(`Cliente "${nombre.trim()}" creado.`, 'success');
@@ -2539,7 +2539,6 @@ function crearCanchaAdmin(datos) {
     duracionTurno: Number(datos.duracion),
     precio:        Number(datos.precio),
     activa:        true,
-    creadoEn:      new Date().toISOString(),
   });
 }
 
