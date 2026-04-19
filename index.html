@@ -797,6 +797,24 @@
     .login-btn:hover { opacity: .85; }
     .login-error { font-size: .82rem; color: var(--rechazado); min-height: 18px; }
 
+    /* Pantalla de carga */
+    #loadingScreen {
+      position: fixed; inset: 0; z-index: 9998;
+      background: var(--bg);
+      display: none;
+      align-items: center; justify-content: center;
+      flex-direction: column; gap: 18px;
+    }
+    .loading-spinner {
+      width: 44px; height: 44px;
+      border: 3px solid var(--surface-2);
+      border-top-color: var(--reservado);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-msg { font-size: .88rem; color: var(--text-muted); letter-spacing: .03em; }
+
     /* ============================================================
        RESPONSIVE — MOBILE
     ============================================================ */
@@ -874,6 +892,12 @@
   </style>
 </head>
 <body>
+
+  <!-- PANTALLA DE CARGA -->
+  <div id="loadingScreen">
+    <div class="loading-spinner"></div>
+    <div class="loading-msg">Cargando datos…</div>
+  </div>
 
   <!-- LOGIN -->
   <div id="loginScreen">
@@ -2970,12 +2994,15 @@ document.getElementById('modal').addEventListener('keydown', e => {
    Punto de entrada del sistema.
 ==================================================================== */
 async function inicializar() {
+  const loader = document.getElementById('loadingScreen');
+  loader.style.display = 'flex';
   try {
     await DB.cargarTodo();
   } catch(e) {
     console.error('Error al conectar con Supabase:', e);
     toast('No se pudo conectar con la base de datos. Revisá tu conexión.', 'error', 6000);
   }
+  loader.style.display = 'none';
   cargarDatosDePrueba();       // Solo carga canchas si la DB está vacía (primer uso)
   aplicarConfig();             // Aplica nombre y horarios guardados
   document.body.setAttribute('data-view', 'recepcion');
