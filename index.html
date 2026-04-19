@@ -120,53 +120,62 @@
     }
     .datebar__btn {
       background: var(--surface-2);
-      border: 1px solid var(--border);
-      color: var(--text);
-      padding: 6px 14px;
+      border: 1px solid rgba(255,255,255,.08);
+      color: var(--text-muted);
+      padding: 7px 14px;
       border-radius: 7px;
       cursor: pointer;
-      font-size: 0.85rem;
+      font-size: 0.82rem;
       font-family: inherit;
-      transition: background .15s;
+      transition: all .15s;
     }
-    .datebar__btn:hover { background: var(--border); }
+    .datebar__btn:hover { background: var(--border); color: var(--text); }
     .datebar__label {
-      font-weight: 600;
-      font-size: 0.95rem;
+      font-weight: 700;
+      font-size: 1rem;
       min-width: 240px;
       text-align: center;
+      color: var(--text);
+      letter-spacing: -.01em;
     }
     .datebar__today {
       background: transparent;
-      border: 1px solid var(--disponible);
+      border: 1px solid rgba(45,212,191,.3);
       color: var(--disponible);
-      padding: 6px 14px;
+      padding: 7px 14px;
       border-radius: 7px;
       cursor: pointer;
       font-size: 0.82rem;
       font-weight: 600;
       font-family: inherit;
+      transition: all .15s;
     }
+    .datebar__today:hover { background: rgba(45,212,191,.1); }
 
     /* ============================================================
        LEYENDA DE ESTADOS
     ============================================================ */
     .legend {
       display: flex;
-      gap: 20px;
+      gap: 6px;
       flex-wrap: wrap;
-      padding: 10px 24px;
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
+      padding: 8px 24px;
+      background: var(--bg);
+      border-bottom: 1px solid rgba(255,255,255,.04);
     }
-    .legend__item { display: flex; align-items: center; gap: 7px; font-size: 0.78rem; color: var(--text-muted); }
-    .legend__dot  { width: 11px; height: 11px; border-radius: 3px; flex-shrink: 0; }
+    .legend__item {
+      display: flex; align-items: center; gap: 5px;
+      font-size: 0.72rem; color: var(--text-muted);
+      background: var(--surface); padding: 3px 10px 3px 7px;
+      border-radius: 20px; border: 1px solid rgba(255,255,255,.05);
+    }
+    .legend__dot  { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
 
     /* ============================================================
        CONTENEDOR DE LA GRILLA
     ============================================================ */
-    .grid-wrap  { padding: 20px 24px; overflow-x: auto; }
-    .grid-inner { display: flex; min-width: 560px; }
+    .grid-wrap  { padding: 0 16px 24px; overflow-x: auto; background: var(--bg); }
+    .grid-inner { display: flex; min-width: 560px; padding-top: 16px; }
 
     /* Columna de horas (eje Y) */
     .time-col        { width: var(--col-time); flex-shrink: 0; }
@@ -180,25 +189,25 @@
     .time-col__tick--half { border-top: 1px dashed rgba(255,255,255,0.05); }
 
     /* Columna de una cancha */
-    .court-col       { flex: 1; min-width: 140px; border-left: 1px solid var(--border); }
+    .court-col       { flex: 1; min-width: 140px; border-left: 1px solid rgba(255,255,255,.06); }
     .court-col__hdr  {
-      height: 52px;
-      background: var(--surface);
-      border-bottom: 2px solid var(--border);
+      height: 58px;
+      background: rgba(255,255,255,.03);
+      border-bottom: 1px solid rgba(255,255,255,.08);
       display: flex; flex-direction: column;
       align-items: center; justify-content: center;
-      padding: 6px 8px;
+      padding: 8px 10px;
     }
-    .court-col__name { font-weight: 700; font-size: 0.9rem; }
-    .court-col__info { font-size: 0.72rem; color: var(--text-muted); margin-top: 2px; }
+    .court-col__name { font-weight: 700; font-size: 0.95rem; letter-spacing: -.01em; }
+    .court-col__info { font-size: 0.7rem; color: var(--text-muted); margin-top: 3px; opacity: .8; }
 
     /* Área de turnos dentro de la columna */
     .slots-area      { position: relative; }
 
     /* Líneas de fondo de la grilla (decorativas) */
     .grid-line       { position: absolute; left: 0; right: 0; height: var(--cell-h);
-                       border-top: 1px solid rgba(255,255,255,0.04); }
-    .grid-line--half { border-top: 1px dashed rgba(255,255,255,0.025); }
+                       border-top: 1px solid rgba(255,255,255,0.025); }
+    .grid-line--half { border-top: 1px dashed rgba(255,255,255,0.010); }
 
     /* ============================================================
        TARJETA DE TURNO
@@ -206,32 +215,48 @@
     .slot-card {
       position: absolute;
       left: 3px; right: 3px;
-      border-radius: 6px;
-      padding: 5px 8px;
+      border-radius: 8px;
+      padding: 7px 10px 6px 9px;
       cursor: pointer;
-      font-size: 0.78rem;
-      font-weight: 600;
       display: flex;
       flex-direction: column;
-      justify-content: center;
-      gap: 1px;
+      justify-content: space-between;
       overflow: hidden;
       border: 1px solid transparent;
-      transition: filter .15s, transform .1s;
+      border-left-width: 3px;
+      transition: filter .15s, transform .1s, box-shadow .15s;
       z-index: 1;
     }
-    .slot-card:hover { filter: brightness(1.18); transform: scale(1.015); z-index: 5; }
-    .slot-card__time  { font-size: 0.67rem; opacity: .75; font-weight: 400; }
-    .slot-card__label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .slot-card__price { font-size: 0.67rem; opacity: .65; }
+    .slot-card:hover {
+      filter: brightness(1.15); transform: scale(1.012);
+      box-shadow: 0 4px 16px rgba(0,0,0,.35); z-index: 5;
+    }
+    .slot-card__time  { font-size: 0.63rem; font-weight: 400; opacity: .55; letter-spacing: .02em; }
+    .slot-card__label { font-size: 0.8rem; font-weight: 600; white-space: nowrap;
+                        overflow: hidden; text-overflow: ellipsis; line-height: 1.2; margin-top: 2px; }
+    .slot-card__price { font-size: 0.68rem; font-weight: 500; opacity: .7; margin-top: 3px; }
 
-    /* Colores por estado — misma lógica: color de texto + color de fondo */
-    .slot--disponible { background: var(--disponible-bg); color: var(--disponible); border-color: var(--disponible); }
-    .slot--pendiente  { background: var(--pendiente-bg);  color: var(--pendiente);  border-color: var(--pendiente); }
-    .slot--reservado  { background: var(--reservado-bg);  color: var(--reservado);  border-color: var(--reservado); }
-    .slot--bloqueado  { background: var(--bloqueado-bg);  color: var(--bloqueado);  border-color: var(--border); }
-    .slot--rechazado  { background: var(--rechazado-bg);  color: var(--rechazado);  border-color: var(--rechazado); }
-    .slot--pagado     { background: var(--pagado-bg);     color: var(--pagado);     border-color: var(--pagado); }
+    /* Colores por estado — acento izquierdo + fondo sutil */
+    .slot--disponible { background: rgba(19,78,74,.8);   color: var(--disponible); border-color: var(--disponible); }
+    .slot--pendiente  { background: rgba(113,63,18,.8);  color: var(--pendiente);  border-color: var(--pendiente); }
+    .slot--reservado  { background: rgba(30,58,138,.8);  color: var(--reservado);  border-color: var(--reservado); }
+    .slot--bloqueado  { background: rgba(30,41,59,.8);   color: var(--bloqueado);  border-color: rgba(71,85,105,.5); }
+    .slot--rechazado  { background: rgba(127,29,29,.8);  color: var(--rechazado);  border-color: var(--rechazado); }
+    .slot--pagado     { background: rgba(20,83,45,.8);   color: var(--pagado);     border-color: var(--pagado); }
+
+    /* Línea de hora actual */
+    .linea-tiempo-actual {
+      position: absolute; left: 0; right: 0;
+      height: 2px; background: rgba(239,68,68,.75);
+      z-index: 10; display: none; pointer-events: none;
+    }
+    .linea-tiempo-actual::before {
+      content: ''; position: absolute;
+      left: -5px; top: -4px;
+      width: 10px; height: 10px;
+      background: rgb(239,68,68); border-radius: 50%;
+      box-shadow: 0 0 8px rgba(239,68,68,.6);
+    }
 
     /* ============================================================
        MODAL
@@ -371,26 +396,28 @@
       background: var(--surface);
       border-bottom: 1px solid var(--border);
       display: flex;
-      padding: 0 24px;
+      padding: 0 20px;
+      gap: 2px;
     }
     .tab-btn {
       background: none;
       border: none;
       border-bottom: 2px solid transparent;
       color: var(--text-muted);
-      padding: 13px 18px;
-      font-size: 0.88rem;
-      font-weight: 600;
+      padding: 14px 16px 12px;
+      font-size: 0.86rem;
+      font-weight: 500;
       font-family: inherit;
       cursor: pointer;
-      transition: color .15s, border-color .15s;
+      transition: color .15s, background .15s, border-color .15s;
       margin-bottom: -1px;
+      border-radius: 8px 8px 0 0;
       display: flex;
       align-items: center;
       gap: 7px;
     }
-    .tab-btn:hover { color: var(--text); }
-    .tab-btn.active { color: var(--text); border-bottom-color: var(--reservado); }
+    .tab-btn:hover { color: var(--text); background: rgba(255,255,255,.04); }
+    .tab-btn.active { color: var(--text); border-bottom-color: var(--reservado); background: rgba(59,130,246,.07); }
     .tab-btn__badge {
       background: var(--pendiente-bg);
       color: var(--pendiente);
@@ -1637,12 +1664,18 @@ function renderGrilla() {
       .filter(t => t.canchaId === cancha.id)
       .forEach(turno => area.appendChild(crearTarjeta(turno, cancha, minInicio)));
 
+    // Línea de hora actual
+    const lineaTiempo = document.createElement('div');
+    lineaTiempo.className = 'linea-tiempo-actual';
+    area.appendChild(lineaTiempo);
+
     col.appendChild(area);
     container.appendChild(col);
   });
 
   // Actualiza el label de la fecha en la barra
   document.getElementById('lblFecha').textContent = formatFecha(fecha);
+  actualizarTodasLineasTiempo();
 }
 
 /**
@@ -1914,6 +1947,20 @@ function toast(msg, tipo = 'info', duracion = 3000) {
 /* ====================================================================
    RELOJ EN TIEMPO REAL
 ==================================================================== */
+function actualizarTodasLineasTiempo() {
+  const ahora     = new Date();
+  const minActual = ahora.getHours() * 60 + ahora.getMinutes();
+  const minInicio = hm(CONFIG.HORA_APERTURA);
+  const minFin    = hm(CONFIG.HORA_CIERRE);
+  const dentro    = minActual >= minInicio && minActual <= minFin
+                    && UI.fechaActual === hoy();
+  const offset    = dentro ? (minActual - minInicio) / CONFIG.MINUTOS_BASE * CONFIG.CELL_H_PX : 0;
+  document.querySelectorAll('.linea-tiempo-actual').forEach(el => {
+    el.style.display = dentro ? 'block' : 'none';
+    if (dentro) el.style.top = `${offset}px`;
+  });
+}
+
 function actualizarReloj() {
   const now  = new Date();
   const h    = String(now.getHours() % 12 || 12).padStart(2, '0');
@@ -3058,7 +3105,8 @@ async function inicializar() {
   renderGrilla();
   actualizarBadgePendientes();
   actualizarReloj();
-  setInterval(actualizarReloj, 1000);
+  actualizarTodasLineasTiempo();
+  setInterval(() => { actualizarReloj(); actualizarTodasLineasTiempo(); }, 1000);
 }
 
 if (!window._esperandoLogin) inicializar();
