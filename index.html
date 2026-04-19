@@ -762,9 +762,55 @@
 
     /* Configuración del complejo */
     .config-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; margin-bottom: 16px; }
+
+    /* Login */
+    #loginScreen {
+      position: fixed; inset: 0; z-index: 9999;
+      background: var(--bg);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .login-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 40px 36px 36px;
+      width: 100%; max-width: 360px;
+      display: flex; flex-direction: column; align-items: center; gap: 12px;
+      box-shadow: 0 8px 40px #0008;
+    }
+    .login-icon { font-size: 2.6rem; line-height: 1; }
+    .login-title { font-size: 1.25rem; font-weight: 700; color: var(--text); letter-spacing: .02em; }
+    .login-sub { font-size: .82rem; color: var(--text-muted); text-align: center; margin-bottom: 4px; }
+    .login-input {
+      width: 100%; padding: 11px 14px; border-radius: 8px;
+      border: 1px solid var(--border); background: var(--bg);
+      color: var(--text); font-size: 1rem; text-align: center;
+      letter-spacing: .15em; outline: none; transition: border-color .2s;
+      box-sizing: border-box;
+    }
+    .login-input:focus { border-color: var(--reservado); }
+    .login-btn {
+      width: 100%; padding: 11px; border-radius: 8px; border: none;
+      background: var(--reservado); color: #fff; font-size: .95rem;
+      font-weight: 600; cursor: pointer; transition: opacity .2s;
+    }
+    .login-btn:hover { opacity: .85; }
+    .login-error { font-size: .82rem; color: var(--rechazado); min-height: 18px; }
   </style>
 </head>
 <body>
+
+  <!-- LOGIN -->
+  <div id="loginScreen">
+    <div class="login-card">
+      <div class="login-icon">🏟</div>
+      <div class="login-title">Costanera Club</div>
+      <div class="login-sub">Ingresá la contraseña para continuar</div>
+      <input id="loginInput" class="login-input" type="password" placeholder="••••••••" autocomplete="off" />
+      <button class="login-btn" id="loginBtn">Ingresar</button>
+      <div id="loginError" class="login-error"></div>
+    </div>
+  </div>
 
   <!-- HEADER -->
   <header class="header">
@@ -920,6 +966,26 @@
   <div class="toasts" id="toasts"></div>
 
 <script>
+/* login */
+(function(){
+  var _v=atob('UmVzZXJ2YXNQcnVlYmFQcm95ZWN0bw=='),_k='_s9x';
+  if(sessionStorage.getItem(_k)==='1'){document.getElementById('loginScreen').style.display='none';return;}
+  function _try(){
+    var inp=document.getElementById('loginInput');
+    if(inp.value===_v){
+      sessionStorage.setItem(_k,'1');
+      document.getElementById('loginScreen').style.display='none';
+    } else {
+      var err=document.getElementById('loginError');
+      err.textContent='Contraseña incorrecta.';
+      inp.value=''; inp.focus();
+      setTimeout(function(){err.textContent='';},3000);
+    }
+  }
+  document.getElementById('loginBtn').addEventListener('click',_try);
+  document.getElementById('loginInput').addEventListener('keydown',function(e){if(e.key==='Enter')_try();});
+})();
+
 /* ====================================================================
    CONFIGURACIÓN
    Valores que definen el comportamiento global del sistema.
