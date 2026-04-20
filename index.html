@@ -6,208 +6,264 @@
   <title>Complejo Deportivo — Panel de Recepción</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <style>
     /* ============================================================
-       VARIABLES GLOBALES
-       Cambiá estos valores para personalizar colores y dimensiones
-       sin tocar el resto del CSS.
+       VARIABLES GLOBALES — GitHub dark theme
     ============================================================ */
     :root {
-      --bg:           #0f172a;
-      --surface:      #1e293b;
-      --surface-2:    #334155;
-      --border:       #475569;
-      --text:         #f1f5f9;
-      --text-muted:   #94a3b8;
+      --bg:           #0d1117;
+      --surface:      #161b22;
+      --surface-2:    #1c2128;
+      --sub:          #21262d;
+      --border:       #30363d;
+      --border-sub:   #21262d;
+      --text:         #e6edf3;
+      --text-muted:   #848d97;
+      --accent:       #2f81f7;
+      --accent-hover: #388bfd;
+      --accent-muted: #1a3a6b;
 
-      /* Un color por estado: el nombre y el fondo de la tarjeta */
-      --disponible:    #2dd4bf;  --disponible-bg:  #134e4a;
-      --pendiente:     #eab308;  --pendiente-bg:   #713f12;
-      --reservado:     #3b82f6;  --reservado-bg:   #1e3a8a;
-      --bloqueado:     #94a3b8;  --bloqueado-bg:   #1e293b;
-      --rechazado:     #ef4444;  --rechazado-bg:   #7f1d1d;
-      --pagado:        #4ade80;  --pagado-bg:      #14532d;
+      /* Estados */
+      --disponible:    #3fb950;  --disponible-bg:  #0d2e1a;
+      --pendiente:     #d29922;  --pendiente-bg:   #2d1e00;
+      --reservado:     #58a6ff;  --reservado-bg:   #0d1f3c;
+      --bloqueado:     #6e7681;  --bloqueado-bg:   #1c2128;
+      --rechazado:     #f85149;  --rechazado-bg:   #2d0f0f;
+      --pagado:        #a371f7;  --pagado-bg:      #1e0d35;
 
-      /* Cada fila de la grilla representa 30 minutos */
-      --cell-h: 44px;
-      --col-time: 64px;
+      /* Grid — cada fila = 30 min */
+      --cell-h: 50px;
+      --col-time: 60px;
+      --sidebar-w: 220px;
     }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
 
     body {
-      font-family: 'DM Sans', 'Segoe UI', system-ui, -apple-system, sans-serif;
+      font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
       background: var(--bg);
       color: var(--text);
       min-height: 100vh;
+      display: flex;
+      -webkit-font-smoothing: antialiased;
     }
 
     /* ============================================================
-       HEADER
+       SCROLLBAR
     ============================================================ */
-    .header {
-      background: var(--surface);
-      border-bottom: 1px solid rgba(255,255,255,0.06);
-      padding: 18px 28px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    .header__brand { display: flex; align-items: center; gap: 12px; }
-    .header__icon {
-      width: 38px; height: 38px;
-      background: var(--disponible);
-      border-radius: 10px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 18px;
-    }
-    .header__title   { font-size: 1.1rem; font-weight: 700; }
-    .header__sub     { font-size: 0.75rem; color: var(--text-muted); margin-top: 1px; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #484f58; }
 
-    /* Reloj — jerarquía editorial */
-    .header__time {
+    /* ============================================================
+       SIDEBAR (desktop)
+    ============================================================ */
+    .sidebar {
+      width: var(--sidebar-w);
+      height: 100vh;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
       display: flex;
-      align-items: baseline;
-      gap: 2px;
+      flex-direction: column;
+      flex-shrink: 0;
+      position: sticky;
+      top: 0;
+      overflow-y: auto;
+    }
+    .sidebar__logo {
+      padding: 20px 16px 16px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 8px;
+    }
+    .sidebar__logo-icon {
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #2f81f7 0%, #1a3a6b 100%);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; margin-bottom: 10px;
+    }
+    .sidebar__logo-title { font-size: 14px; font-weight: 700; color: var(--text); line-height: 1.2; }
+    .sidebar__logo-sub   { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+    .sidebar__nav { padding: 0 8px; flex: 1; }
+    .sidebar__item {
+      display: flex; align-items: center; gap: 10px;
+      width: 100%; padding: 9px 12px;
+      border-radius: 8px; border: none; cursor: pointer;
+      background: transparent; color: var(--text-muted);
+      font-size: 14px; font-weight: 400;
+      margin-bottom: 2px; transition: all .15s;
+      text-align: left; font-family: inherit;
+    }
+    .sidebar__item:hover  { background: var(--surface-2); color: var(--text); }
+    .sidebar__item.active { background: var(--accent-muted); color: var(--accent); font-weight: 600; }
+    .sidebar__footer {
+      padding: 12px 16px; border-top: 1px solid var(--border);
+      font-size: 11px; color: var(--text-muted);
+    }
+
+    /* ============================================================
+       MAIN WRAP
+    ============================================================ */
+    .main-wrap {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      height: 100vh;
+    }
+    .view-area {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+
+    /* ============================================================
+       PAGE HEADER (desktop)
+    ============================================================ */
+    .page-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 20px 28px 0; margin-bottom: 20px;
+      flex-shrink: 0;
+    }
+    .page-header__title { font-size: 20px; font-weight: 700; color: var(--text); margin: 0; }
+    .page-header__sub   { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+
+    /* ============================================================
+       RELOJ
+    ============================================================ */
+    .header__time {
+      display: flex; align-items: baseline; gap: 4px;
       font-variant-numeric: tabular-nums;
-      font-family: 'DM Sans', system-ui, sans-serif;
+      font-family: 'Inter', system-ui, sans-serif;
       line-height: 1;
     }
     .clock-main {
-      font-size: 1.75rem;
-      font-weight: 600;
-      color: #f8fafc;
-      letter-spacing: -.01em;
-    }
-    .clock-sep {
-      font-size: 1.75rem;
-      font-weight: 600;
-      color: #f8fafc;
-      letter-spacing: -.01em;
+      font-size: 28px; font-weight: 700;
+      color: var(--text); letter-spacing: -1px;
     }
     .clock-sec {
-      font-size: 1rem;
-      font-weight: 400;
-      color: rgba(248,250,252,.38);
-      letter-spacing: .01em;
-      align-self: flex-end;
-      margin-bottom: 2px;
-      margin-left: 1px;
+      font-size: 13px; font-weight: 500;
+      color: var(--text-muted);
     }
-    .clock-meridiem {
-      font-size: 0.7rem;
-      font-weight: 500;
-      color: rgba(248,250,252,.3);
-      letter-spacing: .06em;
-      text-transform: uppercase;
-      align-self: flex-end;
-      margin-bottom: 4px;
-      margin-left: 4px;
+
+    /* ============================================================
+       MOBILE HEADER
+    ============================================================ */
+    .mobile-header {
+      display: none;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 16px 10px;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
     }
+    .mobile-header__brand { display: flex; align-items: center; gap: 10px; }
+    .mobile-header__icon {
+      width: 30px; height: 30px; border-radius: 8px;
+      background: linear-gradient(135deg, #2f81f7 0%, #1a3a6b 100%);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; flex-shrink: 0;
+    }
+    .mobile-header__title { font-size: 15px; font-weight: 700; color: var(--text); }
+    .mobile-header__sub   { font-size: 10px; color: var(--text-muted); margin-top: 1px; }
+
+    /* ============================================================
+       BOTTOM TABS (mobile only — hidden on desktop)
+    ============================================================ */
+    .bottom-tabs { display: none; }
 
     /* ============================================================
        BARRA DE FECHA
     ============================================================ */
     .datebar {
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
-      padding: 10px 24px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      flex-wrap: wrap;
+      display: flex; align-items: center; gap: 10px;
+      padding: 0 28px; margin-bottom: 12px; flex-wrap: wrap;
     }
     .datebar__btn {
-      background: var(--surface-2);
-      border: 1px solid rgba(255,255,255,.08);
-      color: var(--text-muted);
-      padding: 7px 14px;
-      border-radius: 7px;
-      cursor: pointer;
-      font-size: 0.82rem;
-      font-family: inherit;
-      transition: all .15s;
+      background: var(--surface); border: 1px solid var(--border);
+      color: var(--text); padding: 6px 12px;
+      border-radius: 8px; cursor: pointer;
+      font-size: 13px; font-weight: 500;
+      font-family: inherit; transition: all .15s;
     }
-    .datebar__btn:hover { background: var(--border); color: var(--text); }
+    .datebar__btn:hover { background: var(--surface-2); }
     .datebar__label {
-      font-weight: 700;
-      font-size: 1rem;
-      min-width: 240px;
-      text-align: center;
-      color: var(--text);
-      letter-spacing: -.01em;
+      font-weight: 600; font-size: 14px;
+      min-width: 260px; text-align: center;
+      color: var(--text); letter-spacing: -.01em;
+      padding: 6px 18px;
+      background: var(--surface); border: 1px solid var(--accent);
+      border-radius: 8px;
     }
     .datebar__today {
-      background: transparent;
-      border: 1px solid rgba(45,212,191,.3);
-      color: var(--disponible);
-      padding: 7px 14px;
-      border-radius: 7px;
-      cursor: pointer;
-      font-size: 0.82rem;
-      font-weight: 600;
-      font-family: inherit;
-      transition: all .15s;
+      background: var(--accent); border: none;
+      color: #fff; padding: 6px 14px;
+      border-radius: 8px; cursor: pointer;
+      font-size: 13px; font-weight: 600;
+      font-family: inherit; transition: background .15s;
     }
-    .datebar__today:hover { background: rgba(45,212,191,.1); }
+    .datebar__today:hover { background: var(--accent-hover); }
 
     /* ============================================================
        LEYENDA DE ESTADOS
     ============================================================ */
     .legend {
-      display: flex;
-      gap: 6px;
-      flex-wrap: wrap;
-      padding: 8px 24px;
-      background: var(--bg);
-      border-bottom: 1px solid rgba(255,255,255,.04);
+      display: flex; gap: 8px; flex-wrap: wrap;
+      padding: 0 28px; margin-bottom: 14px;
     }
     .legend__item {
       display: flex; align-items: center; gap: 5px;
-      font-size: 0.72rem; color: var(--text-muted);
-      background: var(--surface); padding: 3px 10px 3px 7px;
-      border-radius: 20px; border: 1px solid rgba(255,255,255,.05);
+      font-size: 12px; color: var(--text-muted);
+      padding: 4px 10px; border-radius: 20px;
+      border: 1px solid var(--border); background: transparent;
+      cursor: pointer; font-family: inherit;
+      transition: all .15s; font-weight: 500;
     }
+    .legend__item:hover { border-color: var(--text-muted); color: var(--text); }
     .legend__dot  { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
 
     /* ============================================================
        CONTENEDOR DE LA GRILLA
     ============================================================ */
-    .grid-wrap  { padding: 0 16px 24px; overflow-x: auto; background: var(--bg); }
+    .grid-wrap  { padding: 0 16px 24px; overflow-x: auto; }
     .grid-inner { display: flex; min-width: 560px; padding-top: 16px; }
 
     /* Columna de horas (eje Y) */
     .time-col        { width: var(--col-time); flex-shrink: 0; }
     .time-col__hdr   { height: 52px; display: flex; align-items: center; justify-content: center;
-                       font-size: 0.72rem; color: var(--text-muted); font-weight: 600;
+                       font-size: 11px; color: var(--text-muted); font-weight: 700;
                        text-transform: uppercase; letter-spacing: .05em; }
     .time-col__tick  { height: var(--cell-h); display: flex; align-items: flex-start;
                        justify-content: flex-end; padding-right: 10px; padding-top: 3px;
-                       font-size: 0.72rem; color: var(--text-muted);
-                       border-top: 1px solid var(--border); }
-    .time-col__tick--half { border-top: 1px dashed rgba(255,255,255,0.05); }
+                       font-size: 11px; font-weight: 600; color: var(--text-muted);
+                       border-top: 1px solid var(--border-sub); }
+    .time-col__tick--half { border-top: 1px dashed rgba(48,54,61,.4); }
 
     /* Columna de una cancha */
-    .court-col       { flex: 1; min-width: 140px; border-left: 1px solid rgba(255,255,255,.06); }
+    .court-col       { flex: 1; min-width: 140px; border-left: 1px solid var(--border-sub); }
     .court-col__hdr  {
       height: 58px;
-      background: rgba(255,255,255,.03);
-      border-bottom: 1px solid rgba(255,255,255,.08);
+      background: var(--surface-2);
+      border-bottom: 1px solid var(--border);
       display: flex; flex-direction: column;
       align-items: center; justify-content: center;
       padding: 8px 10px;
     }
-    .court-col__name { font-weight: 700; font-size: 0.95rem; letter-spacing: -.01em; }
-    .court-col__info { font-size: 0.7rem; color: var(--text-muted); margin-top: 3px; opacity: .8; }
+    .court-col__name { font-weight: 700; font-size: 14px; letter-spacing: -.01em; }
+    .court-col__info { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
 
     /* Área de turnos dentro de la columna */
     .slots-area      { position: relative; }
 
     /* Líneas de fondo de la grilla (decorativas) */
     .grid-line       { position: absolute; left: 0; right: 0; height: var(--cell-h);
-                       border-top: 1px solid rgba(255,255,255,0.025); }
-    .grid-line--half { border-top: 1px dashed rgba(255,255,255,0.010); }
+                       border-top: 1px solid rgba(48,54,61,.3); }
+    .grid-line--half { border-top: 1px dashed rgba(48,54,61,.15); }
 
     /* ============================================================
        TARJETA DE TURNO
@@ -228,21 +284,24 @@
       z-index: 1;
     }
     .slot-card:hover {
-      filter: brightness(1.15); transform: scale(1.012);
+      filter: brightness(1.12); transform: translateX(2px);
       box-shadow: 0 4px 16px rgba(0,0,0,.35); z-index: 5;
     }
-    .slot-card__time  { font-size: 0.63rem; font-weight: 400; opacity: .55; letter-spacing: .02em; }
-    .slot-card__label { font-size: 0.8rem; font-weight: 600; white-space: nowrap;
-                        overflow: hidden; text-overflow: ellipsis; line-height: 1.2; margin-top: 2px; }
-    .slot-card__price { font-size: 0.68rem; font-weight: 500; opacity: .7; margin-top: 3px; }
+    .slot-card__time  { font-size: 11px; font-weight: 500; color: var(--text-muted); letter-spacing: .02em; }
+    .slot-card__label { font-size: 13px; font-weight: 600; color: var(--text);
+                        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+                        line-height: 1.2; margin-top: 2px; }
+    .slot-card__price { font-size: 11px; font-weight: 600; color: var(--text-muted); margin-top: 3px; }
 
-    /* Colores por estado — acento izquierdo + fondo sutil */
-    .slot--disponible { background: rgba(19,78,74,.8);   color: var(--disponible); border-color: var(--disponible); }
-    .slot--pendiente  { background: rgba(113,63,18,.8);  color: var(--pendiente);  border-color: var(--pendiente); }
-    .slot--reservado  { background: rgba(30,58,138,.8);  color: var(--reservado);  border-color: var(--reservado); }
-    .slot--bloqueado  { background: rgba(30,41,59,.8);   color: var(--bloqueado);  border-color: rgba(71,85,105,.5); }
-    .slot--rechazado  { background: rgba(127,29,29,.8);  color: var(--rechazado);  border-color: var(--rechazado); }
-    .slot--pagado     { background: rgba(20,83,45,.8);   color: var(--pagado);     border-color: var(--pagado); }
+    /* Colores por estado */
+    .slot--disponible { background: var(--disponible-bg); border-color: var(--disponible); }
+    .slot--disponible .slot-card__label { color: var(--disponible); }
+    .slot--pendiente  { background: var(--pendiente-bg);  border-color: var(--pendiente); }
+    .slot--reservado  { background: var(--reservado-bg);  border-color: #2f81f7; }
+    .slot--bloqueado  { background: var(--bloqueado-bg);  border-color: #484f58; }
+    .slot--bloqueado  .slot-card__label { color: var(--bloqueado); }
+    .slot--rechazado  { background: var(--rechazado-bg);  border-color: var(--rechazado); }
+    .slot--pagado     { background: var(--pagado-bg);     border-color: var(--pagado); }
 
     /* Línea de hora actual */
     .linea-tiempo-actual {
@@ -287,33 +346,32 @@
     }
     .modal__head {
       padding: 20px 24px 16px;
-      border-bottom: 1px solid rgba(255,255,255,.06);
+      border-bottom: 1px solid var(--border-sub);
       display: flex; align-items: flex-start; justify-content: space-between; gap: 10px;
     }
     .modal__title  { font-size: 1.08rem; font-weight: 700; letter-spacing: -.01em; }
-    .modal__sub    { font-size: 0.78rem; color: var(--text-muted); margin-top: 3px; opacity: .8; }
-    .modal__close  { background: rgba(255,255,255,.06); border: none; color: var(--text-muted);
+    .modal__sub    { font-size: 0.78rem; color: var(--text-muted); margin-top: 3px; }
+    .modal__close  { background: var(--surface-2); border: 1px solid var(--border); color: var(--text-muted);
                      font-size: 1rem; cursor: pointer; padding: 5px 7px; flex-shrink: 0;
                      border-radius: 7px; transition: background .15s, color .15s; line-height: 1; }
-    .modal__close:hover { background: rgba(255,255,255,.12); color: var(--text); }
+    .modal__close:hover { background: var(--border); color: var(--text); }
     .modal__body   { padding: 20px 24px; }
-    .modal__foot   { padding: 14px 24px 20px; border-top: 1px solid rgba(255,255,255,.06);
+    .modal__foot   { padding: 14px 24px 20px; border-top: 1px solid var(--border-sub);
                      display: flex; gap: 8px; flex-wrap: wrap; }
 
-    /* Badge de estado en el modal */
+    /* Badge de estado */
     .badge {
-      display: inline-flex; align-items: center; gap: 5px;
-      padding: 3px 11px; border-radius: 20px;
-      font-size: 0.75rem; font-weight: 700;
-      text-transform: uppercase; letter-spacing: .04em;
-      margin-bottom: 14px;
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 2px 8px; border-radius: 20px;
+      font-size: 11px; font-weight: 600;
+      margin-bottom: 14px; white-space: nowrap;
     }
-    .badge--disponible { background: var(--disponible-bg); color: var(--disponible); }
-    .badge--pendiente  { background: var(--pendiente-bg);  color: var(--pendiente); }
-    .badge--reservado  { background: var(--reservado-bg);  color: var(--reservado); }
-    .badge--bloqueado  { background: var(--bloqueado-bg);  color: var(--bloqueado); }
-    .badge--rechazado  { background: var(--rechazado-bg);  color: var(--rechazado); }
-    .badge--pagado     { background: var(--pagado-bg);     color: var(--pagado); }
+    .badge--disponible { background: var(--disponible-bg); color: var(--disponible); border: 1px solid var(--disponible); }
+    .badge--pendiente  { background: var(--pendiente-bg);  color: var(--pendiente);  border: 1px solid var(--pendiente); }
+    .badge--reservado  { background: var(--reservado-bg);  color: var(--reservado);  border: 1px solid #2f81f7; }
+    .badge--bloqueado  { background: var(--bloqueado-bg);  color: var(--bloqueado);  border: 1px solid #484f58; }
+    .badge--rechazado  { background: var(--rechazado-bg);  color: var(--rechazado);  border: 1px solid var(--rechazado); }
+    .badge--pagado     { background: var(--pagado-bg);     color: var(--pagado);     border: 1px solid var(--pagado); }
 
     /* Grilla de info en el modal */
     .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 18px; }
@@ -332,19 +390,20 @@
       margin-bottom: 16px;
     }
 
-    /* Formulario de nueva reserva */
+    /* Formulario */
     .form-group        { margin-bottom: 14px; }
-    .form-group label  { display: block; font-size: 0.8rem; color: var(--text-muted);
-                         margin-bottom: 5px; font-weight: 500; }
+    .form-group label  { display: block; font-size: 12px; color: var(--text-muted);
+                         margin-bottom: 5px; font-weight: 600;
+                         text-transform: uppercase; letter-spacing: .5px; }
     .form-group input  {
       width: 100%;
       background: var(--surface-2); border: 1px solid var(--border);
-      color: var(--text); padding: 9px 11px; border-radius: 8px;
-      font-size: 0.88rem; font-family: inherit;
+      color: var(--text); padding: 9px 12px; border-radius: 8px;
+      font-size: 14px; font-family: inherit;
       transition: border-color .15s;
     }
-    .form-group input:focus      { outline: none; border-color: var(--reservado); }
-    .form-group input::placeholder { color: var(--text-muted); }
+    .form-group input:focus      { outline: none; border-color: var(--accent); }
+    .form-group input::placeholder { color: var(--text-muted); opacity: .6; }
 
     /* ============================================================
        BOTONES
@@ -358,13 +417,13 @@
     .btn:hover  { filter: brightness(1.1); }
     .btn:active { transform: scale(.97); }
 
-    .btn--primary   { background: var(--reservado);   color: #fff; }
+    .btn--primary   { background: var(--accent);       color: #fff; }
     .btn--success   { background: var(--disponible);  color: #0a1f0a; }
     .btn--warning   { background: var(--pendiente);   color: #1a1200; }
     .btn--danger    { background: var(--rechazado);   color: #fff; }
     .btn--ghost     { background: var(--surface-2);   color: var(--text); border: 1px solid var(--border); }
     .btn--lock      { background: var(--bloqueado-bg); color: var(--text-muted); border: 1px solid var(--border); }
-    .btn--paid      { background: var(--pagado);      color: #0a1f0a; }
+    .btn--paid      { background: var(--pagado);      color: #fff; }
 
     /* ============================================================
        TOASTS
@@ -391,60 +450,25 @@
     .toast--info    { border-left: 4px solid var(--reservado); }
     .toast--warning { border-left: 4px solid var(--pendiente); }
 
-    /* ============================================================
-       NAVEGACIÓN DE PESTAÑAS
-    ============================================================ */
-    .tabs {
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      padding: 0 20px;
-      gap: 2px;
-    }
-    .tab-btn {
-      background: none;
-      border: none;
-      border-bottom: 2px solid transparent;
-      color: var(--text-muted);
-      padding: 14px 16px 12px;
-      font-size: 0.86rem;
-      font-weight: 500;
-      font-family: inherit;
-      cursor: pointer;
-      transition: color .15s, background .15s, border-color .15s;
-      margin-bottom: -1px;
-      border-radius: 8px 8px 0 0;
-      display: flex;
-      align-items: center;
-      gap: 7px;
-    }
-    .tab-btn:hover { color: var(--text); background: rgba(255,255,255,.04); }
-    .tab-btn.active { color: var(--text); border-bottom-color: var(--reservado); background: rgba(59,130,246,.07); }
+    /* badge pendientes en sidebar */
     .tab-btn__badge {
-      background: var(--pendiente-bg);
-      color: var(--pendiente);
-      font-size: 0.68rem;
-      padding: 1px 6px;
-      border-radius: 10px;
-      font-weight: 700;
+      background: var(--pendiente-bg); color: var(--pendiente);
+      font-size: 10px; padding: 1px 6px;
+      border-radius: 10px; font-weight: 700;
     }
 
-    /* Sistema de vistas: oculta las secciones que no corresponden */
-    body[data-view='clientes'] .datebar,
-    body[data-view='clientes'] .legend,
-    body[data-view='clientes'] .grid-wrap { display: none; }
+    /* ============================================================
+       SISTEMA DE VISTAS
+    ============================================================ */
+    #view-recepcion { display: none; }
+    body[data-view='recepcion'] #view-recepcion { display: block; }
+
     #view-clientes { display: none; }
     body[data-view='clientes'] #view-clientes { display: block; }
 
-    body[data-view='reportes'] .datebar,
-    body[data-view='reportes'] .legend,
-    body[data-view='reportes'] .grid-wrap { display: none; }
     #view-reportes { display: none; }
     body[data-view='reportes'] #view-reportes { display: block; }
 
-    body[data-view='admin'] .datebar,
-    body[data-view='admin'] .legend,
-    body[data-view='admin'] .grid-wrap { display: none; }
     #view-admin { display: none; }
     body[data-view='admin'] #view-admin { display: block; }
 
@@ -452,58 +476,37 @@
        PANEL DE CLIENTES — BARRA DE HERRAMIENTAS
     ============================================================ */
     .cl-toolbar {
-      padding: 18px 28px;
-      display: flex;
-      gap: 10px;
-      align-items: center;
-      flex-wrap: wrap;
-      border-bottom: 1px solid rgba(255,255,255,.06);
-      background: var(--surface);
+      padding: 0 28px 16px;
+      display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
     }
     .cl-search {
-      flex: 1;
-      min-width: 200px;
-      background: var(--bg);
-      border: 1px solid rgba(255,255,255,.08);
-      color: var(--text);
-      padding: 10px 14px 10px 38px;
-      border-radius: 10px;
-      font-size: 0.88rem;
-      font-family: inherit;
+      flex: 1; min-width: 200px;
+      background: var(--surface); border: 1px solid var(--border);
+      color: var(--text); padding: 9px 12px 9px 36px;
+      border-radius: 8px; font-size: 14px; font-family: inherit;
       transition: border-color .2s, box-shadow .2s;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%2394a3b8' viewBox='0 0 16 16'%3E%3Cpath d='M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z'/%3E%3C/svg%3E");
-      background-repeat: no-repeat;
-      background-position: 12px center;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23848d97' viewBox='0 0 16 16'%3E%3Cpath d='M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: 12px center;
     }
-    .cl-search:focus {
-      outline: none;
-      border-color: rgba(59,130,246,.5);
-      box-shadow: 0 0 0 3px rgba(59,130,246,.1);
-    }
+    .cl-search:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(47,129,247,.1); }
     .cl-search::placeholder { color: var(--text-muted); opacity: .6; }
 
     /* ============================================================
        PANEL DE CLIENTES — ESTADÍSTICAS
     ============================================================ */
     .cl-stats {
-      display: flex;
-      gap: 10px;
-      padding: 20px 28px;
-      flex-wrap: wrap;
-      border-bottom: 1px solid rgba(255,255,255,.04);
+      display: flex; gap: 10px;
+      padding: 0 28px 20px; flex-wrap: wrap;
     }
     .cl-stat {
-      background: var(--surface);
-      border: 1px solid rgba(255,255,255,.07);
-      border-radius: 12px;
-      padding: 16px 22px;
-      min-width: 130px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; padding: 16px 20px; flex: 1; min-width: 120px;
       transition: border-color .15s;
     }
-    .cl-stat:hover { border-color: rgba(255,255,255,.14); }
-    .cl-stat__num { font-size: 1.8rem; font-weight: 700; line-height: 1; letter-spacing: -.02em; }
-    .cl-stat__lbl { font-size: 0.68rem; color: var(--text-muted); text-transform: uppercase;
-                    letter-spacing: .07em; margin-top: 5px; opacity: .7; }
+    .cl-stat:hover { border-color: var(--text-muted); }
+    .cl-stat__num { font-size: 24px; font-weight: 800; line-height: 1; letter-spacing: -.5px; }
+    .cl-stat__lbl { font-size: 11px; color: var(--text-muted); text-transform: uppercase;
+                    letter-spacing: .5px; margin-top: 5px; }
 
     /* ============================================================
        PANEL DE CLIENTES — TARJETAS
@@ -511,52 +514,38 @@
     .cl-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 14px;
-      padding: 20px 28px 28px;
+      gap: 14px; padding: 0 28px 28px;
     }
     .cl-card {
-      background: var(--surface);
-      border: 1px solid rgba(255,255,255,.07);
-      border-radius: 14px;
-      padding: 18px;
-      cursor: pointer;
-      transition: border-color .2s, box-shadow .2s, transform .15s;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; padding: 16px; cursor: pointer;
+      transition: all .15s;
     }
     .cl-card:hover {
-      border-color: rgba(59,130,246,.4);
-      box-shadow: 0 8px 28px rgba(0,0,0,.35);
-      transform: translateY(-1px);
+      background: var(--surface-2); border-color: var(--accent);
+      transform: translateY(-2px); box-shadow: 0 4px 20px rgba(47,129,247,.15);
     }
     .cl-card__head { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
     .cl-card__avatar {
-      width: 44px; height: 44px;
-      border-radius: 12px;
-      background: rgba(59,130,246,.15);
-      color: var(--reservado);
+      width: 44px; height: 44px; border-radius: 12px;
       display: flex; align-items: center; justify-content: center;
-      font-size: 1rem; font-weight: 800; flex-shrink: 0;
-      letter-spacing: -.02em;
-      border: 1px solid rgba(59,130,246,.2);
+      font-size: 15px; font-weight: 700; flex-shrink: 0;
     }
-    .cl-card__name  { font-weight: 700; font-size: 1rem; letter-spacing: -.01em; }
-    .cl-card__phone { font-size: 0.75rem; color: var(--text-muted); margin-top: 3px; opacity: .7; letter-spacing: .01em; }
-    .cl-card__foot  { display: flex; gap: 5px; flex-wrap: wrap;
-                      padding-top: 13px; border-top: 1px solid rgba(255,255,255,.05); }
+    .cl-card__name  { font-weight: 700; font-size: 15px; }
+    .cl-card__phone { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
+    .cl-card__foot  { display: flex; gap: 5px; flex-wrap: wrap; align-items: center;
+                      padding-top: 13px; border-top: 1px solid var(--border-sub); }
     .cl-chip {
-      background: rgba(255,255,255,.05);
-      border: 1px solid rgba(255,255,255,.07);
-      border-radius: 20px;
-      padding: 3px 10px;
-      font-size: 0.7rem;
-      font-weight: 500;
-      color: var(--text-muted);
+      background: var(--surface-2); border: 1px solid var(--border);
+      border-radius: 20px; padding: 3px 10px;
+      font-size: 11px; font-weight: 500; color: var(--text-muted);
     }
-    .cl-chip--activo  { background: rgba(59,130,246,.12);  border-color: rgba(59,130,246,.2);  color: var(--reservado); }
-    .cl-chip--pagado  { background: rgba(74,222,128,.10);  border-color: rgba(74,222,128,.2);  color: var(--pagado); }
-    .cl-chip--hoy     { background: rgba(234,179,8,.10);   border-color: rgba(234,179,8,.2);   color: var(--pendiente); }
+    .cl-chip--activo { background: rgba(47,129,247,.12); border-color: rgba(47,129,247,.2); color: var(--accent); }
+    .cl-chip--pagado { background: rgba(163,113,247,.10); border-color: rgba(163,113,247,.2); color: var(--pagado); }
+    .cl-chip--hoy    { background: rgba(210,153,34,.10); border-color: rgba(210,153,34,.2); color: var(--pendiente); }
 
     /* Estado vacío */
-    .cl-empty { text-align: center; padding: 72px 24px; color: var(--text-muted); }
+    .cl-empty { text-align: center; padding: 72px 24px; color: var(--text-muted); grid-column: 1/-1; }
     .cl-empty__icon { font-size: 3rem; margin-bottom: 14px; opacity: .3; }
     .cl-empty__msg  { font-size: 0.9rem; opacity: .7; }
 
@@ -564,38 +553,28 @@
        MODAL DE DETALLE / EDICIÓN DE CLIENTE
     ============================================================ */
     .cl-modal-avatar {
-      width: 54px; height: 54px;
-      border-radius: 14px;
-      background: rgba(59,130,246,.15);
-      color: var(--reservado);
+      width: 54px; height: 54px; border-radius: 14px;
       display: flex; align-items: center; justify-content: center;
-      font-size: 1.25rem; font-weight: 800;
-      flex-shrink: 0;
-      border: 1px solid rgba(59,130,246,.2);
+      font-size: 1.25rem; font-weight: 800; flex-shrink: 0;
     }
     .modal-section-lbl {
-      font-size: 0.68rem; font-weight: 700;
-      text-transform: uppercase; letter-spacing: .08em;
-      color: var(--text-muted);
-      margin: 20px 0 10px;
-      padding-bottom: 7px;
-      border-bottom: 1px solid rgba(255,255,255,.06);
-      opacity: .8;
+      font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .5px;
+      color: var(--text-muted); margin: 20px 0 10px;
+      padding-bottom: 7px; border-bottom: 1px solid var(--border-sub);
     }
 
     /* Tabla de historial */
     .hist-wrap { max-height: 280px; overflow-y: auto; border-radius: 10px;
-                 border: 1px solid rgba(255,255,255,.07); }
-    .hist-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+                 border: 1px solid var(--border); }
+    .hist-table { width: 100%; border-collapse: collapse; font-size: 13px; }
     .hist-table th {
-      position: sticky; top: 0;
-      text-align: left; padding: 9px 12px;
-      background: rgba(255,255,255,.04);
-      color: var(--text-muted); font-size: 0.66rem;
-      text-transform: uppercase; letter-spacing: .06em;
-      border-bottom: 1px solid rgba(255,255,255,.06);
+      position: sticky; top: 0; text-align: left; padding: 10px 12px;
+      background: var(--surface-2); color: var(--text-muted); font-size: 11px;
+      text-transform: uppercase; letter-spacing: .5px;
+      border-bottom: 1px solid var(--border);
     }
-    .hist-table td { padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,.035); vertical-align: middle; }
+    .hist-table td { padding: 11px 12px; border-bottom: 1px solid var(--border-sub); vertical-align: middle; }
     .hist-table tr:last-child td { border-bottom: none; }
     .hist-table tr:hover td { background: rgba(255,255,255,.025); }
     .hist-empty { text-align: center; padding: 28px; color: var(--text-muted); font-size: 0.82rem; opacity: .6; }
@@ -607,41 +586,26 @@
        REPORTES — BARRA DE PERÍODO
     ============================================================ */
     .report-toolbar {
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
-      padding: 12px 24px;
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      flex-wrap: wrap;
+      padding: 0 28px 16px;
+      display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
     }
-    .period-tabs { display: flex; gap: 4px; }
+    .period-tabs {
+      display: flex; gap: 4px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 8px; padding: 3px;
+    }
     .period-btn {
-      background: var(--surface-2);
-      border: 1px solid var(--border);
-      color: var(--text-muted);
-      padding: 6px 14px;
-      border-radius: 7px;
-      cursor: pointer;
-      font-size: 0.82rem;
-      font-weight: 600;
-      font-family: inherit;
-      transition: background .15s, color .15s, border-color .15s;
+      background: transparent; border: none; color: var(--text-muted);
+      padding: 5px 12px; border-radius: 6px; cursor: pointer;
+      font-size: 13px; font-weight: 400; font-family: inherit;
+      transition: all .15s;
     }
     .period-btn:hover  { color: var(--text); }
-    .period-btn.active { background: var(--reservado-bg); color: var(--reservado); border-color: var(--reservado); }
+    .period-btn.active { background: var(--accent); color: #fff; font-weight: 600; }
     .period-nav {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-left: auto;
+      display: flex; align-items: center; gap: 8px; margin-left: auto;
     }
-    .period-label {
-      font-weight: 600;
-      font-size: 0.9rem;
-      min-width: 220px;
-      text-align: center;
-    }
+    .period-label { font-weight: 600; font-size: 14px; min-width: 220px; text-align: center; }
 
     /* ============================================================
        REPORTES — KPIs
@@ -649,155 +613,105 @@
     .kpi-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 12px;
-      padding: 16px 24px;
+      gap: 12px; padding: 0 28px 16px;
     }
     .kpi-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 16px 20px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; padding: 16px 20px;
     }
-    .kpi-card__num { font-size: 1.9rem; font-weight: 700; line-height: 1; }
-    .kpi-card__lbl { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;
-                     letter-spacing: .05em; margin-top: 5px; }
-    .kpi-card__sub { font-size: 0.75rem; color: var(--text-muted); margin-top: 4px; }
-    .kpi-bar       { height: 5px; background: var(--surface-2); border-radius: 3px; margin-top: 6px; overflow: hidden; }
-    .kpi-bar__fill { height: 100%; background: var(--disponible); border-radius: 3px;
-                     transition: width .4s ease; }
+    .kpi-card__num { font-size: 28px; font-weight: 800; line-height: 1; letter-spacing: -1px; }
+    .kpi-card__lbl { font-size: 11px; color: var(--text-muted); text-transform: uppercase;
+                     letter-spacing: .5px; margin-top: 5px; }
+    .kpi-card__sub { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+    .kpi-bar       { height: 6px; background: var(--surface-2); border-radius: 3px; margin-top: 6px; overflow: hidden; }
+    .kpi-bar__fill { height: 100%; background: var(--pagado); border-radius: 3px; transition: width .4s ease; }
 
     /* ============================================================
        REPORTES — SECCIONES Y GRÁFICOS
     ============================================================ */
-    .report-body { padding: 0 24px 32px; display: flex; flex-direction: column; gap: 16px; }
-
+    .report-body { padding: 0 28px 32px; display: flex; flex-direction: column; gap: 16px; }
     .report-section {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      overflow: hidden;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; overflow: hidden;
     }
     .report-section__title {
-      padding: 14px 18px;
-      font-size: 0.78rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: .05em;
-      color: var(--text-muted);
-      border-bottom: 1px solid var(--border);
+      padding: 14px 18px; font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .5px;
+      color: var(--text-muted); border-bottom: 1px solid var(--border);
     }
 
     /* Gráfico de barras horizontales */
     .chart-wrap { padding: 16px 18px; display: flex; flex-direction: column; gap: 10px; }
     .chart-row  { display: flex; align-items: center; gap: 10px; }
     .chart-row__label {
-      width: 80px;
-      flex-shrink: 0;
-      font-size: 0.76rem;
-      color: var(--text-muted);
-      text-align: right;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      width: 80px; flex-shrink: 0; font-size: 12px; color: var(--text-muted);
+      text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
-    .chart-row__track {
-      flex: 1;
-      height: 10px;
-      background: var(--surface-2);
-      border-radius: 5px;
-      overflow: hidden;
-    }
-    .chart-row__fill {
-      height: 100%;
-      background: var(--pagado);
-      border-radius: 5px;
-      transition: width .4s ease;
-      min-width: 2px;
-    }
-    .chart-row__fill--reservado { background: var(--reservado); }
+    .chart-row__track { flex: 1; height: 6px; background: var(--surface-2); border-radius: 3px; overflow: hidden; }
+    .chart-row__fill  { height: 100%; background: var(--pagado); border-radius: 3px; transition: width .4s ease; min-width: 2px; }
+    .chart-row__fill--reservado { background: var(--accent); }
     .chart-row__fill--pendiente { background: var(--pendiente); }
-    .chart-row__value {
-      width: 90px;
-      flex-shrink: 0;
-      font-size: 0.76rem;
-      font-weight: 600;
-      color: var(--text-muted);
-    }
+    .chart-row__value { width: 90px; flex-shrink: 0; font-size: 12px; font-weight: 600; color: var(--text-muted); }
 
     /* Grilla de canchas */
-    .cancha-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1px;
-                   background: var(--border); }
+    .cancha-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                   gap: 1px; background: var(--border); }
     .cancha-card { padding: 16px 18px; background: var(--surface); }
-    .cancha-card__name  { font-weight: 700; font-size: 0.95rem; }
-    .cancha-card__sport { font-size: 0.72rem; color: var(--text-muted); margin-top: 2px; margin-bottom: 8px; }
+    .cancha-card__name  { font-weight: 700; font-size: 14px; }
+    .cancha-card__sport { font-size: 11px; color: var(--text-muted); margin-top: 2px; margin-bottom: 8px; }
     .cancha-card__ing   { font-size: 1.3rem; font-weight: 700; margin-bottom: 4px; }
 
     /* Top clientes */
     .top-clientes { padding: 8px 0; }
-    .top-cliente  {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 10px 18px;
-      border-bottom: 1px solid rgba(255,255,255,.04);
-    }
+    .top-cliente  { display: flex; align-items: center; gap: 12px; padding: 10px 18px;
+                    border-bottom: 1px solid var(--border-sub); }
     .top-cliente:last-child { border-bottom: none; }
-    .top-cliente__rank   { font-size: 0.75rem; color: var(--text-muted); width: 20px; text-align: center;
+    .top-cliente__rank   { font-size: 12px; color: var(--text-muted); width: 20px; text-align: center;
                            font-weight: 700; flex-shrink: 0; }
     .top-cliente__avatar { width: 34px; height: 34px; border-radius: 8px;
                            background: var(--reservado-bg); color: var(--reservado);
                            display: flex; align-items: center; justify-content: center;
-                           font-size: 0.78rem; font-weight: 800; flex-shrink: 0; }
+                           font-size: 12px; font-weight: 800; flex-shrink: 0; }
     .top-cliente__info   { flex: 1; min-width: 0; }
-    .top-cliente__name   { font-size: 0.88rem; font-weight: 600;
-                           white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .top-cliente__phone  { font-size: 0.72rem; color: var(--text-muted); }
+    .top-cliente__name   { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .top-cliente__phone  { font-size: 12px; color: var(--text-muted); }
     .top-cliente__stats  { display: flex; flex-direction: column; align-items: flex-end;
-                           gap: 2px; font-size: 0.75rem; color: var(--text-muted); flex-shrink: 0; }
-    .top-cliente__stats strong { font-size: 0.88rem; color: var(--pagado); }
+                           gap: 2px; font-size: 12px; color: var(--text-muted); flex-shrink: 0; }
+    .top-cliente__stats strong { font-size: 13px; color: var(--pagado); }
 
     /* ============================================================
        PANEL DE ADMINISTRACIÓN
     ============================================================ */
-    .admin-wrap { padding: 20px 24px 32px; display: flex; flex-direction: column; gap: 16px; }
+    .admin-wrap { padding: 0 28px 32px; display: flex; flex-direction: column; gap: 16px; }
 
     .admin-section {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      overflow: hidden;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; overflow: hidden;
     }
     .admin-section__hdr {
-      padding: 14px 20px;
-      border-bottom: 1px solid var(--border);
+      padding: 14px 20px; border-bottom: 1px solid var(--border);
       display: flex; align-items: center; justify-content: space-between;
     }
     .admin-section__title {
-      font-size: 0.78rem; font-weight: 700;
-      text-transform: uppercase; letter-spacing: .05em;
-      color: var(--text-muted);
+      font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .5px; color: var(--text-muted);
     }
     .admin-section__body { padding: 20px; }
 
     /* Grilla de tarjetas de cancha */
     .admin-courts {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-      gap: 12px;
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px;
     }
     .admin-court {
-      background: var(--surface-2);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 16px;
-      transition: border-color .15s;
+      background: var(--surface-2); border: 1px solid var(--border);
+      border-radius: 12px; padding: 18px; transition: all .15s;
       display: flex; flex-direction: column;
     }
-    .admin-court:hover        { border-color: var(--reservado); }
-    .admin-court.inactiva     { opacity: .4; }
+    .admin-court:hover        { background: var(--surface-2); border-color: var(--accent); }
+    .admin-court.inactiva     { opacity: .55; }
     .admin-court__icon  { font-size: 1.8rem; margin-bottom: 8px; display: block; }
-    .admin-court__name  { font-weight: 700; font-size: 1rem; }
-    .admin-court__sport { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
+    .admin-court__name  { font-weight: 700; font-size: 14px; }
+    .admin-court__sport { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
     .admin-court__chips { display: flex; gap: 6px; margin: 10px 0; flex-wrap: wrap; }
     .admin-court__price { font-size: 1.25rem; font-weight: 700; color: var(--pagado); }
     .admin-court__foot  {
@@ -819,8 +733,8 @@
       height: 14px; width: 14px; left: 2px; bottom: 2px;
       background: var(--text-muted); border-radius: 50%; transition: .2s;
     }
-    .toggle input:checked + .toggle__rail { background: var(--disponible-bg); border-color: var(--disponible); }
-    .toggle input:checked + .toggle__rail::before { transform: translateX(16px); background: var(--disponible); }
+    .toggle input:checked + .toggle__rail { background: rgba(47,129,247,.2); border-color: var(--accent); }
+    .toggle input:checked + .toggle__rail::before { transform: translateX(16px); background: var(--accent); }
 
     /* Select en formularios */
     .form-select {
@@ -833,7 +747,7 @@
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2394a3b8' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
       background-repeat: no-repeat; background-position: right 11px center;
     }
-    .form-select:focus { outline: none; border-color: var(--reservado); }
+    .form-select:focus { outline: none; border-color: var(--accent); }
     .form-select option { background: var(--surface); color: var(--text); }
 
     /* Configuración del complejo */
@@ -864,13 +778,13 @@
       letter-spacing: .15em; outline: none; transition: border-color .2s;
       box-sizing: border-box;
     }
-    .login-input:focus { border-color: var(--reservado); }
+    .login-input:focus { border-color: var(--accent); }
     .login-btn {
       width: 100%; padding: 11px; border-radius: 8px; border: none;
-      background: var(--reservado); color: #fff; font-size: .95rem;
-      font-weight: 600; cursor: pointer; transition: opacity .2s;
+      background: var(--accent); color: #fff; font-size: .95rem;
+      font-weight: 600; cursor: pointer; transition: background .2s; font-family: inherit;
     }
-    .login-btn:hover { opacity: .85; }
+    .login-btn:hover { background: var(--accent-hover); }
     .login-error { font-size: .82rem; color: var(--rechazado); min-height: 18px; }
 
     /* Pantalla de carga */
@@ -884,7 +798,7 @@
     .loading-spinner {
       width: 44px; height: 44px;
       border: 3px solid var(--surface-2);
-      border-top-color: var(--reservado);
+      border-top-color: var(--accent);
       border-radius: 50%;
       animation: spin .7s linear infinite;
     }
@@ -894,79 +808,73 @@
     /* ============================================================
        RESPONSIVE — MOBILE
     ============================================================ */
-    @media (max-width: 640px) {
+    @media (max-width: 768px) {
+      /* Ocultar sidebar, mostrar mobile layout */
+      .sidebar { display: none; }
+      .page-header { display: none; }
+      .mobile-header { display: flex; }
 
-      /* Header */
-      .header          { padding: 12px 14px; }
-      .header__icon    { width: 32px; height: 32px; font-size: 15px; border-radius: 8px; }
-      .header__title   { font-size: 0.95rem; }
-      .header__sub     { font-size: 0.68rem; }
-      .clock-main      { font-size: 1.3rem; }
-      .clock-sep       { font-size: 1.3rem; }
-      .clock-sec       { font-size: 0.8rem; }
-      .clock-meridiem  { font-size: 0.62rem; }
-
-      /* Tabs — scroll horizontal sin scroll bar visible */
-      .tabs            { padding: 0 6px; overflow-x: auto; -webkit-overflow-scrolling: touch;
-                         scrollbar-width: none; }
-      .tabs::-webkit-scrollbar { display: none; }
-      .tab-btn         { padding: 11px 10px; font-size: 0.8rem; white-space: nowrap; flex-shrink: 0; }
+      /* Bottom tabs */
+      .bottom-tabs {
+        display: flex;
+        background: var(--surface); border-top: 1px solid var(--border);
+        padding-bottom: env(safe-area-inset-bottom, 8px); padding-top: 4px;
+        flex-shrink: 0;
+      }
+      .bottom-tab {
+        flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px;
+        padding: 8px 0; background: none; border: none; cursor: pointer;
+        color: var(--text-muted); font-size: 10px; font-family: inherit;
+        font-weight: 400; transition: color .15s;
+      }
+      .bottom-tab.active { color: var(--accent); font-weight: 600; }
 
       /* Barra de fecha */
-      .datebar         { padding: 8px 12px; gap: 7px; }
-      .datebar__label  { min-width: 0; flex: 1; font-size: 0.8rem; }
-      .datebar__btn    { padding: 6px 10px; font-size: 0.8rem; }
+      .datebar { padding: 8px 14px; gap: 7px; }
+      .datebar__label { min-width: 0; flex: 1; font-size: 13px; padding: 6px 10px; }
+      .datebar__btn   { padding: 6px 10px; font-size: 12px; }
 
-      /* Leyenda — más compacta */
-      .legend          { padding: 6px 12px; gap: 8px; }
-      .legend__item    { font-size: 0.7rem; }
+      /* Leyenda */
+      .legend { padding: 6px 14px; gap: 6px; }
+      .legend__item { font-size: 11px; }
 
-      /* Grilla de recepción */
-      .grid-wrap       { padding: 10px 6px; }
+      /* Grilla */
+      .grid-wrap { padding: 8px 6px; }
 
       /* Modal — sube desde abajo como sheet */
-      .overlay         { padding: 0; align-items: flex-end; }
-      .modal           { border-radius: 16px 16px 0 0; max-width: 100%; max-height: 88vh; }
-      .modal__foot     { flex-direction: column; }
+      .overlay  { padding: 0; align-items: flex-end; }
+      .modal    { border-radius: 20px 20px 0 0; max-width: 100%; max-height: 88vh; }
+      .modal__foot { flex-direction: column; }
       .modal__foot .btn { width: 100%; text-align: center; justify-content: center; }
 
-      /* Info grid en modal (2 col → 1 col) */
-      .info-grid       { grid-template-columns: 1fr; }
+      /* Info grid: 2col → 1col */
+      .info-grid { grid-template-columns: 1fr; }
 
-      /* Formularios de 2 columnas → 1 columna */
-      .form-row        { grid-template-columns: 1fr; }
+      /* Forms: 2col → 1col */
+      .form-row { grid-template-columns: 1fr; }
 
-      /* Panel de clientes */
-      .cl-toolbar      { padding: 12px 14px; }
-      .cl-stats        { padding: 12px 14px; gap: 8px; }
-      .cl-stat         { min-width: 0; flex: 1; padding: 12px 14px; }
-      .cl-stat__num    { font-size: 1.3rem; }
-      .cl-grid         { padding: 0 14px 20px; gap: 10px;
-                         grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
+      /* Clientes */
+      .cl-toolbar { padding: 8px 14px 14px; }
+      .cl-stats   { padding: 0 14px 16px; gap: 8px; }
+      .cl-stat    { min-width: 0; padding: 12px 14px; }
+      .cl-stat__num { font-size: 20px; }
+      .cl-grid    { padding: 0 14px 20px; gap: 10px;
+                    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
 
       /* Reportes */
-      .rep-toolbar     { padding: 12px 14px; flex-wrap: wrap; }
-      .rep-body        { padding: 14px; }
-      .rep-stats       { gap: 8px; }
-      .rep-stat        { padding: 12px 14px; }
+      .report-toolbar { padding: 0 14px 14px; }
+      .kpi-grid       { padding: 0 14px 14px; }
+      .report-body    { padding: 0 14px 24px; }
 
       /* Admin */
-      .admin-body      { padding: 14px; }
-      .cancha-grid     { gap: 1px; }
-      .config-grid     { grid-template-columns: 1fr; }
+      .admin-wrap { padding: 0 14px 24px; }
+      .config-grid { grid-template-columns: 1fr; }
 
-      /* View containers */
+      /* Padding inferior para que no tape las tabs */
+      #view-recepcion,
       #view-clientes,
       #view-reportes,
-      #view-admin      { padding-bottom: 20px; }
-    }
-
-    @media (max-width: 400px) {
-      /* En pantallas muy chicas ocultamos el reloj y el subtítulo */
-      .header__time    { display: none; }
-      .header__sub     { display: none; }
-      .tab-btn         { padding: 11px 8px; font-size: 0.75rem; }
-      .datebar__label  { font-size: 0.75rem; }
+      #view-admin { padding-bottom: 20px; }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -994,140 +902,224 @@
     </div>
   </div>
 
-  <!-- HEADER -->
-  <header class="header">
-    <div class="header__brand">
-      <div class="header__icon">🏟</div>
-      <div>
-        <div class="header__title">Costanera Club</div>
-        <div class="header__sub">Gestión de Reservas</div>
-      </div>
+  <!-- SIDEBAR (desktop) -->
+  <nav class="sidebar">
+    <div class="sidebar__logo">
+      <div class="sidebar__logo-icon">⚽</div>
+      <div class="sidebar__logo-title" id="sidebarTitle">Reservas</div>
+      <div class="sidebar__logo-sub">Gestión de canchas</div>
     </div>
-    <div class="header__time" id="reloj"></div>
-  </header>
-
-  <!-- PESTAÑAS DE NAVEGACIÓN -->
-  <nav class="tabs">
-    <button class="tab-btn active" data-view="recepcion">Recepción</button>
-    <button class="tab-btn" data-view="clientes">
-      Clientes
-      <span class="tab-btn__badge" id="badgePendientes" style="display:none"></span>
-    </button>
-    <button class="tab-btn" data-view="reportes">Reportes</button>
-    <button class="tab-btn" data-view="admin">Administración</button>
+    <div class="sidebar__nav">
+      <button class="sidebar__item active" data-view="recepcion">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+          <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.5"/>
+          <path d="M3 10h18M8 2v4M16 2v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        Recepción
+      </button>
+      <button class="sidebar__item" data-view="clientes">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          <circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="1.5"/>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        Clientes
+        <span class="tab-btn__badge" id="badgePendientes" style="display:none"></span>
+      </button>
+      <button class="sidebar__item" data-view="reportes">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+          <path d="M18 20V10M12 20V4M6 20v-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+        Reportes
+      </button>
+      <button class="sidebar__item" data-view="admin">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.5"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" stroke="currentColor" stroke-width="1.5"/>
+        </svg>
+        Administración
+      </button>
+    </div>
+    <div class="sidebar__footer">v2.0 — Rediseño</div>
   </nav>
 
-  <!-- NAVEGACIÓN DE FECHA -->
-  <div class="datebar">
-    <button class="datebar__btn" id="btnPrev">← Anterior</button>
-    <div class="datebar__label" id="lblFecha">Cargando…</div>
-    <button class="datebar__btn" id="btnNext">Siguiente →</button>
-    <button class="datebar__today" id="btnHoy">Hoy</button>
-  </div>
+  <!-- MAIN CONTENT -->
+  <div class="main-wrap">
 
-  <!-- LEYENDA -->
-  <div class="legend">
-    <div class="legend__item"><span class="legend__dot" style="background:var(--disponible)"></span>Disponible</div>
-    <div class="legend__item"><span class="legend__dot" style="background:var(--pendiente)"></span>Pendiente</div>
-    <div class="legend__item"><span class="legend__dot" style="background:var(--reservado)"></span>Reservado</div>
-    <div class="legend__item"><span class="legend__dot" style="background:var(--bloqueado)"></span>Bloqueado</div>
-    <div class="legend__item"><span class="legend__dot" style="background:var(--rechazado)"></span>Rechazado</div>
-    <div class="legend__item"><span class="legend__dot" style="background:var(--pagado)"></span>Pagado</div>
-  </div>
-
-  <!-- GRILLA -->
-  <div class="grid-wrap">
-    <div class="grid-inner" id="gridInner">
-      <!-- Generado por JavaScript -->
-    </div>
-  </div>
-
-  <!-- VISTA: CLIENTES -->
-  <div id="view-clientes">
-
-    <!-- Barra de búsqueda + botón nuevo -->
-    <div class="cl-toolbar">
-      <input class="cl-search" id="clSearch" type="search"
-             placeholder="Buscar por nombre o teléfono…" autocomplete="off" />
-      <button class="btn btn--primary" id="btnNuevoCliente">+ Nuevo cliente</button>
-    </div>
-
-    <!-- Estadísticas rápidas -->
-    <div class="cl-stats" id="clStats"></div>
-
-    <!-- Grilla de tarjetas -->
-    <div class="cl-grid" id="clGrid"></div>
-
-  </div>
-
-  <!-- VISTA: REPORTES -->
-  <div id="view-reportes">
-
-    <!-- Selector de período + navegación -->
-    <div class="report-toolbar">
-      <div class="period-tabs">
-        <button class="period-btn active" data-periodo="diario">Diario</button>
-        <button class="period-btn" data-periodo="semanal">Semanal</button>
-        <button class="period-btn" data-periodo="mensual">Mensual</button>
-        <button class="period-btn" data-periodo="anual">Anual</button>
-      </div>
-      <div class="period-nav">
-        <button class="datebar__btn" id="rPrev">←</button>
-        <span class="period-label" id="rLabel">—</span>
-        <button class="datebar__btn" id="rNext">→</button>
-        <button class="datebar__today" id="rHoy">Hoy</button>
+    <!-- Mobile header -->
+    <div class="mobile-header">
+      <div class="mobile-header__brand">
+        <div class="mobile-header__icon">⚽</div>
+        <div>
+          <div class="mobile-header__title" id="mobileViewTitle">Recepción</div>
+          <div class="mobile-header__sub">Gestión de canchas</div>
+        </div>
       </div>
     </div>
 
-    <!-- KPI cards -->
-    <div class="kpi-grid" id="rKpis"></div>
+    <!-- Scrollable area -->
+    <div class="view-area">
 
-    <!-- Gráficos + tablas -->
-    <div class="report-body" id="rBody"></div>
-
-  </div>
-
-  <!-- VISTA: ADMINISTRACIÓN -->
-  <div id="view-admin">
-    <div class="admin-wrap">
-
-      <!-- CANCHAS -->
-      <div class="admin-section">
-        <div class="admin-section__hdr">
-          <div class="admin-section__title">Canchas</div>
-          <button class="btn btn--primary" id="btnNuevaCancha">+ Nueva cancha</button>
+      <!-- Page header (desktop) -->
+      <div class="page-header">
+        <div>
+          <h1 class="page-header__title" id="pageHeaderTitle">Recepción</h1>
+          <p class="page-header__sub" id="pageHeaderSub">Turnos del día</p>
         </div>
-        <div class="admin-section__body">
-          <div class="admin-courts" id="adminCourts"></div>
-        </div>
+        <div class="header__time" id="reloj"></div>
       </div>
 
-      <!-- CONFIGURACIÓN -->
-      <div class="admin-section">
-        <div class="admin-section__hdr">
-          <div class="admin-section__title">Configuración del complejo</div>
+      <!-- VISTA: RECEPCIÓN -->
+      <div id="view-recepcion">
+
+        <!-- NAVEGACIÓN DE FECHA -->
+        <div class="datebar">
+          <button class="datebar__btn" id="btnPrev">← Anterior</button>
+          <div class="datebar__label" id="lblFecha">Cargando…</div>
+          <button class="datebar__btn" id="btnNext">Siguiente →</button>
+          <button class="datebar__today" id="btnHoy">Hoy</button>
         </div>
-        <div class="admin-section__body">
-          <div class="config-grid">
-            <div class="form-group">
-              <label for="cfgNombre">Nombre del complejo</label>
-              <input id="cfgNombre" type="text" placeholder="Complejo Deportivo" autocomplete="off" />
+
+        <!-- LEYENDA -->
+        <div class="legend">
+          <div class="legend__item"><span class="legend__dot" style="background:var(--disponible)"></span>Disponible</div>
+          <div class="legend__item"><span class="legend__dot" style="background:var(--pendiente)"></span>Pendiente</div>
+          <div class="legend__item"><span class="legend__dot" style="background:var(--reservado)"></span>Reservado</div>
+          <div class="legend__item"><span class="legend__dot" style="background:var(--bloqueado)"></span>Bloqueado</div>
+          <div class="legend__item"><span class="legend__dot" style="background:var(--rechazado)"></span>Rechazado</div>
+          <div class="legend__item"><span class="legend__dot" style="background:var(--pagado)"></span>Pagado</div>
+        </div>
+
+        <!-- GRILLA -->
+        <div class="grid-wrap">
+          <div class="grid-inner" id="gridInner">
+            <!-- Generado por JavaScript -->
+          </div>
+        </div>
+
+      </div><!-- /view-recepcion -->
+
+      <!-- VISTA: CLIENTES -->
+      <div id="view-clientes">
+
+        <!-- Barra de búsqueda + botón nuevo -->
+        <div class="cl-toolbar">
+          <input class="cl-search" id="clSearch" type="search"
+                 placeholder="Buscar por nombre o teléfono…" autocomplete="off" />
+          <button class="btn btn--primary" id="btnNuevoCliente">+ Nuevo cliente</button>
+        </div>
+
+        <!-- Estadísticas rápidas -->
+        <div class="cl-stats" id="clStats"></div>
+
+        <!-- Grilla de tarjetas -->
+        <div class="cl-grid" id="clGrid"></div>
+
+      </div><!-- /view-clientes -->
+
+      <!-- VISTA: REPORTES -->
+      <div id="view-reportes">
+
+        <!-- Selector de período + navegación -->
+        <div class="report-toolbar">
+          <div class="period-tabs">
+            <button class="period-btn active" data-periodo="diario">Diario</button>
+            <button class="period-btn" data-periodo="semanal">Semanal</button>
+            <button class="period-btn" data-periodo="mensual">Mensual</button>
+            <button class="period-btn" data-periodo="anual">Anual</button>
+          </div>
+          <div class="period-nav">
+            <button class="datebar__btn" id="rPrev">←</button>
+            <span class="period-label" id="rLabel">—</span>
+            <button class="datebar__btn" id="rNext">→</button>
+            <button class="datebar__today" id="rHoy">Hoy</button>
+          </div>
+        </div>
+
+        <!-- KPI cards -->
+        <div class="kpi-grid" id="rKpis"></div>
+
+        <!-- Gráficos + tablas -->
+        <div class="report-body" id="rBody"></div>
+
+      </div><!-- /view-reportes -->
+
+      <!-- VISTA: ADMINISTRACIÓN -->
+      <div id="view-admin">
+        <div class="admin-wrap">
+
+          <!-- CANCHAS -->
+          <div class="admin-section">
+            <div class="admin-section__hdr">
+              <div class="admin-section__title">Canchas</div>
+              <button class="btn btn--primary" id="btnNuevaCancha">+ Nueva cancha</button>
             </div>
-            <div class="form-group">
-              <label for="cfgApertura">Hora de apertura</label>
-              <input id="cfgApertura" type="time" />
-            </div>
-            <div class="form-group">
-              <label for="cfgCierre">Hora de cierre</label>
-              <input id="cfgCierre" type="time" />
+            <div class="admin-section__body">
+              <div class="admin-courts" id="adminCourts"></div>
             </div>
           </div>
-          <button class="btn btn--success" id="btnGuardarConfig">Guardar configuración</button>
-        </div>
-      </div>
 
-    </div>
-  </div>
+          <!-- CONFIGURACIÓN -->
+          <div class="admin-section">
+            <div class="admin-section__hdr">
+              <div class="admin-section__title">Configuración del complejo</div>
+            </div>
+            <div class="admin-section__body">
+              <div class="config-grid">
+                <div class="form-group">
+                  <label for="cfgNombre">Nombre del complejo</label>
+                  <input id="cfgNombre" type="text" placeholder="Complejo Deportivo" autocomplete="off" />
+                </div>
+                <div class="form-group">
+                  <label for="cfgApertura">Hora de apertura</label>
+                  <input id="cfgApertura" type="time" />
+                </div>
+                <div class="form-group">
+                  <label for="cfgCierre">Hora de cierre</label>
+                  <input id="cfgCierre" type="time" />
+                </div>
+              </div>
+              <button class="btn btn--success" id="btnGuardarConfig">Guardar configuración</button>
+            </div>
+          </div>
+
+        </div>
+      </div><!-- /view-admin -->
+
+    </div><!-- /view-area -->
+
+    <!-- BOTTOM TABS (mobile) -->
+    <nav class="bottom-tabs">
+      <button class="bottom-tab active" data-view="recepcion">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+          <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.5"/>
+          <path d="M3 10h18M8 2v4M16 2v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        <span>Recepción</span>
+      </button>
+      <button class="bottom-tab" data-view="clientes">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          <circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="1.5"/>
+        </svg>
+        <span>Clientes</span>
+      </button>
+      <button class="bottom-tab" data-view="reportes">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+          <path d="M18 20V10M12 20V4M6 20v-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+        <span>Reportes</span>
+      </button>
+      <button class="bottom-tab" data-view="admin">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.5"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" stroke="currentColor" stroke-width="1.5"/>
+        </svg>
+        <span>Admin</span>
+      </button>
+    </nav>
+
+  </div><!-- /main-wrap -->
 
   <!-- MODAL -->
   <div class="overlay" id="overlay">
@@ -1218,7 +1210,7 @@ const CONFIG = {
   HORA_APERTURA:  '11:00',  // Primer slot del día
   HORA_CIERRE:    '22:00',  // No puede empezar ningún turno después de esto
   MINUTOS_BASE:   30,        // Altura de cada fila = 30 minutos
-  CELL_H_PX:      44,        // Debe coincidir con --cell-h del CSS
+  CELL_H_PX:      50,        // Debe coincidir con --cell-h del CSS
   HS_CANCELACION: 3,         // Horas antes del turno para cancelar sin cargo
 };
 
@@ -1652,8 +1644,10 @@ function renderGrilla() {
     const col = document.createElement('div');
     col.className = 'court-col';
 
+    const sportColor = cancha.deporte?.toLowerCase().includes('fútbol') || cancha.deporte?.toLowerCase().includes('futbol')
+      ? '#3fb950' : '#2f81f7';
     col.innerHTML = `
-      <div class="court-col__hdr">
+      <div class="court-col__hdr" style="border-top:3px solid ${sportColor}">
         <div class="court-col__name">${cancha.nombre}</div>
         <div class="court-col__info">${cancha.deporte} · $${cancha.precio.toLocaleString('es-AR')} · ${cancha.duracionTurno} min</div>
       </div>`;
@@ -1976,15 +1970,14 @@ function actualizarTodasLineasTiempo() {
 }
 
 function actualizarReloj() {
-  const now  = new Date();
-  const h    = String(now.getHours() % 12 || 12).padStart(2, '0');
-  const m    = String(now.getMinutes()).padStart(2, '0');
-  const s    = String(now.getSeconds()).padStart(2, '0');
-  const mer  = now.getHours() < 12 ? 'a.m.' : 'p.m.';
+  const now = new Date();
+  const h   = String(now.getHours()).padStart(2, '0');
+  const m   = String(now.getMinutes()).padStart(2, '0');
+  const s   = String(now.getSeconds()).padStart(2, '0');
+  const mer = now.getHours() < 12 ? 'AM' : 'PM';
   document.getElementById('reloj').innerHTML =
-    `<span class="clock-main">${h}<span class="clock-sep">:</span>${m}</span>` +
-    `<span class="clock-sec">:${s}</span>` +
-    `<span class="clock-meridiem">${mer}</span>`;
+    `<span class="clock-main">${h}:${m}</span>` +
+    `<span class="clock-sec">${s} ${mer}</span>`;
 }
 
 /* ====================================================================
@@ -2079,6 +2072,18 @@ function iniciales(nombre) {
   return nombre.trim().split(/\s+/).slice(0, 2).map(p => p[0].toUpperCase()).join('');
 }
 
+/** Paleta de colores para avatares de clientes */
+const AVATAR_COLORS = ['#2f81f7','#3fb950','#a371f7','#d29922','#f85149','#39c5cf'];
+function avatarColor(id) {
+  // Extraer número del id para asignar color de forma determinista
+  const n = parseInt(id.replace(/\D/g,'').slice(-4) || '0', 10);
+  return AVATAR_COLORS[n % AVATAR_COLORS.length];
+}
+function avatarStyle(id) {
+  const c = avatarColor(id);
+  return `background:${c}22;border:1.5px solid ${c}44;color:${c}`;
+}
+
 /**
  * Renderiza las estadísticas globales del panel (totales de clientes,
  * reservas activas hoy, ingresos del mes).
@@ -2163,11 +2168,12 @@ function renderClientes(filtro = '') {
     card.className = 'cl-card';
     card.innerHTML = `
       <div class="cl-card__head">
-        <div class="cl-card__avatar">${iniciales(cliente.nombre)}</div>
-        <div>
+        <div class="cl-card__avatar" style="${avatarStyle(cliente.id)}">${iniciales(cliente.nombre)}</div>
+        <div style="flex:1;min-width:0">
           <div class="cl-card__name">${cliente.nombre}</div>
           <div class="cl-card__phone">${cliente.telefono}</div>
         </div>
+        ${stats.totalGastado > 0 ? `<div style="font-size:14px;font-weight:700;color:var(--accent);flex-shrink:0">$${stats.totalGastado.toLocaleString('es-AR')}</div>` : ''}
       </div>
       <div class="cl-card__foot">
         <span class="cl-chip">${stats.total} reserva${stats.total !== 1 ? 's' : ''}</span>
@@ -2191,7 +2197,7 @@ function abrirDetalleCliente(clienteId) {
 
   document.getElementById('mTitle').innerHTML = `
     <div style="display:flex;align-items:center;gap:12px">
-      <div class="cl-modal-avatar">${iniciales(cliente.nombre)}</div>
+      <div class="cl-modal-avatar" style="${avatarStyle(cliente.id)}">${iniciales(cliente.nombre)}</div>
       <div>${cliente.nombre}</div>
     </div>`;
   document.getElementById('mSub').textContent = cliente.telefono;
@@ -2605,24 +2611,24 @@ function renderReportes() {
 function renderKpis(stats) {
   const { ingresosCobrados, ingresosPrevistos, turnosOcupados, totalTeorico, cancelaciones, ocupacionPct } = stats;
   document.getElementById('rKpis').innerHTML = `
-    <div class="kpi-card">
+    <div class="kpi-card" style="border-top:3px solid #3fb950">
       <div class="kpi-card__num">$${ingresosCobrados.toLocaleString('es-AR')}</div>
       <div class="kpi-card__lbl">Ingresos cobrados</div>
       <div class="kpi-card__sub">Previsto: $${ingresosPrevistos.toLocaleString('es-AR')}</div>
     </div>
-    <div class="kpi-card">
+    <div class="kpi-card" style="border-top:3px solid #2f81f7">
       <div class="kpi-card__num">${turnosOcupados}</div>
       <div class="kpi-card__lbl">Turnos con actividad</div>
       <div class="kpi-card__sub">de ${totalTeorico} posibles</div>
     </div>
-    <div class="kpi-card">
+    <div class="kpi-card" style="border-top:3px solid #a371f7">
       <div class="kpi-card__num">${ocupacionPct}%</div>
       <div class="kpi-card__lbl">Ocupación</div>
       <div class="kpi-card__sub">
-        <div class="kpi-bar"><div class="kpi-bar__fill" style="width:${ocupacionPct}%"></div></div>
+        <div class="kpi-bar"><div class="kpi-bar__fill" style="width:${ocupacionPct}%;background:#a371f7"></div></div>
       </div>
     </div>
-    <div class="kpi-card">
+    <div class="kpi-card" style="border-top:3px solid #f85149">
       <div class="kpi-card__num">${cancelaciones}</div>
       <div class="kpi-card__lbl">Cancelaciones</div>
       <div class="kpi-card__sub">turnos rechazados</div>
@@ -2750,9 +2756,24 @@ function renderReporteBody(stats, periodo) {
  */
 function cambiarVista(vista) {
   document.body.setAttribute('data-view', vista);
-  document.querySelectorAll('.tab-btn').forEach(btn => {
+  // Sidebar (desktop)
+  document.querySelectorAll('.sidebar__item').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.view === vista);
   });
+  // Bottom tabs (mobile)
+  document.querySelectorAll('.bottom-tab').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.view === vista);
+  });
+  // Page header titles
+  const TITLES = { recepcion: 'Recepción', clientes: 'Clientes', reportes: 'Reportes', admin: 'Administración' };
+  const SUBS   = { recepcion: 'Turnos del día', clientes: 'Gestión de clientes', reportes: 'Estadísticas', admin: 'Configuración' };
+  const titleEl = document.getElementById('pageHeaderTitle');
+  const subEl   = document.getElementById('pageHeaderSub');
+  const mobileEl = document.getElementById('mobileViewTitle');
+  if (titleEl)  titleEl.textContent  = TITLES[vista] || vista;
+  if (subEl)    subEl.textContent    = SUBS[vista]   || '';
+  if (mobileEl) mobileEl.textContent = TITLES[vista] || vista;
+  // Render
   if (vista === 'recepcion') renderGrilla();
   if (vista === 'clientes')  renderClientes();
   if (vista === 'reportes')  renderReportes();
@@ -2845,7 +2866,10 @@ function aplicarConfig() {
   if (cfg.horaApertura) CONFIG.HORA_APERTURA = cfg.horaApertura;
   if (cfg.horaCierre)   CONFIG.HORA_CIERRE   = cfg.horaCierre;
   if (cfg.nombre) {
-    document.querySelector('.header__title').textContent = cfg.nombre;
+    const sidebarTitle = document.getElementById('sidebarTitle');
+    if (sidebarTitle) sidebarTitle.textContent = cfg.nombre;
+    // Update page title to show complex name when in admin view
+    document.title = cfg.nombre + ' — Panel de Recepción';
   }
 }
 
@@ -2872,8 +2896,11 @@ function renderCanchasAdmin() {
   grid.innerHTML = '';
   canchas.forEach(cancha => {
     const activa = cancha.activa !== false;
+    const sportCol = cancha.deporte?.toLowerCase().includes('fútbol') || cancha.deporte?.toLowerCase().includes('futbol')
+      ? '#3fb950' : '#2f81f7';
     const card   = document.createElement('div');
     card.className = 'admin-court' + (activa ? '' : ' inactiva');
+    card.style.borderTop = `3px solid ${sportCol}`;
 
     card.innerHTML = `
       <span class="admin-court__icon">${iconoDeporte(cancha.deporte)}</span>
@@ -3046,8 +3073,8 @@ document.getElementById('btnHoy').addEventListener('click', () => {
   UI.fechaActual = hoy(); renderGrilla();
 });
 
-// Tabs
-document.querySelectorAll('.tab-btn').forEach(btn => {
+// Sidebar items + Bottom tabs
+document.querySelectorAll('.sidebar__item, .bottom-tab').forEach(btn => {
   btn.addEventListener('click', () => cambiarVista(btn.dataset.view));
 });
 
