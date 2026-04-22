@@ -2824,12 +2824,30 @@ function crearCanchaAdmin(datos) {
  */
 function editarCanchaAdmin(id, datos) {
   validarDatosCancha(datos);
-  return DB.actualizarCancha(id, {
+  const canchaActual  = DB.obtenerCanchaPorId(id);
+  const nuevaDuracion = Number(datos.duracion);
+  const cambioDuracion = canchaActual && nuevaDuracion !== canchaActual.duracionTurno;
+
+  DB.actualizarCancha(id, {
     nombre:        datos.nombre.trim(),
     deporte:       datos.deporte.trim(),
-    duracionTurno: Number(datos.duracion),
+    duracionTurno: nuevaDuracion,
     precio:        Number(datos.precio),
   });
+
+  if (cambioDuracion) {
+    const hoyStr    = hoy();
+    const aEliminar = DB._cache.turnos.filter(
+      t => t.canchaId === id && t.estado === 'disponible' && t.fecha >= hoyStr
+    );
+    DB._cache.turnos = DB._cache.turnos.filter(
+      t => !(t.canchaId === id && t.estado === 'disponible' && t.fecha >= hoyStr)
+    );
+    aEliminar.forEach(t =>
+      DB._sync(() => DB._q(`/turnos?id=eq.${t.id}`, { method: 'DELETE' }))
+    );
+    asegurarTurnosDia(UI.fechaActual);
+  }
 }
 
 /** Valida los campos comunes de un formulario de cancha. */
@@ -3001,6 +3019,7 @@ function abrirFormCancha(canchaId = null) {
       } else {
         editarCanchaAdmin(canchaId, datos);
         cerrarModal(); renderCanchasAdmin();
+        if (document.body.getAttribute('data-view') === 'recepcion') renderGrilla();
         toast('Cancha actualizada.', 'success');
       }
     } catch (e) { toast(e.message, 'error'); }
@@ -3055,9 +3074,26 @@ function acGuardarConfig() {
   if (!apertura || !cierre) { toast('Completá los horarios de apertura y cierre.', 'warning'); return; }
   if (apertura >= cierre)   { toast('La hora de apertura debe ser anterior al cierre.', 'error'); return; }
 
+  // Detectar cambio de horario ANTES de guardar
+  const cfgActual    = DB.obtenerConfig();
+  const cambioHorario = cfgActual.horaApertura !== apertura || cfgActual.horaCierre !== cierre;
+
   DB.guardarConfig({ nombre, horaApertura: apertura, horaCierre: cierre });
   aplicarConfig();
-  toast('Configuración guardada.', 'success');
+
+  if (cambioHorario) {
+    // Eliminar todos los turnos "disponible" del día visible para regenerarlos
+    // con el nuevo horario (turnos reservados/pagados no se tocan)
+    const fechaHoy = UI.fechaActual;
+    const aEliminar = DB._cache.turnos.filter(t => t.fecha === fechaHoy && t.estado === 'disponible');
+    DB._cache.turnos = DB._cache.turnos.filter(t => !(t.fecha === fechaHoy && t.estado === 'disponible'));
+    aEliminar.forEach(t => DB._sync(() => DB._q(`/turnos?id=eq.${t.id}`, { method: 'DELETE' })));
+    // Pre-generar los nuevos slots con el horario actualizado
+    asegurarTurnosDia(fechaHoy);
+    toast('Configuración guardada. Horario actualizado ✓', 'success');
+  } else {
+    toast('Configuración guardada.', 'success');
+  }
 }
 
 /* ====================================================================
