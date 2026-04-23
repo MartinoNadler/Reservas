@@ -1328,12 +1328,33 @@ const DB = {
   },
 
   // ─── CONFIG ───────────────────────────────────────────────────────
-  obtenerConfig() { return { ...this._cache.config }; },
+  // Campos que no existen en la tabla Supabase → se persisten solo en localStorage
+  _LOCAL_CFG_KEY: 'reservas_local_cfg',
+  _localCfgFields: ['emoji', 'subtitulo'],
+
+  obtenerConfig() {
+    const local = JSON.parse(localStorage.getItem(this._LOCAL_CFG_KEY) || '{}');
+    return { ...this._cache.config, ...local };
+  },
   guardarConfig(cfg) {
-    // El resto del código usa 'nombre', Supabase usa 'nombreComplejo'
-    const sbCfg = { ...cfg };
+    // Separar campos locales de los que van a Supabase
+    const sbCfg   = { ...cfg };
+    const localCfg = {};
+    this._localCfgFields.forEach(k => {
+      if (k in sbCfg) { localCfg[k] = sbCfg[k]; delete sbCfg[k]; }
+    });
+    // Supabase usa 'nombreComplejo', el resto del código usa 'nombre'
     if (sbCfg.nombre !== undefined) { sbCfg.nombreComplejo = sbCfg.nombre; delete sbCfg.nombre; }
+
     this._cache.config = { ...this._cache.config, ...cfg };
+
+    // Persistir campos locales en localStorage
+    if (Object.keys(localCfg).length) {
+      const prev = JSON.parse(localStorage.getItem(this._LOCAL_CFG_KEY) || '{}');
+      localStorage.setItem(this._LOCAL_CFG_KEY, JSON.stringify({ ...prev, ...localCfg }));
+    }
+
+    // Solo mandar a Supabase los campos que existen en la tabla
     this._sync(() => this._q('/config?id=eq.1', { method: 'PATCH', body: JSON.stringify(sbCfg) }));
     return this._cache.config;
   },
