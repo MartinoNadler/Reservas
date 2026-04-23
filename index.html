@@ -752,6 +752,11 @@
 
     /* Configuración del complejo */
     .config-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; margin-bottom: 16px; }
+    .emoji-pick {
+      cursor: pointer; font-size: 18px; padding: 2px 4px; border-radius: 6px;
+      transition: background .15s; user-select: none;
+    }
+    .emoji-pick:hover { background: var(--sub); }
 
     /* Login */
     #loginScreen {
@@ -1066,10 +1071,35 @@
             </div>
             <div class="admin-section__body">
               <div class="config-grid">
-                <div class="form-group">
+                <div class="form-group" style="grid-column:1/-1">
                   <label for="cfgNombre">Nombre del complejo</label>
                   <input id="cfgNombre" type="text" placeholder="Complejo Deportivo" autocomplete="off" />
                 </div>
+              </div>
+              <div class="config-grid" style="grid-template-columns: 80px 1fr; margin-bottom:14px;">
+                <div class="form-group">
+                  <label for="cfgEmoji">Emoji</label>
+                  <input id="cfgEmoji" type="text" maxlength="4" placeholder="⚽"
+                         style="text-align:center; font-size:22px; padding:6px 4px;" autocomplete="off" />
+                  <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:6px;">
+                    <span class="emoji-pick" title="Fútbol">⚽</span>
+                    <span class="emoji-pick" title="Pádel">🎾</span>
+                    <span class="emoji-pick" title="Tenis">🏸</span>
+                    <span class="emoji-pick" title="Básquet">🏀</span>
+                    <span class="emoji-pick" title="Vóley">🏐</span>
+                    <span class="emoji-pick" title="Hockey">🏑</span>
+                    <span class="emoji-pick" title="Rugby">🏉</span>
+                    <span class="emoji-pick" title="Squash">🎱</span>
+                    <span class="emoji-pick" title="Natación">🏊</span>
+                    <span class="emoji-pick" title="🏟️">🏟️</span>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label for="cfgSubtitulo">Subtítulo del sidebar</label>
+                  <input id="cfgSubtitulo" type="text" placeholder="Gestión de canchas" autocomplete="off" />
+                </div>
+              </div>
+              <div class="config-grid" style="margin-bottom:16px;">
                 <div class="form-group">
                   <label for="cfgApertura">Hora de apertura</label>
                   <input id="cfgApertura" type="time" />
@@ -2883,12 +2913,23 @@ function aplicarConfig() {
   const cfg = DB.obtenerConfig();
   if (cfg.horaApertura) CONFIG.HORA_APERTURA = cfg.horaApertura;
   if (cfg.horaCierre)   CONFIG.HORA_CIERRE   = cfg.horaCierre;
-  if (cfg.nombre) {
+
+  const nombre    = cfg.nombre    || '';
+  const emoji     = cfg.emoji     || '⚽';
+  const subtitulo = cfg.subtitulo || 'Gestión de canchas';
+
+  if (nombre) {
     const sidebarTitle = document.getElementById('sidebarTitle');
-    if (sidebarTitle) sidebarTitle.textContent = cfg.nombre;
-    // Update page title to show complex name when in admin view
-    document.title = cfg.nombre + ' — Panel de Recepción';
+    if (sidebarTitle) sidebarTitle.textContent = nombre;
+    document.title = nombre + ' — Panel de Recepción';
   }
+
+  const logoIcon = document.querySelector('.sidebar__logo-icon');
+  if (logoIcon) logoIcon.textContent = emoji;
+
+  document.querySelectorAll('.sidebar__logo-sub, .mobile-header__sub').forEach(el => {
+    el.textContent = subtitulo;
+  });
 }
 
 /**
@@ -3059,16 +3100,25 @@ function acEliminarCancha(canchaId) {
 /** Carga los valores actuales en el formulario de configuración. */
 function cargarFormConfig() {
   const cfg = DB.obtenerConfig();
-  document.getElementById('cfgNombre').value   = cfg.nombre       || 'Complejo Deportivo';
-  document.getElementById('cfgApertura').value = cfg.horaApertura || CONFIG.HORA_APERTURA;
-  document.getElementById('cfgCierre').value   = cfg.horaCierre   || CONFIG.HORA_CIERRE;
+  document.getElementById('cfgNombre').value    = cfg.nombre     || 'Complejo Deportivo';
+  document.getElementById('cfgEmoji').value     = cfg.emoji      || '⚽';
+  document.getElementById('cfgSubtitulo').value = cfg.subtitulo  || 'Gestión de canchas';
+  document.getElementById('cfgApertura').value  = cfg.horaApertura || CONFIG.HORA_APERTURA;
+  document.getElementById('cfgCierre').value    = cfg.horaCierre   || CONFIG.HORA_CIERRE;
+
+  // Emoji quick-pick
+  document.querySelectorAll('.emoji-pick').forEach(el => {
+    el.onclick = () => { document.getElementById('cfgEmoji').value = el.textContent; };
+  });
 }
 
 /** Guarda la configuración del complejo y la aplica al instante. */
 function acGuardarConfig() {
-  const nombre   = document.getElementById('cfgNombre').value.trim();
-  const apertura = document.getElementById('cfgApertura').value;
-  const cierre   = document.getElementById('cfgCierre').value;
+  const nombre    = document.getElementById('cfgNombre').value.trim();
+  const emoji     = document.getElementById('cfgEmoji').value.trim()    || '⚽';
+  const subtitulo = document.getElementById('cfgSubtitulo').value.trim() || 'Gestión de canchas';
+  const apertura  = document.getElementById('cfgApertura').value;
+  const cierre    = document.getElementById('cfgCierre').value;
 
   if (!nombre)   { toast('El nombre del complejo no puede estar vacío.', 'warning'); return; }
   if (!apertura || !cierre) { toast('Completá los horarios de apertura y cierre.', 'warning'); return; }
@@ -3078,7 +3128,7 @@ function acGuardarConfig() {
   const cfgActual    = DB.obtenerConfig();
   const cambioHorario = cfgActual.horaApertura !== apertura || cfgActual.horaCierre !== cierre;
 
-  DB.guardarConfig({ nombre, horaApertura: apertura, horaCierre: cierre });
+  DB.guardarConfig({ nombre, emoji, subtitulo, horaApertura: apertura, horaCierre: cierre });
   aplicarConfig();
 
   if (cambioHorario) {
