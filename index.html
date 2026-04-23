@@ -752,11 +752,6 @@
 
     /* Configuración del complejo */
     .config-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; margin-bottom: 16px; }
-    .emoji-pick {
-      cursor: pointer; font-size: 18px; padding: 2px 4px; border-radius: 6px;
-      transition: background .15s; user-select: none;
-    }
-    .emoji-pick:hover { background: var(--sub); }
 
     /* Login */
     #loginScreen {
@@ -1070,36 +1065,9 @@
               <div class="admin-section__title">Configuración del complejo</div>
             </div>
             <div class="admin-section__body">
-              <div class="config-grid">
-                <div class="form-group" style="grid-column:1/-1">
-                  <label for="cfgNombre">Nombre del complejo</label>
-                  <input id="cfgNombre" type="text" placeholder="Complejo Deportivo" autocomplete="off" />
-                </div>
-              </div>
-              <div class="config-grid" style="grid-template-columns: 80px 1fr; margin-bottom:14px;">
-                <div class="form-group">
-                  <label for="cfgEmoji">Emoji</label>
-                  <input id="cfgEmoji" type="text" maxlength="4" placeholder="⚽"
-                         style="text-align:center; font-size:22px; padding:6px 4px;" autocomplete="off" />
-                  <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:6px;">
-                    <span class="emoji-pick" title="Fútbol">⚽</span>
-                    <span class="emoji-pick" title="Pádel">🎾</span>
-                    <span class="emoji-pick" title="Tenis">🏸</span>
-                    <span class="emoji-pick" title="Básquet">🏀</span>
-                    <span class="emoji-pick" title="Vóley">🏐</span>
-                    <span class="emoji-pick" title="Hockey">🏑</span>
-                    <span class="emoji-pick" title="Rugby">🏉</span>
-                    <span class="emoji-pick" title="Squash">🎱</span>
-                    <span class="emoji-pick" title="Natación">🏊</span>
-                    <span class="emoji-pick" title="🏟️">🏟️</span>
-                  </div>
-                </div>
-                <div class="form-group">
-                  <label for="cfgSubtitulo">Subtítulo del sidebar</label>
-                  <input id="cfgSubtitulo" type="text" placeholder="Gestión de canchas" autocomplete="off" />
-                </div>
-              </div>
-              <div class="config-grid" style="margin-bottom:16px;">
+
+              <!-- Fila 1: Horarios -->
+              <div class="config-grid" style="margin-bottom:14px;">
                 <div class="form-group">
                   <label for="cfgApertura">Hora de apertura</label>
                   <input id="cfgApertura" type="time" />
@@ -1109,6 +1077,38 @@
                   <input id="cfgCierre" type="time" />
                 </div>
               </div>
+
+              <!-- Fila 2: Nombre -->
+              <div class="form-group" style="margin-bottom:14px;">
+                <label for="cfgNombre">Nombre del complejo</label>
+                <input id="cfgNombre" type="text" placeholder="Complejo Deportivo" autocomplete="off" />
+              </div>
+
+              <!-- Fila 3: Subtítulo + Emoji -->
+              <div class="config-grid" style="grid-template-columns:1fr auto; align-items:end; margin-bottom:20px;">
+                <div class="form-group" style="margin:0;">
+                  <label for="cfgSubtitulo">Subtítulo</label>
+                  <input id="cfgSubtitulo" type="text" placeholder="Gestión de canchas" autocomplete="off" />
+                </div>
+                <div class="form-group" style="margin:0;">
+                  <label for="cfgEmoji">Emoji</label>
+                  <select id="cfgEmoji" class="form-select" style="font-size:18px; text-align:center; min-width:90px;">
+                    <option value="⚽">⚽ Fútbol</option>
+                    <option value="🎾">🎾 Pádel</option>
+                    <option value="🏸">🏸 Tenis</option>
+                    <option value="🏀">🏀 Básquet</option>
+                    <option value="🏐">🏐 Vóley</option>
+                    <option value="🏑">🏑 Hockey</option>
+                    <option value="🏉">🏉 Rugby</option>
+                    <option value="🎱">🎱 Billar</option>
+                    <option value="🏊">🏊 Natación</option>
+                    <option value="🏟️">🏟️ Estadio</option>
+                    <option value="🥊">🥊 Boxeo</option>
+                    <option value="🏋️">🏋️ Gimnasio</option>
+                  </select>
+                </div>
+              </div>
+
               <button class="btn btn--success" id="btnGuardarConfig">Guardar configuración</button>
             </div>
           </div>
@@ -3100,16 +3100,15 @@ function acEliminarCancha(canchaId) {
 /** Carga los valores actuales en el formulario de configuración. */
 function cargarFormConfig() {
   const cfg = DB.obtenerConfig();
-  document.getElementById('cfgNombre').value    = cfg.nombre     || 'Complejo Deportivo';
-  document.getElementById('cfgEmoji').value     = cfg.emoji      || '⚽';
-  document.getElementById('cfgSubtitulo').value = cfg.subtitulo  || 'Gestión de canchas';
-  document.getElementById('cfgApertura').value  = cfg.horaApertura || CONFIG.HORA_APERTURA;
-  document.getElementById('cfgCierre').value    = cfg.horaCierre   || CONFIG.HORA_CIERRE;
-
-  // Emoji quick-pick
-  document.querySelectorAll('.emoji-pick').forEach(el => {
-    el.onclick = () => { document.getElementById('cfgEmoji').value = el.textContent; };
-  });
+  document.getElementById('cfgNombre').value    = cfg.nombre        || 'Complejo Deportivo';
+  document.getElementById('cfgSubtitulo').value = cfg.subtitulo     || 'Gestión de canchas';
+  document.getElementById('cfgApertura').value  = cfg.horaApertura  || CONFIG.HORA_APERTURA;
+  document.getElementById('cfgCierre').value    = cfg.horaCierre    || CONFIG.HORA_CIERRE;
+  // Seleccionar el emoji guardado en el <select>
+  const emojiSel = document.getElementById('cfgEmoji');
+  const savedEmoji = cfg.emoji || '⚽';
+  const opt = [...emojiSel.options].find(o => o.value === savedEmoji);
+  emojiSel.value = opt ? savedEmoji : emojiSel.options[0].value;
 }
 
 /** Guarda la configuración del complejo y la aplica al instante. */
