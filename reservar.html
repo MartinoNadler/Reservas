@@ -825,7 +825,7 @@ async function renderSlots() {
 
   slotsCalc.forEach(slot => {
     const turnoExistente = turnosDB.find(t => t.horaInicio === slot.horaInicio);
-    const esMio   = turnoExistente && misTurnoIds.has(turnoExistente.id);
+    const esMio   = turnoExistente && turnoExistente.estado !== 'disponible' && misTurnoIds.has(turnoExistente.id);
     const ocupado = turnoExistente && turnoExistente.estado !== 'disponible' && !esMio;
     const pasado  = esHoy && minutos(slot.horaInicio) <= ahoraMin;
     const libre   = !ocupado && !pasado && !esMio;
