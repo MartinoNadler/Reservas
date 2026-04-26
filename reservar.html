@@ -339,49 +339,60 @@
       padding-bottom: 13px; margin-bottom: 20px;
     }
 
-    /* ── DATE TABS ──────────────────────────────────────────── */
-    .date-tabs {
-      display: flex; gap: 7px;
-      overflow-x: auto; padding-bottom: 4px; scrollbar-width: none;
-    }
-    .date-tabs::-webkit-scrollbar { display: none; }
+    /* ── MINI CALENDAR ──────────────────────────────────────── */
+    .mini-cal { user-select: none; }
 
-    .date-tab {
-      flex-shrink: 0; display: flex; flex-direction: column; align-items: center;
-      min-width: 60px; padding: 10px 6px 8px;
-      background: var(--sur-0); border: 1px solid var(--bd);
-      border-radius: 12px; cursor: pointer;
-      transition: background .15s, border-color .15s, box-shadow .15s;
-      position: relative;
+    .mini-cal__header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 10px;
     }
-    .date-tab:hover { background: var(--sur-1); border-color: var(--bd-hi); }
-    .date-tab.active {
-      background: var(--blue-grad); border-color: transparent;
-      box-shadow: 0 4px 16px var(--blue-glow);
+    .mini-cal__month-label {
+      font-size: 13px; font-weight: 700; color: var(--t1); letter-spacing: -.2px;
     }
-    @media (max-width:520px) { .date-tab { min-width: 50px; padding: 8px 4px 7px; border-radius: 10px; } }
+    .mini-cal__nav {
+      width: 28px; height: 28px; border-radius: 7px;
+      background: var(--sur-1); border: 1px solid var(--bd);
+      color: var(--t2); font-size: 15px; line-height: 1;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: background .14s, color .14s;
+    }
+    .mini-cal__nav:hover:not(:disabled) { background: var(--sur-2); color: var(--t1); }
+    .mini-cal__nav:disabled { opacity: .22; cursor: default; }
 
-    .date-tab__day {
-      font-size: 9px; font-weight: 700; text-transform: uppercase;
-      letter-spacing: .06em; color: var(--t3);
+    .mini-cal__weekdays {
+      display: grid; grid-template-columns: repeat(7, 1fr);
+      margin-bottom: 3px;
     }
-    .date-tab.active .date-tab__day { color: rgba(255,255,255,.75); }
-
-    .date-tab__num {
-      font-size: 20px; font-weight: 800; color: var(--t1); line-height: 1.2;
-      font-variant-numeric: tabular-nums;
+    .mini-cal__wd {
+      text-align: center; font-size: 10px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .04em;
+      color: var(--t4); padding: 3px 0;
     }
-    .date-tab.active .date-tab__num { color: #fff; }
-    @media (max-width:520px) { .date-tab__num { font-size: 17px; } }
 
-    .date-tab__mes { font-size: 9px; font-weight: 600; color: var(--t3); }
-    .date-tab.active .date-tab__mes { color: rgba(255,255,255,.65); }
-
-    .date-tab__dot {
-      width: 3px; height: 3px; border-radius: 50%;
-      margin-top: 5px; background: var(--blue);
+    .mini-cal__days {
+      display: grid; grid-template-columns: repeat(7, 1fr);
+      gap: 2px;
     }
-    .date-tab.active .date-tab__dot { background: rgba(255,255,255,.55); }
+    .mini-cal__day {
+      aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 500; color: var(--t2);
+      border-radius: 8px; cursor: pointer;
+      transition: background .12s, color .12s;
+      position: relative; font-variant-numeric: tabular-nums;
+    }
+    .mini-cal__day:not(.mc-past):not(.mc-empty):hover { background: var(--sur-2); color: var(--t1); }
+    .mini-cal__day.mc-past  { color: var(--t4); cursor: default; }
+    .mini-cal__day.mc-empty { cursor: default; }
+    .mini-cal__day.mc-today { color: var(--blue); font-weight: 700; }
+    .mini-cal__day.mc-today::after {
+      content: ''; position: absolute; bottom: 3px;
+      width: 4px; height: 4px; border-radius: 50%; background: var(--blue);
+    }
+    .mini-cal__day.mc-active {
+      background: var(--blue-grad) !important; color: #fff !important;
+      font-weight: 700; box-shadow: 0 3px 10px var(--blue-glow);
+    }
+    .mini-cal__day.mc-active::after { display: none; }
 
     /* ── CANCHA TABS ────────────────────────────────────────── */
     .cancha-tabs {
@@ -418,13 +429,41 @@
     .info-bar__sep { color: var(--t4); }
     @media (max-width:520px) { .info-bar { padding: 8px 12px; font-size: 11px; } }
 
+    /* ── CANCHA HERO ─────────────────────────────────────────── */
+    .cancha-hero {
+      border-radius: 16px; overflow: hidden;
+      position: relative; height: 176px;
+      background: var(--sur-0); border: 1px solid var(--bd);
+      margin-bottom: 14px;
+    }
+    .cancha-hero__img {
+      width: 100%; height: 100%; object-fit: cover; display: block;
+    }
+    .cancha-hero__gradient {
+      width: 100%; height: 100%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 58px;
+    }
+    .cancha-hero__overlay {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      padding: 10px 16px 14px;
+      background: linear-gradient(transparent, rgba(0,0,0,.8));
+    }
+    .cancha-hero__name {
+      font-size: 15px; font-weight: 700; color: #fff; letter-spacing: -.2px;
+    }
+    .cancha-hero__meta {
+      font-size: 11px; color: rgba(255,255,255,.58); margin-top: 2px;
+    }
+    @media (max-width:520px) { .cancha-hero { height: 140px; border-radius: 12px; } }
+
     /* ── SLOT GRID ──────────────────────────────────────────── */
     .slot-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(105px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(118px, 1fr));
       gap: 7px;
     }
-    @media (max-width:1060px) { .slot-grid { grid-template-columns: repeat(auto-fill, minmax(110px,1fr)); } }
+    @media (max-width:1060px) { .slot-grid { grid-template-columns: repeat(auto-fill, minmax(112px,1fr)); } }
     @media (max-width:520px)  { .slot-grid { grid-template-columns: repeat(3,1fr); gap: 6px; } }
     @media (max-width:360px)  { .slot-grid { grid-template-columns: repeat(2,1fr); } }
 
@@ -497,6 +536,20 @@
     .legend__swatch--mia     { background: var(--blue-dim);  border-color: var(--blue-bd);  border-left-color: var(--blue);  }
     .legend__swatch--ocupado { background: var(--sur-0); border-color: var(--bd); opacity: .5; }
     @media (max-width:520px) { .legend__item { font-size: 10px; } }
+
+    /* ── LOCATION FOOTER ─────────────────────────────────────── */
+    .location-footer {
+      margin-top: 20px; padding-top: 14px;
+      border-top: 1px solid var(--bd);
+      display: flex; justify-content: flex-end; align-items: center;
+    }
+    .location-link {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 12px; color: var(--t3); font-weight: 500;
+      text-decoration: none; transition: color .15s;
+    }
+    .location-link:hover { color: var(--blue); }
+    .location-link__icon { font-size: 14px; }
 
     /* ══════════════════════════════════════════════════════════
        MODAL
@@ -724,7 +777,7 @@
         <!-- Selector de fecha y cancha -->
         <div>
           <div class="section-title">Reservar turno</div>
-          <div class="date-tabs"   id="dateTabs"></div>
+          <div id="miniCal"></div>
           <div class="cancha-tabs" id="canchaTabs"></div>
         </div>
 
@@ -732,6 +785,7 @@
 
       <!-- ── PANEL DERECHO ──────────────────────── -->
       <div class="booking-right">
+        <div class="cancha-hero" id="canchaHero" style="display:none"></div>
         <div class="info-bar" id="infoBar" style="display:none"></div>
         <div class="slot-grid" id="slotGrid">
           <div class="spinner" style="grid-column:1/-1"></div>
@@ -750,6 +804,7 @@
             Ocupado
           </div>
         </div>
+        <div class="location-footer" id="locationFooter" style="display:none"></div>
       </div>
 
     </div>
@@ -793,6 +848,8 @@ const S = {
   fechaActual:  fechaHoy(),
   canchaActual: null,
   dniPendiente: '',
+  calAno: null,
+  calMes: null,
 };
 
 /* ── HELPERS ─────────────────────────────────────────────── */
@@ -977,9 +1034,11 @@ async function entrar() {
   S.canchas = await sbq('/canchas?activa=eq.true&order=nombre') || [];
   if (S.canchas.length) S.canchaActual = S.canchas[0].id;
 
-  renderDateTabs();
+  renderCalendar();
   renderCanchaTabs();
   renderInfoBar();
+  renderCanchaHero();
+  renderLocation();
   await Promise.all([renderSlots(), renderMisReservas()]);
 }
 
@@ -993,27 +1052,82 @@ document.getElementById('accordionTrigger').addEventListener('click', () => {
   body.classList.toggle('closed',  isOpen);
 });
 
-/* ── DATE TABS ───────────────────────────────────────────── */
-function renderDateTabs() {
-  const wrap = document.getElementById('dateTabs');
-  wrap.innerHTML = '';
-  proxFechas(7).forEach((f,i) => {
-    const { dia,num,mes } = infoFecha(f);
-    const tab = document.createElement('div');
-    tab.className = 'date-tab' + (f===S.fechaActual?' active':'');
-    tab.innerHTML = `
-      <span class="date-tab__day">${i===0?'Hoy':dia}</span>
-      <span class="date-tab__num">${num}</span>
-      <span class="date-tab__mes">${mes}</span>
-      <span class="date-tab__dot"></span>`;
-    tab.addEventListener('click', async () => {
-      S.fechaActual = f;
-      document.querySelectorAll('.date-tab').forEach(t=>t.classList.remove('active'));
-      tab.classList.add('active');
-      renderInfoBar();
-      await renderSlots();
-    });
-    wrap.appendChild(tab);
+/* ── MINI CALENDAR ───────────────────────────────────────── */
+function renderCalendar() {
+  const wrap = document.getElementById('miniCal');
+  if (!wrap) return;
+
+  const hoy = fechaHoy();
+  const [hy, hm] = hoy.split('-').map(Number);
+
+  // Initialize month to current month on first render
+  if (!S.calAno) { S.calAno = hy; S.calMes = hm; }
+
+  const ano = S.calAno, mes = S.calMes;
+
+  // Month label in Spanish
+  const labelRaw = new Date(ano, mes - 1, 1)
+    .toLocaleDateString('es-AR', { month: 'long', year: 'numeric' });
+  const label = labelRaw.charAt(0).toUpperCase() + labelRaw.slice(1);
+
+  // First weekday of month (Mon-first: Mon=0 … Sun=6)
+  const firstWd  = new Date(ano, mes - 1, 1).getDay();
+  const offset   = (firstWd + 6) % 7;
+  const daysInMo = new Date(ano, mes, 0).getDate();
+
+  // Can we go back? Only if viewed month is ahead of today's month
+  const canPrev = (ano > hy) || (ano === hy && mes > hm);
+
+  const wdLabels = ['L','M','X','J','V','S','D'];
+
+  // Build day cells
+  let cellsHtml = '';
+  for (let i = 0; i < offset; i++) {
+    cellsHtml += `<div class="mini-cal__day mc-empty"></div>`;
+  }
+  for (let d = 1; d <= daysInMo; d++) {
+    const fStr    = `${ano}-${pad(mes)}-${pad(d)}`;
+    const isPast  = fStr < hoy;
+    const isToday = fStr === hoy;
+    const isActive= fStr === S.fechaActual;
+    let cls = 'mini-cal__day';
+    if      (isActive) cls += ' mc-active';
+    else if (isPast)   cls += ' mc-past';
+    else if (isToday)  cls += ' mc-today';
+    cellsHtml += `<div class="${cls}" data-fecha="${fStr}">${d}</div>`;
+  }
+
+  wrap.innerHTML = `
+    <div class="mini-cal__header">
+      <button class="mini-cal__nav" id="calPrev" ${canPrev ? '' : 'disabled'}>‹</button>
+      <span class="mini-cal__month-label">${label}</span>
+      <button class="mini-cal__nav" id="calNext">›</button>
+    </div>
+    <div class="mini-cal__weekdays">
+      ${wdLabels.map(w => `<div class="mini-cal__wd">${w}</div>`).join('')}
+    </div>
+    <div class="mini-cal__days" id="calDays">${cellsHtml}</div>`;
+
+  document.getElementById('calPrev').addEventListener('click', () => {
+    if (!canPrev) return;
+    S.calMes--;
+    if (S.calMes < 1) { S.calMes = 12; S.calAno--; }
+    renderCalendar();
+  });
+  document.getElementById('calNext').addEventListener('click', () => {
+    S.calMes++;
+    if (S.calMes > 12) { S.calMes = 1; S.calAno++; }
+    renderCalendar();
+  });
+  document.getElementById('calDays').addEventListener('click', async e => {
+    const cell = e.target.closest('.mini-cal__day');
+    if (!cell || cell.classList.contains('mc-past') || cell.classList.contains('mc-empty')) return;
+    const f = cell.dataset.fecha;
+    if (!f || f < fechaHoy()) return;
+    S.fechaActual = f;
+    renderCalendar();
+    renderInfoBar();
+    await renderSlots();
   });
 }
 
@@ -1030,6 +1144,7 @@ function renderCanchaTabs() {
       document.querySelectorAll('.cancha-tab').forEach(t=>t.classList.remove('active'));
       tab.classList.add('active');
       renderInfoBar();
+      renderCanchaHero();
       await renderSlots();
     });
     wrap.appendChild(tab);
@@ -1051,6 +1166,48 @@ function renderInfoBar() {
     <span>${cancha.deporte}</span>
     <span class="info-bar__sep">·</span>
     <span>${esHoy ? 'Hoy' : fechaCorta(S.fechaActual)}</span>`;
+}
+
+/* ── CANCHA HERO ─────────────────────────────────────────── */
+function renderCanchaHero() {
+  const hero = document.getElementById('canchaHero');
+  if (!hero) return;
+  const cancha = S.canchas.find(c => c.id === S.canchaActual);
+  if (!cancha) { hero.style.display = 'none'; return; }
+
+  hero.style.display = '';
+  const info   = deporteInfo(cancha.deporte);
+  const imgUrl = cancha.imagen_url || cancha.imageUrl || cancha.imagen || null;
+
+  const media = imgUrl
+    ? `<img class="cancha-hero__img" src="${imgUrl}" alt="${cancha.nombre}" loading="lazy" />`
+    : `<div class="cancha-hero__gradient" style="background:linear-gradient(160deg,${info.color}28 0%,#050c1b 100%)">${info.emoji}</div>`;
+
+  const precio  = cancha.precio != null ? `$${Number(cancha.precio).toLocaleString('es-AR')} · ` : '';
+  const duracion = cancha.duracionTurno ? `${cancha.duracionTurno} min` : '';
+
+  hero.innerHTML = `
+    ${media}
+    <div class="cancha-hero__overlay">
+      <div class="cancha-hero__name">${cancha.nombre}</div>
+      <div class="cancha-hero__meta">${cancha.deporte}${precio||duracion ? ' · ' + precio + duracion : ''}</div>
+    </div>`;
+}
+
+/* ── LOCATION FOOTER ─────────────────────────────────────── */
+function renderLocation() {
+  const footer = document.getElementById('locationFooter');
+  if (!footer) return;
+  const dir  = S.config.direccion;
+  const maps = S.config.googleMaps;
+  if (!dir && !maps) { footer.style.display = 'none'; return; }
+  const href = maps || `https://maps.google.com/?q=${encodeURIComponent(dir || '')}`;
+  footer.style.display = '';
+  footer.innerHTML = `
+    <a class="location-link" href="${href}" target="_blank" rel="noopener noreferrer">
+      <span class="location-link__icon">📍</span>
+      ${dir || 'Ver en Google Maps'}
+    </a>`;
 }
 
 /* ── SLOT GRID ───────────────────────────────────────────── */
@@ -1361,6 +1518,8 @@ async function init() {
       nombre:       cfg.nombreComplejo || cfg.nombre || 'Reservas',
       horaApertura: cfg.horaApertura   || '08:00',
       horaCierre:   cfg.horaCierre     || '22:00',
+      direccion:    cfg.direccion      || cfg.address   || null,
+      googleMaps:   cfg.googleMaps     || cfg.google_maps || cfg.mapsUrl || null,
     };
     const local = JSON.parse(localStorage.getItem('reservas_local_cfg') || '{}');
     if (local.emoji) S.config.emoji = local.emoji;
