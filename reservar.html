@@ -1129,6 +1129,21 @@ async function init() {
 }
 
 init();
+
+/* ── REFRESCO AUTOMÁTICO ───────────────────────────────────────── */
+// Al volver a la pestaña → refrescar
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && S.cliente) {
+    Promise.all([renderSlots(), renderMisReservas()]);
+  }
+});
+
+// Cada 30 segundos mientras la página está activa
+setInterval(() => {
+  if (!document.hidden && S.cliente) {
+    Promise.all([renderSlots(), renderMisReservas()]);
+  }
+}, 30_000);
 </script>
 </body>
 </html>
