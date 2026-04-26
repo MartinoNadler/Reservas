@@ -221,12 +221,36 @@
        LAYOUT
     ══════════════════════════════════════════════════════════ */
     .main-content {
-      flex: 1; padding: 32px 24px 64px;
-      max-width: 960px; margin: 0 auto; width: 100%;
-      display: flex; flex-direction: column; gap: 32px;
+      flex: 1; padding: 28px 32px 64px;
+      max-width: 1400px; margin: 0 auto; width: 100%;
     }
-    @media (max-width:700px) { .main-content { padding: 24px 16px 56px; gap: 28px; } }
-    @media (max-width:520px) { .main-content { padding: 20px 14px 48px; gap: 24px; } }
+    @media (max-width:1060px) { .main-content { padding: 24px 20px 56px; } }
+    @media (max-width:520px)  { .main-content { padding: 20px 14px 48px; } }
+
+    /* ── 2 COLUMNAS DESKTOP ─────────────────────────────────── */
+    .booking-layout {
+      display: grid;
+      grid-template-columns: 380px 1fr;
+      gap: 36px;
+      align-items: start;
+    }
+    @media (max-width:1060px) {
+      .booking-layout { grid-template-columns: 1fr; gap: 28px; }
+    }
+    @media (max-width:520px) { .booking-layout { gap: 22px; } }
+
+    .booking-left {
+      display: flex; flex-direction: column; gap: 24px;
+      position: sticky; top: 70px;
+      max-height: calc(100vh - 86px);
+      overflow-y: auto; scrollbar-width: none;
+    }
+    .booking-left::-webkit-scrollbar { display: none; }
+    @media (max-width:1060px) {
+      .booking-left { position: static; max-height: none; overflow: visible; gap: 22px; }
+    }
+
+    .booking-right { min-width: 0; }
 
     /* ══════════════════════════════════════════════════════════
        ACCORDION — MIS RESERVAS
@@ -263,40 +287,38 @@
     .reserva-card {
       background: linear-gradient(135deg, rgba(74,158,255,.05), rgba(74,158,255,.02));
       border: 1px solid rgba(74,158,255,.10);
-      border-radius: 14px; padding: 14px 16px;
-      display: flex; align-items: center; gap: 14px;
-      margin-top: 8px;
+      border-radius: 12px; padding: 11px 14px;
+      display: flex; align-items: center; gap: 11px;
+      margin-top: 7px;
       transition: border-color .15s, background .15s;
     }
     .reserva-card:hover {
-      border-color: rgba(74,158,255,.18);
+      border-color: rgba(74,158,255,.2);
       background: linear-gradient(135deg, rgba(74,158,255,.08), rgba(74,158,255,.03));
     }
     .reserva-card__icon {
-      width: 42px; height: 42px; border-radius: 11px;
+      width: 34px; height: 34px; border-radius: 9px;
       display: flex; align-items: center; justify-content: center;
-      font-size: 18px; flex-shrink: 0;
+      font-size: 15px; flex-shrink: 0;
     }
     .reserva-card__main  { flex: 1; min-width: 0; }
-    .reserva-card__court { font-size: 14px; font-weight: 700; color: var(--t1); }
+    .reserva-card__court { font-size: 13px; font-weight: 700; color: var(--t1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .reserva-card__time  {
-      font-size: 12px; color: var(--t2); margin-top: 3px;
-      font-variant-numeric: tabular-nums;
+      font-size: 11px; color: var(--t2); margin-top: 2px;
+      font-variant-numeric: tabular-nums; white-space: nowrap;
     }
     .reserva-card__right { text-align: right; flex-shrink: 0; }
-    .reserva-card__price { font-size: 15px; font-weight: 700; color: var(--blue); }
+    .reserva-card__price { font-size: 13px; font-weight: 700; color: var(--blue); }
     .reserva-card__badge {
-      display: inline-block; margin-top: 4px;
+      display: inline-block; margin-top: 3px;
       font-size: 9px; font-weight: 700; text-transform: uppercase;
-      letter-spacing: .06em; padding: 3px 8px; border-radius: 6px;
+      letter-spacing: .06em; padding: 2px 7px; border-radius: 5px;
     }
     .badge--confirmada { color: var(--green); background: var(--green-dim); }
     .badge--pendiente  { color: var(--amber); background: rgba(245,158,11,.10); }
 
     @media (max-width:520px) {
-      .reserva-card { flex-wrap: wrap; gap: 10px; padding: 12px 14px; }
-      .reserva-card__icon  { width: 34px; height: 34px; font-size: 15px; border-radius: 9px; }
-      .reserva-card__court { font-size: 13px; }
+      .reserva-card { flex-wrap: wrap; gap: 9px; padding: 10px 12px; }
       .reserva-card__right { flex: 0 0 auto; }
     }
 
@@ -388,8 +410,9 @@
     .info-bar {
       display: flex; align-items: center; gap: 7px;
       background: var(--sur-0); border: 1px solid var(--bd);
-      border-radius: 8px; padding: 9px 14px; margin-top: 12px;
+      border-radius: 8px; padding: 9px 14px;
       font-size: 12px; color: var(--t2); font-weight: 500;
+      margin-bottom: 12px;
     }
     .info-bar__dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
     .info-bar__sep { color: var(--t4); }
@@ -398,11 +421,12 @@
     /* ── SLOT GRID ──────────────────────────────────────────── */
     .slot-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
-      gap: 7px; margin-top: 12px;
+      grid-template-columns: repeat(auto-fill, minmax(105px, 1fr));
+      gap: 7px;
     }
-    @media (max-width:520px) { .slot-grid { grid-template-columns: repeat(3,1fr); gap: 6px; } }
-    @media (max-width:360px) { .slot-grid { grid-template-columns: repeat(2,1fr); } }
+    @media (max-width:1060px) { .slot-grid { grid-template-columns: repeat(auto-fill, minmax(110px,1fr)); } }
+    @media (max-width:520px)  { .slot-grid { grid-template-columns: repeat(3,1fr); gap: 6px; } }
+    @media (max-width:360px)  { .slot-grid { grid-template-columns: repeat(2,1fr); } }
 
     .slot {
       border-radius: 10px;
@@ -678,46 +702,57 @@
   </header>
 
   <div class="main-content">
+    <div class="booking-layout">
 
-    <!-- MIS RESERVAS ACTIVAS -->
-    <div>
-      <button class="accordion-trigger open" id="accordionTrigger">
-        <div class="accordion-trigger__left">
-          <span class="accordion-trigger__label">Mis reservas activas</span>
-          <span class="accordion-badge" id="accordionBadge">0</span>
+      <!-- ── PANEL IZQUIERDO ─────────────────────── -->
+      <div class="booking-left">
+
+        <!-- Mis reservas activas -->
+        <div>
+          <button class="accordion-trigger open" id="accordionTrigger">
+            <div class="accordion-trigger__left">
+              <span class="accordion-trigger__label">Mis reservas activas</span>
+              <span class="accordion-badge" id="accordionBadge">0</span>
+            </div>
+            <span class="accordion-arrow">⌄</span>
+          </button>
+          <div class="accordion-body open" id="accordionBody">
+            <div id="misReservas"><div class="spinner"></div></div>
+          </div>
         </div>
-        <span class="accordion-arrow">⌄</span>
-      </button>
-      <div class="accordion-body open" id="accordionBody">
-        <div id="misReservas"><div class="spinner"></div></div>
+
+        <!-- Selector de fecha y cancha -->
+        <div>
+          <div class="section-title">Reservar turno</div>
+          <div class="date-tabs"   id="dateTabs"></div>
+          <div class="cancha-tabs" id="canchaTabs"></div>
+        </div>
+
       </div>
+
+      <!-- ── PANEL DERECHO ──────────────────────── -->
+      <div class="booking-right">
+        <div class="info-bar" id="infoBar" style="display:none"></div>
+        <div class="slot-grid" id="slotGrid">
+          <div class="spinner" style="grid-column:1/-1"></div>
+        </div>
+        <div class="legend">
+          <div class="legend__item">
+            <div class="legend__swatch legend__swatch--libre"></div>
+            Disponible
+          </div>
+          <div class="legend__item">
+            <div class="legend__swatch legend__swatch--mia"></div>
+            Tu reserva
+          </div>
+          <div class="legend__item">
+            <div class="legend__swatch legend__swatch--ocupado"></div>
+            Ocupado
+          </div>
+        </div>
+      </div>
+
     </div>
-
-    <!-- RESERVAR TURNO -->
-    <div>
-      <div class="section-title">Reservar turno</div>
-      <div class="date-tabs"  id="dateTabs"></div>
-      <div class="cancha-tabs" id="canchaTabs"></div>
-      <div class="info-bar"    id="infoBar"></div>
-      <div class="slot-grid"   id="slotGrid">
-        <div class="spinner" style="grid-column:1/-1"></div>
-      </div>
-      <div class="legend">
-        <div class="legend__item">
-          <div class="legend__swatch legend__swatch--libre"></div>
-          Disponible
-        </div>
-        <div class="legend__item">
-          <div class="legend__swatch legend__swatch--mia"></div>
-          Tu reserva
-        </div>
-        <div class="legend__item">
-          <div class="legend__swatch legend__swatch--ocupado"></div>
-          Ocupado
-        </div>
-      </div>
-    </div>
-
   </div>
 </div>
 
