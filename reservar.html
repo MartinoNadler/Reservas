@@ -940,10 +940,9 @@ async function hacerReserva(slot, turnoExistente, cancha) {
     await sbq('/reservas', {
       method: 'POST',
       body: JSON.stringify({
-        id:           uid('r'),
-        clienteId:    S.cliente.id,
+        id:        uid('r'),
+        clienteId: S.cliente.id,
         turnoId,
-        fechaReserva: new Date().toISOString(),
       }),
     });
 
