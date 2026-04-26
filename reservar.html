@@ -1168,6 +1168,14 @@ function renderInfoBar() {
     <span>${esHoy ? 'Hoy' : fechaCorta(S.fechaActual)}</span>`;
 }
 
+/* ── IMAGEN LOCAL POR DEPORTE ────────────────────────────── */
+function localImgPorDeporte(deporte) {
+  const d = (deporte || '').toLowerCase();
+  if (d.includes('fútbol') || d.includes('futbol') || d.includes('futsal')) return 'Futbol.webp';
+  if (d.includes('pádel') || d.includes('padel'))                           return 'Padel.webp';
+  return null;
+}
+
 /* ── CANCHA HERO ─────────────────────────────────────────── */
 function renderCanchaHero() {
   const hero = document.getElementById('canchaHero');
@@ -1177,7 +1185,7 @@ function renderCanchaHero() {
 
   hero.style.display = '';
   const info   = deporteInfo(cancha.deporte);
-  const imgUrl = cancha.imagen_url || cancha.imageUrl || cancha.imagen || null;
+  const imgUrl = cancha.imagen_url || cancha.imageUrl || cancha.imagen || localImgPorDeporte(cancha.deporte);
 
   const media = imgUrl
     ? `<img class="cancha-hero__img" src="${imgUrl}" alt="${cancha.nombre}" loading="lazy" />`
