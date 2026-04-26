@@ -1,0 +1,1135 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>Reservar turno</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:           #0d1117;
+      --surface:      #161b22;
+      --surface-2:    #1c2128;
+      --sub:          #21262d;
+      --border:       #30363d;
+      --border-sub:   #21262d;
+      --text:         #e6edf3;
+      --text-muted:   #848d97;
+      --accent:       #2f81f7;
+      --accent-hover: #388bfd;
+      --success:      #3fb950;
+      --warning:      #d29922;
+      --danger:       #f85149;
+      --radius:       12px;
+    }
+
+    html, body {
+      min-height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', system-ui, sans-serif;
+      font-size: 15px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── PANTALLAS ────────────────────────────────────────────────── */
+    .screen { display: none; min-height: 100vh; flex-direction: column; }
+    .screen.active { display: flex; }
+
+    /* ── AUTH (INICIO / REGISTRO) ─────────────────────────────────── */
+    .auth-wrap {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 32px 20px; gap: 28px;
+    }
+
+    .auth-logo {
+      display: flex; flex-direction: column;
+      align-items: center; gap: 10px; text-align: center;
+    }
+    .auth-logo__icon {
+      width: 68px; height: 68px; border-radius: 20px;
+      background: var(--accent);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 34px; box-shadow: 0 8px 32px rgba(47,129,247,.3);
+    }
+    .auth-logo__name { font-size: 22px; font-weight: 800; letter-spacing: -.3px; }
+    .auth-logo__sub  { font-size: 13px; color: var(--text-muted); }
+
+    .auth-card {
+      width: 100%; max-width: 390px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 26px;
+    }
+    .auth-card__title { font-size: 17px; font-weight: 700; margin-bottom: 4px; }
+    .auth-card__sub   { font-size: 13px; color: var(--text-muted); margin-bottom: 22px; }
+
+    /* ── FORM ─────────────────────────────────────────────────────── */
+    .form-group { margin-bottom: 16px; }
+    .form-group:last-child { margin-bottom: 0; }
+    .form-group label {
+      display: block; font-size: 11px; font-weight: 700;
+      color: var(--text-muted); text-transform: uppercase;
+      letter-spacing: .5px; margin-bottom: 7px;
+    }
+    .form-group input {
+      width: 100%; background: var(--sub);
+      border: 1px solid var(--border); border-radius: 8px;
+      padding: 11px 14px; font: inherit; color: var(--text);
+      transition: border-color .15s, box-shadow .15s;
+    }
+    .form-group input:focus {
+      outline: none; border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(47,129,247,.15);
+    }
+    .form-group input::placeholder { color: var(--text-muted); opacity: .6; }
+    .form-group input.is-error     { border-color: var(--danger); }
+    .form-group input:disabled     { opacity: .45; cursor: not-allowed; }
+    .field-err { font-size: 11px; color: var(--danger); margin-top: 5px; min-height: 16px; }
+
+    /* ── BOTONES ──────────────────────────────────────────────────── */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      padding: 11px 18px; border: 1px solid transparent; border-radius: 8px;
+      font: 600 14px 'Inter', sans-serif; cursor: pointer;
+      transition: all .15s; white-space: nowrap; text-align: center;
+    }
+    .btn:disabled { opacity: .4; cursor: not-allowed; pointer-events: none; }
+    .btn--full    { width: 100%; }
+    .btn--primary { background: var(--accent);   color: #fff; border-color: var(--accent); }
+    .btn--primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+    .btn--success { background: var(--success);  color: #fff; border-color: var(--success); }
+    .btn--success:hover { filter: brightness(1.1); }
+    .btn--danger  { background: transparent; border-color: var(--danger); color: var(--danger); }
+    .btn--danger:hover  { background: rgba(248,81,73,.1); }
+    .btn--ghost   { background: var(--sub); border-color: var(--border); color: var(--text); }
+    .btn--ghost:hover { border-color: var(--text-muted); }
+    .btn--sm      { padding: 6px 12px; font-size: 12px; border-radius: 6px; }
+
+    .back-btn {
+      background: none; border: none; color: var(--text-muted);
+      font: 600 13px 'Inter', sans-serif; cursor: pointer;
+      padding: 0; margin-bottom: 18px;
+      display: flex; align-items: center; gap: 4px;
+    }
+    .back-btn:hover { color: var(--text); }
+
+    /* ── PANTALLA PRINCIPAL ───────────────────────────────────────── */
+    .main-header {
+      background: var(--surface); border-bottom: 1px solid var(--border);
+      padding: 14px 18px; display: flex; align-items: center; gap: 12px;
+      position: sticky; top: 0; z-index: 100;
+    }
+    .main-header__logo {
+      width: 38px; height: 38px; border-radius: 11px;
+      background: var(--accent);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px; flex-shrink: 0;
+    }
+    .main-header__info { flex: 1; min-width: 0; }
+    .main-header__complex { font-size: 13px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .main-header__user    { font-size: 12px; color: var(--text-muted); }
+
+    .main-content {
+      flex: 1; padding: 22px 16px 48px;
+      max-width: 620px; margin: 0 auto; width: 100%;
+    }
+
+    /* ── SECCIÓN ──────────────────────────────────────────────────── */
+    .section { margin-bottom: 32px; }
+    .section__title {
+      font-size: 11px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .6px; color: var(--text-muted); margin-bottom: 12px;
+    }
+
+    /* ── MIS RESERVAS ─────────────────────────────────────────────── */
+    .reserva-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 14px 16px;
+      display: flex; align-items: center; gap: 14px; margin-bottom: 8px;
+    }
+    .reserva-card:last-child { margin-bottom: 0; }
+    .reserva-card__bar {
+      width: 4px; border-radius: 2px; align-self: stretch; flex-shrink: 0;
+    }
+    .reserva-card__info { flex: 1; min-width: 0; }
+    .reserva-card__court { font-size: 14px; font-weight: 700; }
+    .reserva-card__time  {
+      font-size: 12px; color: var(--text-muted); margin-top: 3px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+
+    .empty-box {
+      text-align: center; padding: 22px 20px;
+      color: var(--text-muted); font-size: 13px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+
+    /* ── DATE TABS ────────────────────────────────────────────────── */
+    .date-tabs {
+      display: flex; gap: 7px;
+      overflow-x: auto; padding-bottom: 3px; scrollbar-width: none;
+    }
+    .date-tabs::-webkit-scrollbar { display: none; }
+
+    .date-tab {
+      flex-shrink: 0; display: flex; flex-direction: column;
+      align-items: center; padding: 9px 14px; min-width: 60px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; cursor: pointer; transition: all .15s;
+    }
+    .date-tab:hover { border-color: var(--accent); }
+    .date-tab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .date-tab__day { font-size: 10px; font-weight: 600; text-transform: uppercase; opacity: .75; }
+    .date-tab__num { font-size: 20px; font-weight: 800; line-height: 1.1; }
+    .date-tab__mes { font-size: 9px; opacity: .7; }
+
+    /* ── CANCHA TABS ──────────────────────────────────────────────── */
+    .cancha-tabs {
+      display: flex; gap: 7px; margin-top: 14px;
+      overflow-x: auto; padding-bottom: 3px; scrollbar-width: none;
+    }
+    .cancha-tabs::-webkit-scrollbar { display: none; }
+
+    .cancha-tab {
+      flex-shrink: 0; padding: 7px 18px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 20px; font-size: 13px; font-weight: 600;
+      cursor: pointer; transition: all .15s;
+    }
+    .cancha-tab:hover  { border-color: var(--accent); }
+    .cancha-tab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+    /* ── SLOT GRID ────────────────────────────────────────────────── */
+    .slot-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(105px, 1fr));
+      gap: 8px; margin-top: 14px;
+    }
+
+    .slot {
+      padding: 13px 8px; border-radius: 10px;
+      border: 1px solid var(--border);
+      text-align: center; transition: all .15s;
+      background: var(--surface);
+    }
+    .slot__time  { font-size: 15px; font-weight: 700; }
+    .slot__dur   { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+    .slot__price { font-size: 11px; font-weight: 600; margin-top: 5px; }
+    .slot__label { font-size: 10px; margin-top: 5px; }
+
+    .slot--libre {
+      border-color: rgba(63,185,80,.35);
+      background: rgba(63,185,80,.06);
+      cursor: pointer;
+    }
+    .slot--libre .slot__time  { color: var(--success); }
+    .slot--libre .slot__price { color: var(--success); opacity: .85; }
+    .slot--libre:hover {
+      border-color: var(--success);
+      background: rgba(63,185,80,.15);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 16px rgba(63,185,80,.15);
+    }
+
+    .slot--ocupado {
+      opacity: .4; cursor: not-allowed;
+      background: var(--surface-2);
+    }
+    .slot--ocupado .slot__time  { color: var(--text-muted); }
+    .slot--ocupado .slot__label { color: var(--danger); }
+
+    .slot--pasado { opacity: .25; cursor: not-allowed; }
+
+    .slot--mia {
+      border-color: rgba(47,129,247,.5);
+      background: rgba(47,129,247,.08);
+      cursor: not-allowed;
+    }
+    .slot--mia .slot__time  { color: var(--accent); }
+    .slot--mia .slot__label { color: var(--accent); font-weight: 600; }
+
+    /* ── MODAL ────────────────────────────────────────────────────── */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,.72); z-index: 500;
+      align-items: flex-end; justify-content: center;
+      padding: 0;
+    }
+    .modal-overlay.active { display: flex; }
+    @media (min-width: 520px) { .modal-overlay { align-items: center; padding: 20px; } }
+
+    .modal {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 18px 18px 0 0;
+      padding: 8px 22px 36px; width: 100%; max-width: 440px;
+      animation: slideModal .2s ease;
+    }
+    @media (min-width: 520px) { .modal { border-radius: 16px; padding: 26px; } }
+
+    @keyframes slideModal {
+      from { transform: translateY(20px); opacity: 0; }
+      to   { transform: translateY(0);    opacity: 1; }
+    }
+
+    .modal__handle {
+      width: 38px; height: 4px; background: var(--border);
+      border-radius: 2px; margin: 10px auto 20px; display: block;
+    }
+    @media (min-width: 520px) { .modal__handle { display: none; } }
+
+    .modal__title { font-size: 17px; font-weight: 700; margin-bottom: 4px; }
+    .modal__sub   { font-size: 13px; color: var(--text-muted); margin-bottom: 20px; }
+
+    .confirm-rows {
+      background: var(--sub); border-radius: 10px;
+      padding: 12px 16px; margin-bottom: 20px;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .confirm-row {
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: 13px;
+    }
+    .confirm-row__label { color: var(--text-muted); }
+    .confirm-row__val   { font-weight: 600; text-align: right; }
+
+    .modal-actions { display: flex; gap: 8px; }
+    .modal-actions .btn { flex: 1; }
+
+    /* ── TOAST ────────────────────────────────────────────────────── */
+    .toast-wrap {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+      z-index: 999; display: flex; flex-direction: column;
+      align-items: center; gap: 8px; pointer-events: none;
+    }
+    .toast {
+      background: var(--surface-2); border: 1px solid var(--border);
+      border-radius: 8px; padding: 10px 20px;
+      font-size: 13px; font-weight: 500; max-width: 320px;
+      text-align: center; pointer-events: all;
+      animation: fadeUp .18s ease;
+    }
+    .toast--success { border-color: rgba(63,185,80,.4);  color: var(--success); }
+    .toast--error   { border-color: rgba(248,81,73,.4);  color: var(--danger); }
+    .toast--info    { border-color: rgba(47,129,247,.4); color: var(--accent); }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── SPINNER ──────────────────────────────────────────────────── */
+    .spinner {
+      width: 32px; height: 32px;
+      border: 3px solid var(--border); border-top-color: var(--accent);
+      border-radius: 50%; animation: spin .65s linear infinite;
+      margin: 32px auto; display: block;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── LOADING INICIAL ──────────────────────────────────────────── */
+    #loadingFull {
+      position: fixed; inset: 0; background: var(--bg);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 20px; z-index: 9999;
+    }
+    #loadingFull.oculto { display: none; }
+    .loading-icon {
+      width: 60px; height: 60px; border-radius: 18px;
+      background: var(--accent); font-size: 30px;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 8px 32px rgba(47,129,247,.35);
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── LOADING INICIAL ──────────────────────────────────────────── -->
+<div id="loadingFull">
+  <div class="loading-icon" id="loadIcon">⚽</div>
+  <div class="spinner" style="margin:0"></div>
+</div>
+
+<!-- ── TOASTS ───────────────────────────────────────────────────── -->
+<div class="toast-wrap" id="toastWrap"></div>
+
+<!-- ── MODAL ────────────────────────────────────────────────────── -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <span class="modal__handle"></span>
+    <div class="modal__title"  id="mTitle"></div>
+    <div class="modal__sub"    id="mSub"></div>
+    <div class="confirm-rows"  id="mRows" style="display:none"></div>
+    <div class="modal-actions" id="mActions"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     PANTALLA 1 — DNI
+══════════════════════════════════════════════════════════════ -->
+<div class="screen" id="screen-dni">
+  <div class="auth-wrap">
+    <div class="auth-logo">
+      <div class="auth-logo__icon" id="logoA">⚽</div>
+      <div class="auth-logo__name" id="nameA">Reservas</div>
+      <div class="auth-logo__sub">Reservá tu turno en segundos</div>
+    </div>
+
+    <div class="auth-card">
+      <div class="auth-card__title">Ingresá tu DNI</div>
+      <div class="auth-card__sub">Para ver disponibilidad y gestionar tus turnos.</div>
+
+      <div class="form-group">
+        <label for="inDNI">DNI</label>
+        <input id="inDNI" type="tel" inputmode="numeric"
+               placeholder="Ej: 40123456" maxlength="8" autocomplete="off" />
+        <div class="field-err" id="errDNI"></div>
+      </div>
+
+      <button class="btn btn--primary btn--full" id="btnContinuar" style="margin-top:4px">
+        Continuar →
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     PANTALLA 2 — REGISTRO
+══════════════════════════════════════════════════════════════ -->
+<div class="screen" id="screen-registro">
+  <div class="auth-wrap">
+    <div class="auth-logo">
+      <div class="auth-logo__icon" id="logoB">⚽</div>
+      <div class="auth-logo__name" id="nameB">Reservas</div>
+      <div class="auth-logo__sub">Primera vez aquí</div>
+    </div>
+
+    <div class="auth-card">
+      <button class="back-btn" id="btnVolver">← Volver</button>
+      <div class="auth-card__title">Completá tus datos</div>
+      <div class="auth-card__sub">Solo la primera vez. Después entrás directo con tu DNI.</div>
+
+      <div class="form-group">
+        <label>DNI</label>
+        <input id="regDNI" type="text" disabled />
+      </div>
+      <div class="form-group">
+        <label for="regNombre">Nombre y apellido</label>
+        <input id="regNombre" type="text" placeholder="Ej: Juan García" autocomplete="name" />
+        <div class="field-err" id="errNombre"></div>
+      </div>
+      <div class="form-group">
+        <label for="regTel">Teléfono</label>
+        <input id="regTel" type="tel" inputmode="numeric"
+               placeholder="Ej: 1134567890" maxlength="13" autocomplete="tel" />
+        <div class="field-err" id="errTel"></div>
+      </div>
+
+      <button class="btn btn--success btn--full" id="btnRegistrar" style="margin-top:4px">
+        Crear cuenta →
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     PANTALLA 3 — PRINCIPAL
+══════════════════════════════════════════════════════════════ -->
+<div class="screen" id="screen-main">
+
+  <header class="main-header">
+    <div class="main-header__logo" id="hLogo">⚽</div>
+    <div class="main-header__info">
+      <div class="main-header__complex" id="hComplex">Reservas</div>
+      <div class="main-header__user"    id="hUser">…</div>
+    </div>
+    <button class="btn btn--ghost btn--sm" id="btnSalir">Salir</button>
+  </header>
+
+  <div class="main-content">
+
+    <!-- Mis reservas -->
+    <div class="section">
+      <div class="section__title">Mis reservas activas</div>
+      <div id="misReservas"><div class="spinner"></div></div>
+    </div>
+
+    <!-- Reservar -->
+    <div class="section">
+      <div class="section__title">Reservar turno</div>
+      <div class="date-tabs"  id="dateTabs"></div>
+      <div class="cancha-tabs" id="canchaTabs"></div>
+      <div class="slot-grid"   id="slotGrid">
+        <div class="spinner" style="grid-column:1/-1"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     JAVASCRIPT
+══════════════════════════════════════════════════════════════ -->
+<script>
+'use strict';
+
+/* ── SUPABASE ──────────────────────────────────────────────────── */
+const SB_URL = 'https://ljsrakvyayjguwesmzoi.supabase.co';
+const SB_KEY = 'sb_publishable_fJb0jH0ENWv8ux7MBr3EdA_k1Mlt9p-';
+
+async function sbq(path, opts = {}) {
+  const prefer = opts.method === 'POST' ? 'return=representation' : 'return=minimal';
+  const r = await fetch(`${SB_URL}/rest/v1${path}`, {
+    headers: {
+      'apikey':        SB_KEY,
+      'Authorization': `Bearer ${SB_KEY}`,
+      'Content-Type':  'application/json',
+      'Prefer':        prefer,
+    },
+    ...opts,
+  });
+  if (!r.ok) {
+    const txt = await r.text();
+    throw new Error(`SB ${r.status}: ${txt}`);
+  }
+  const txt = await r.text();
+  return txt ? JSON.parse(txt) : null;
+}
+
+/* ── ESTADO GLOBAL ─────────────────────────────────────────────── */
+const S = {
+  cliente:       null,   // { id, nombre, telefono, dni }
+  config:        {},
+  canchas:       [],
+  fechaActual:   fechaHoy(),
+  canchaActual:  null,
+  dniPendiente:  '',
+};
+
+/* ── HELPERS ───────────────────────────────────────────────────── */
+function fechaHoy() {
+  const d = new Date();
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+}
+
+function pad(n) { return String(n).padStart(2, '0'); }
+
+function uid(p) {
+  return p + '_' + Math.random().toString(36).slice(2,9) + Date.now().toString(36);
+}
+
+function dniAId(dni) { return `cld${dni}`; }   // cld = cliente-dni
+
+function minutos(h) {
+  const [hh, mm] = h.split(':').map(Number);
+  return hh * 60 + mm;
+}
+
+function sumar(h, min) {
+  const t = minutos(h) + min;
+  return `${pad(Math.floor(t/60))}:${pad(t%60)}`;
+}
+
+const DIAS_CORTO = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+const DIAS_LARGO = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+const MESES      = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+const MESES_FULL = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+
+function infoFecha(str) {
+  const [y, m, d] = str.split('-').map(Number);
+  const obj = new Date(y, m-1, d);
+  return { dia: DIAS_CORTO[obj.getDay()], num: d, mes: MESES[m-1] };
+}
+
+function fechaLarga(str) {
+  const [y, m, d] = str.split('-').map(Number);
+  const obj = new Date(y, m-1, d);
+  return `${DIAS_LARGO[obj.getDay()]} ${d} de ${MESES_FULL[m-1]}`;
+}
+
+function proxFechas(n = 7) {
+  const arr = [];
+  for (let i = 0; i < n; i++) {
+    const d = new Date();
+    d.setDate(d.getDate() + i);
+    arr.push(`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`);
+  }
+  return arr;
+}
+
+/* ── TOAST ─────────────────────────────────────────────────────── */
+function toast(msg, tipo = 'info', ms = 3200) {
+  const el = document.createElement('div');
+  el.className = `toast toast--${tipo}`;
+  el.textContent = msg;
+  document.getElementById('toastWrap').appendChild(el);
+  setTimeout(() => el.remove(), ms);
+}
+
+/* ── MODAL ─────────────────────────────────────────────────────── */
+function abrirModal({ title, sub, rows, actions }) {
+  document.getElementById('mTitle').textContent = title;
+  document.getElementById('mSub').textContent   = sub || '';
+
+  const rowsEl = document.getElementById('mRows');
+  if (rows && rows.length) {
+    rowsEl.style.display = '';
+    rowsEl.innerHTML = rows.map(r =>
+      `<div class="confirm-row">
+        <span class="confirm-row__label">${r.label}</span>
+        <span class="confirm-row__val" style="${r.style||''}">${r.val}</span>
+      </div>`
+    ).join('');
+  } else {
+    rowsEl.style.display = 'none';
+  }
+
+  const actEl = document.getElementById('mActions');
+  actEl.innerHTML = '';
+  (actions || []).forEach(({ label, cls, fn }) => {
+    const btn = document.createElement('button');
+    btn.className   = `btn ${cls}`;
+    btn.textContent = label;
+    btn.onclick     = fn;
+    actEl.appendChild(btn);
+  });
+
+  document.getElementById('modalOverlay').classList.add('active');
+}
+
+function cerrarModal() {
+  document.getElementById('modalOverlay').classList.remove('active');
+}
+
+document.getElementById('modalOverlay').addEventListener('click', e => {
+  if (e.target.id === 'modalOverlay') cerrarModal();
+});
+
+/* ── PANTALLAS ─────────────────────────────────────────────────── */
+function ir(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+/* ── VALIDACIONES ──────────────────────────────────────────────── */
+function validarDNI(v) {
+  const n = v.replace(/\D/g, '');
+  if (!n.length) return 'Ingresá tu DNI.';
+  if (n.length < 7 || n.length > 8) return 'El DNI debe tener 7 u 8 dígitos.';
+  return null;
+}
+
+function validarNombre(v) {
+  const s = v.trim();
+  if (s.length < 5) return 'El nombre debe tener al menos 5 caracteres.';
+  if (!/^[a-záéíóúüñA-ZÁÉÍÓÚÜÑ\s'.-]+$/.test(s)) return 'Solo se permiten letras.';
+  return null;
+}
+
+function validarTelefono(v) {
+  const n = v.replace(/\D/g, '');
+  if (n.length < 8 || n.length > 13) return 'Ingresá un número válido (8 a 13 dígitos).';
+  return null;
+}
+
+function marcarError(inputId, errId, msg) {
+  const inp = document.getElementById(inputId);
+  const err = document.getElementById(errId);
+  if (msg) { inp.classList.add('is-error'); err.textContent = msg; return false; }
+  inp.classList.remove('is-error'); err.textContent = ''; return true;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   PANTALLA 1 — DNI
+══════════════════════════════════════════════════════════════ */
+document.getElementById('inDNI').addEventListener('input', e => {
+  e.target.value = e.target.value.replace(/\D/g, '');
+});
+document.getElementById('inDNI').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('btnContinuar').click();
+});
+
+document.getElementById('btnContinuar').addEventListener('click', async () => {
+  const dni = document.getElementById('inDNI').value.trim();
+  if (!marcarError('inDNI', 'errDNI', validarDNI(dni))) return;
+
+  const btn = document.getElementById('btnContinuar');
+  btn.disabled = true; btn.textContent = 'Verificando…';
+
+  try {
+    const rows = await sbq(`/clientes?id=eq.${dniAId(dni)}`);
+    if (rows && rows.length) {
+      const c = rows[0];
+      S.cliente = { id: c.id, nombre: c.nombre, telefono: c.telefono, dni };
+      guardarSesion();
+      await entrar();
+    } else {
+      S.dniPendiente = dni;
+      document.getElementById('regDNI').value = dni;
+      ir('screen-registro');
+      setTimeout(() => document.getElementById('regNombre').focus(), 80);
+    }
+  } catch (e) {
+    toast('Error de conexión. Intentá de nuevo.', 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Continuar →';
+  }
+});
+
+/* ══════════════════════════════════════════════════════════════
+   PANTALLA 2 — REGISTRO
+══════════════════════════════════════════════════════════════ */
+document.getElementById('btnVolver').addEventListener('click', () => ir('screen-dni'));
+
+document.getElementById('regTel').addEventListener('input', e => {
+  e.target.value = e.target.value.replace(/[^\d]/g, '');
+});
+
+document.getElementById('btnRegistrar').addEventListener('click', async () => {
+  const nombre = document.getElementById('regNombre').value;
+  const tel    = document.getElementById('regTel').value;
+
+  const okN = marcarError('regNombre', 'errNombre', validarNombre(nombre));
+  const okT = marcarError('regTel',    'errTel',    validarTelefono(tel));
+  if (!okN || !okT) return;
+
+  const btn = document.getElementById('btnRegistrar');
+  btn.disabled = true; btn.textContent = 'Registrando…';
+
+  try {
+    const nuevo = {
+      id:            dniAId(S.dniPendiente),
+      nombre:        nombre.trim(),
+      telefono:      tel.trim(),
+      fechaRegistro: new Date().toISOString(),
+    };
+    await sbq('/clientes', { method: 'POST', body: JSON.stringify(nuevo) });
+    S.cliente = { ...nuevo, dni: S.dniPendiente };
+    guardarSesion();
+    await entrar();
+  } catch (e) {
+    toast('Error al registrar. Intentá de nuevo.', 'error');
+    console.error(e);
+  } finally {
+    btn.disabled = false; btn.textContent = 'Crear cuenta →';
+  }
+});
+
+/* ══════════════════════════════════════════════════════════════
+   SESIÓN (localStorage)
+══════════════════════════════════════════════════════════════ */
+function guardarSesion() {
+  localStorage.setItem('rv_cliente', JSON.stringify(S.cliente));
+}
+
+function borrarSesion() {
+  localStorage.removeItem('rv_cliente');
+}
+
+/* ══════════════════════════════════════════════════════════════
+   ENTRAR AL SISTEMA
+══════════════════════════════════════════════════════════════ */
+async function entrar() {
+  ir('screen-main');
+  document.getElementById('hComplex').textContent = S.config.nombre || 'Reservas';
+  document.getElementById('hLogo').textContent    = S.config.emoji  || '⚽';
+  document.getElementById('hUser').textContent    = `Hola, ${S.cliente.nombre.split(' ')[0]} 👋`;
+
+  S.canchas = await sbq('/canchas?activa=eq.true&order=nombre') || [];
+  if (S.canchas.length) S.canchaActual = S.canchas[0].id;
+
+  renderDateTabs();
+  renderCanchaTabs();
+  await Promise.all([renderSlots(), renderMisReservas()]);
+}
+
+/* ── DATE TABS ─────────────────────────────────────────────────── */
+function renderDateTabs() {
+  const wrap = document.getElementById('dateTabs');
+  wrap.innerHTML = '';
+  proxFechas(7).forEach((f, i) => {
+    const { dia, num, mes } = infoFecha(f);
+    const tab = document.createElement('div');
+    tab.className = 'date-tab' + (f === S.fechaActual ? ' active' : '');
+    tab.innerHTML = `
+      <span class="date-tab__day">${i === 0 ? 'Hoy' : dia}</span>
+      <span class="date-tab__num">${num}</span>
+      <span class="date-tab__mes">${mes}</span>`;
+    tab.addEventListener('click', async () => {
+      S.fechaActual = f;
+      document.querySelectorAll('.date-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      await renderSlots();
+    });
+    wrap.appendChild(tab);
+  });
+}
+
+/* ── CANCHA TABS ───────────────────────────────────────────────── */
+function renderCanchaTabs() {
+  const wrap = document.getElementById('canchaTabs');
+  wrap.innerHTML = '';
+  S.canchas.forEach(c => {
+    const tab = document.createElement('div');
+    tab.className = 'cancha-tab' + (c.id === S.canchaActual ? ' active' : '');
+    tab.textContent = c.nombre;
+    tab.addEventListener('click', async () => {
+      S.canchaActual = c.id;
+      document.querySelectorAll('.cancha-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      await renderSlots();
+    });
+    wrap.appendChild(tab);
+  });
+}
+
+/* ── SLOTS ─────────────────────────────────────────────────────── */
+async function renderSlots() {
+  const grid = document.getElementById('slotGrid');
+  grid.innerHTML = '<div class="spinner" style="grid-column:1/-1"></div>';
+
+  const cancha = S.canchas.find(c => c.id === S.canchaActual);
+  if (!cancha) { grid.innerHTML = ''; return; }
+
+  // Turnos existentes en Supabase para esta cancha+fecha
+  const turnosDB = await sbq(
+    `/turnos?canchaId=eq.${cancha.id}&fecha=eq.${S.fechaActual}&order=horaInicio`
+  ) || [];
+
+  // Reservas del cliente para filtrar "mis turnos"
+  const misReservasDB = S.cliente
+    ? await sbq(`/reservas?clienteId=eq.${S.cliente.id}`) || []
+    : [];
+  const misTurnoIds = new Set(misReservasDB.map(r => r.turnoId));
+
+  // Calcular todos los slots posibles según config
+  const slotsCalc = calcularSlots(cancha);
+
+  // Hora actual (para marcar pasados en "hoy")
+  const esHoy = S.fechaActual === fechaHoy();
+  const ahoraMin = minutos(`${pad(new Date().getHours())}:${pad(new Date().getMinutes())}`);
+
+  grid.innerHTML = '';
+
+  if (!slotsCalc.length) {
+    grid.innerHTML = '<div class="empty-box" style="grid-column:1/-1">No hay turnos configurados para este día.</div>';
+    return;
+  }
+
+  slotsCalc.forEach(slot => {
+    const turnoExistente = turnosDB.find(t => t.horaInicio === slot.horaInicio);
+    const esMio   = turnoExistente && misTurnoIds.has(turnoExistente.id);
+    const ocupado = turnoExistente && turnoExistente.estado !== 'disponible' && !esMio;
+    const pasado  = esHoy && minutos(slot.horaInicio) <= ahoraMin;
+    const libre   = !ocupado && !pasado && !esMio;
+
+    let cls = 'slot ';
+    if (pasado)  cls += 'slot--pasado';
+    else if (esMio)   cls += 'slot--mia';
+    else if (ocupado) cls += 'slot--ocupado';
+    else              cls += 'slot--libre';
+
+    const div = document.createElement('div');
+    div.className = cls;
+    div.innerHTML = `
+      <div class="slot__time">${slot.horaInicio}</div>
+      <div class="slot__dur">${cancha.duracionTurno} min</div>
+      <div class="slot__label">
+        ${esMio   ? '✓ Reservado' :
+          ocupado ? 'Ocupado'     :
+          pasado  ? ''            :
+          `<span class="slot__price">$${cancha.precio.toLocaleString('es-AR')}</span>`}
+      </div>`;
+
+    if (libre) div.addEventListener('click', () => pedirConfirmacion(slot, turnoExistente, cancha));
+    grid.appendChild(div);
+  });
+}
+
+function calcularSlots(cancha) {
+  const apertura = S.config.horaApertura || '08:00';
+  const cierre   = S.config.horaCierre   || '22:00';
+  const slots = [];
+  let h = apertura;
+  while (minutos(h) + cancha.duracionTurno <= minutos(cierre)) {
+    slots.push({ horaInicio: h, horaFin: sumar(h, cancha.duracionTurno) });
+    h = sumar(h, cancha.duracionTurno);
+  }
+  return slots;
+}
+
+/* ── CONFIRMAR RESERVA ─────────────────────────────────────────── */
+function pedirConfirmacion(slot, turnoExistente, cancha) {
+  abrirModal({
+    title: 'Confirmar reserva',
+    sub:   '¿Querés reservar este turno?',
+    rows: [
+      { label: 'Cancha',  val: cancha.nombre },
+      { label: 'Fecha',   val: fechaLarga(S.fechaActual) },
+      { label: 'Horario', val: `${slot.horaInicio} – ${slot.horaFin}` },
+      { label: 'Precio',  val: `$${cancha.precio.toLocaleString('es-AR')}`, style: 'color:var(--success)' },
+    ],
+    actions: [
+      { label: 'Cancelar',          cls: 'btn--ghost',   fn: cerrarModal },
+      { label: 'Confirmar reserva', cls: 'btn--success', fn: () => hacerReserva(slot, turnoExistente, cancha) },
+    ],
+  });
+}
+
+async function hacerReserva(slot, turnoExistente, cancha) {
+  cerrarModal();
+  try {
+    let turnoId;
+
+    if (turnoExistente) {
+      // Re-verificar que sigue disponible
+      const [actual] = await sbq(`/turnos?id=eq.${turnoExistente.id}`) || [];
+      if (!actual || actual.estado !== 'disponible') {
+        toast('Este turno ya no está disponible 😕', 'error');
+        await renderSlots();
+        return;
+      }
+      await sbq(`/turnos?id=eq.${turnoExistente.id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ estado: 'reservado' }),
+      });
+      turnoId = turnoExistente.id;
+    } else {
+      // Turno no existe en DB todavía → crearlo como reservado
+      const nuevoTurno = {
+        id:         uid('t'),
+        canchaId:   cancha.id,
+        fecha:      S.fechaActual,
+        horaInicio: slot.horaInicio,
+        horaFin:    slot.horaFin,
+        estado:     'reservado',
+      };
+      // Verificar que no fue creado por otro cliente entre tanto
+      const existentes = await sbq(
+        `/turnos?canchaId=eq.${cancha.id}&fecha=eq.${S.fechaActual}&horaInicio=eq.${slot.horaInicio}`
+      ) || [];
+      if (existentes.length) {
+        const ex = existentes[0];
+        if (ex.estado !== 'disponible') {
+          toast('Este turno ya no está disponible 😕', 'error');
+          await renderSlots();
+          return;
+        }
+        await sbq(`/turnos?id=eq.${ex.id}`, {
+          method: 'PATCH',
+          body: JSON.stringify({ estado: 'reservado' }),
+        });
+        turnoId = ex.id;
+      } else {
+        const created = await sbq('/turnos', {
+          method: 'POST',
+          body: JSON.stringify(nuevoTurno),
+        });
+        turnoId = (Array.isArray(created) ? created[0] : created)?.id || nuevoTurno.id;
+      }
+    }
+
+    // Crear reserva
+    await sbq('/reservas', {
+      method: 'POST',
+      body: JSON.stringify({
+        id:           uid('r'),
+        clienteId:    S.cliente.id,
+        turnoId,
+        fechaReserva: new Date().toISOString(),
+      }),
+    });
+
+    toast('¡Turno reservado! ✓', 'success');
+    await Promise.all([renderSlots(), renderMisReservas()]);
+  } catch (e) {
+    toast('Error al reservar. Intentá de nuevo.', 'error');
+    console.error(e);
+  }
+}
+
+/* ── MIS RESERVAS ──────────────────────────────────────────────── */
+async function renderMisReservas() {
+  const wrap = document.getElementById('misReservas');
+  wrap.innerHTML = '<div class="spinner"></div>';
+
+  try {
+    const hoyStr = fechaHoy();
+    const reservas = await sbq(`/reservas?clienteId=eq.${S.cliente.id}`) || [];
+
+    if (!reservas.length) {
+      wrap.innerHTML = '<div class="empty-box">No tenés reservas activas.</div>';
+      return;
+    }
+
+    const ids = reservas.map(r => r.turnoId).join(',');
+    const turnos = await sbq(
+      `/turnos?id=in.(${ids})&fecha=gte.${hoyStr}&estado=in.(reservado,pendiente,pagado)&order=fecha,horaInicio`
+    ) || [];
+
+    if (!turnos.length) {
+      wrap.innerHTML = '<div class="empty-box">No tenés reservas activas.</div>';
+      return;
+    }
+
+    const canchaIds = [...new Set(turnos.map(t => t.canchaId))].join(',');
+    const canchas = await sbq(`/canchas?id=in.(${canchaIds})`) || [];
+
+    wrap.innerHTML = '';
+    turnos.forEach(turno => {
+      const cancha  = canchas.find(c => c.id === turno.canchaId);
+      const reserva = reservas.find(r => r.turnoId === turno.id);
+      if (!cancha || !reserva) return;
+
+      const esHoyTurno = turno.fecha === hoyStr;
+      const color = esHoyTurno ? 'var(--warning)' : 'var(--accent)';
+
+      const card = document.createElement('div');
+      card.className = 'reserva-card';
+      card.innerHTML = `
+        <div class="reserva-card__bar" style="background:${color}"></div>
+        <div class="reserva-card__info">
+          <div class="reserva-card__court">${cancha.nombre}</div>
+          <div class="reserva-card__time">
+            ${esHoyTurno ? '<strong>Hoy</strong>' : fechaLarga(turno.fecha)}
+            &nbsp;·&nbsp;${turno.horaInicio} – ${turno.horaFin}
+          </div>
+        </div>
+        <button class="btn btn--danger btn--sm" style="flex-shrink:0"
+          data-rid="${reserva.id}" data-tid="${turno.id}"
+          data-cancha="${cancha.nombre}"
+          data-fecha="${turno.fecha}"
+          data-inicio="${turno.horaInicio}"
+          data-fin="${turno.horaFin}">
+          Cancelar
+        </button>`;
+      wrap.appendChild(card);
+    });
+
+    if (!wrap.children.length) {
+      wrap.innerHTML = '<div class="empty-box">No tenés reservas activas.</div>';
+    }
+
+    // Delegar eventos de cancelación
+    wrap.querySelectorAll('[data-rid]').forEach(btn => {
+      btn.addEventListener('click', () => pedirCancelacion(
+        btn.dataset.rid, btn.dataset.tid,
+        btn.dataset.cancha, btn.dataset.fecha,
+        btn.dataset.inicio, btn.dataset.fin
+      ));
+    });
+
+  } catch (e) {
+    wrap.innerHTML = '<div class="empty-box">Error al cargar reservas.</div>';
+    console.error(e);
+  }
+}
+
+/* ── CANCELAR ──────────────────────────────────────────────────── */
+function pedirCancelacion(rid, tid, cancha, fecha, inicio, fin) {
+  abrirModal({
+    title: 'Cancelar reserva',
+    sub:   '¿Estás seguro? Esta acción no se puede deshacer.',
+    rows: [
+      { label: 'Cancha',  val: cancha },
+      { label: 'Fecha',   val: fechaLarga(fecha) },
+      { label: 'Horario', val: `${inicio} – ${fin}` },
+    ],
+    actions: [
+      { label: 'Volver',        cls: 'btn--ghost',  fn: cerrarModal },
+      { label: 'Cancelar turno', cls: 'btn--danger', fn: () => ejecutarCancelacion(rid, tid) },
+    ],
+  });
+}
+
+async function ejecutarCancelacion(rid, tid) {
+  cerrarModal();
+  try {
+    await sbq(`/turnos?id=eq.${tid}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ estado: 'disponible' }),
+    });
+    await sbq(`/reservas?id=eq.${rid}`, { method: 'DELETE' });
+    toast('Reserva cancelada.', 'info');
+    await Promise.all([renderSlots(), renderMisReservas()]);
+  } catch (e) {
+    toast('Error al cancelar. Intentá de nuevo.', 'error');
+    console.error(e);
+  }
+}
+
+/* ── SALIR ─────────────────────────────────────────────────────── */
+document.getElementById('btnSalir').addEventListener('click', () => {
+  abrirModal({
+    title: 'Cerrar sesión',
+    sub:   'La próxima vez vas a tener que ingresar tu DNI.',
+    actions: [
+      { label: 'Quedarme', cls: 'btn--ghost',  fn: cerrarModal },
+      { label: 'Salir',    cls: 'btn--danger', fn: () => {
+          borrarSesion(); S.cliente = null;
+          cerrarModal(); ir('screen-dni');
+          document.getElementById('inDNI').value = '';
+      }},
+    ],
+  });
+});
+
+/* ══════════════════════════════════════════════════════════════
+   INIT
+══════════════════════════════════════════════════════════════ */
+async function init() {
+  // Cargar config del complejo
+  try {
+    const rows = await sbq('/config');
+    const cfg  = rows?.[0] || {};
+    S.config = {
+      nombre:       cfg.nombreComplejo || cfg.nombre || 'Reservas',
+      horaApertura: cfg.horaApertura   || '08:00',
+      horaCierre:   cfg.horaCierre     || '22:00',
+    };
+    // emoji y subtítulo están en localStorage del admin (campo local)
+    const local = JSON.parse(localStorage.getItem('reservas_local_cfg') || '{}');
+    if (local.emoji) S.config.emoji = local.emoji;
+  } catch (e) { console.warn('Config no disponible, usando defaults.', e); }
+
+  // Actualizar branding en pantallas de auth
+  const emoji  = S.config.emoji  || '⚽';
+  const nombre = S.config.nombre || 'Reservas';
+  ['logoA','logoB'].forEach(id => { document.getElementById(id).textContent = emoji; });
+  ['nameA','nameB'].forEach(id => { document.getElementById(id).textContent = nombre; });
+  document.getElementById('loadIcon').textContent = emoji;
+  document.title = `Reservar · ${nombre}`;
+
+  // Verificar sesión guardada
+  const saved = localStorage.getItem('rv_cliente');
+  if (saved) {
+    try {
+      const c = JSON.parse(saved);
+      const rows = await sbq(`/clientes?id=eq.${c.id}`);
+      if (rows?.length) {
+        S.cliente = { ...c, nombre: rows[0].nombre, telefono: rows[0].telefono };
+        guardarSesion();
+        document.getElementById('loadingFull').classList.add('oculto');
+        await entrar();
+        return;
+      }
+    } catch { /* sesión inválida */ }
+    borrarSesion();
+  }
+
+  document.getElementById('loadingFull').classList.add('oculto');
+  ir('screen-dni');
+  setTimeout(() => document.getElementById('inDNI').focus(), 100);
+}
+
+init();
+</script>
+</body>
+</html>
