@@ -482,13 +482,43 @@
 /* ── SUPABASE ──────────────────────────────────────────────────── */
 const SB_URL = 'https://ljsrakvyayjguwesmzoi.supabase.co';
 const SB_KEY = 'sb_publishable_fJb0jH0ENWv8ux7MBr3EdA_k1Mlt9p-';
+let   SB_TOKEN = null;  // token de sesión anónima
+
+/** Inicia sesión anónima en Supabase para poder hacer escrituras. */
+async function initAnonAuth() {
+  // Reutilizar sesión guardada si sigue vigente
+  const saved = JSON.parse(localStorage.getItem('rv_sb_session') || 'null');
+  if (saved?.access_token && saved.expires_at > Date.now() / 1000 + 60) {
+    SB_TOKEN = saved.access_token;
+    return;
+  }
+  try {
+    const r = await fetch(`${SB_URL}/auth/v1/signup`, {
+      method: 'POST',
+      headers: { 'apikey': SB_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),   // cuerpo vacío = sesión anónima
+    });
+    if (r.ok) {
+      const data = await r.json();
+      if (data.access_token) {
+        SB_TOKEN = data.access_token;
+        localStorage.setItem('rv_sb_session', JSON.stringify({
+          access_token: data.access_token,
+          expires_at:   data.expires_at || (Date.now() / 1000 + 3600),
+        }));
+      }
+    }
+  } catch (e) {
+    console.warn('Anon auth no disponible, usando clave pública.', e);
+  }
+}
 
 async function sbq(path, opts = {}) {
   const prefer = opts.method === 'POST' ? 'return=representation' : 'return=minimal';
   const r = await fetch(`${SB_URL}/rest/v1${path}`, {
     headers: {
       'apikey':        SB_KEY,
-      'Authorization': `Bearer ${SB_KEY}`,
+      'Authorization': `Bearer ${SB_TOKEN || SB_KEY}`,
       'Content-Type':  'application/json',
       'Prefer':        prefer,
     },
@@ -1085,6 +1115,9 @@ document.getElementById('btnSalir').addEventListener('click', () => {
    INIT
 ══════════════════════════════════════════════════════════════ */
 async function init() {
+  // Autenticación anónima (necesaria para escrituras con RLS activo)
+  await initAnonAuth();
+
   // Cargar config del complejo
   try {
     const rows = await sbq('/config');
