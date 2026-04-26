@@ -221,33 +221,12 @@
        LAYOUT
     ══════════════════════════════════════════════════════════ */
     .main-content {
-      flex: 1; padding: 32px 28px 64px;
-      max-width: 1280px; margin: 0 auto; width: 100%;
+      flex: 1; padding: 32px 24px 64px;
+      max-width: 960px; margin: 0 auto; width: 100%;
+      display: flex; flex-direction: column; gap: 32px;
     }
-    @media (max-width:860px) { .main-content { padding: 24px 16px 56px; } }
-    @media (max-width:520px) { .main-content { padding: 20px 14px 48px; } }
-
-    /* ── DOS COLUMNAS ────────────────────────────────────────── */
-    .booking-layout {
-      display: grid;
-      grid-template-columns: 310px 1fr;
-      gap: 40px;
-      align-items: start;
-    }
-    @media (max-width:860px) {
-      .booking-layout { grid-template-columns: 1fr; gap: 28px; }
-    }
-    @media (max-width:520px) {
-      .booking-layout { gap: 24px; }
-    }
-
-    .booking-left {
-      display: flex; flex-direction: column; gap: 28px;
-      position: sticky; top: 74px;
-    }
-    @media (max-width:860px) { .booking-left { position: static; } }
-
-    .booking-right { min-width: 0; }
+    @media (max-width:700px) { .main-content { padding: 24px 16px 56px; gap: 28px; } }
+    @media (max-width:520px) { .main-content { padding: 20px 14px 48px; gap: 24px; } }
 
     /* ══════════════════════════════════════════════════════════
        ACCORDION — MIS RESERVAS
@@ -419,10 +398,9 @@
     /* ── SLOT GRID ──────────────────────────────────────────── */
     .slot-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(105px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
       gap: 7px; margin-top: 12px;
     }
-    @media (max-width:860px) { .slot-grid { grid-template-columns: repeat(auto-fill, minmax(112px,1fr)); } }
     @media (max-width:520px) { .slot-grid { grid-template-columns: repeat(3,1fr); gap: 6px; } }
     @media (max-width:360px) { .slot-grid { grid-template-columns: repeat(2,1fr); } }
 
@@ -700,58 +678,46 @@
   </header>
 
   <div class="main-content">
-    <div class="booking-layout">
 
-      <!-- ── PANEL IZQUIERDO ─────────────────────────────── -->
-      <div class="booking-left">
-
-        <!-- Mis reservas activas -->
-        <div>
-          <button class="accordion-trigger open" id="accordionTrigger">
-            <div class="accordion-trigger__left">
-              <span class="accordion-trigger__label">Mis reservas activas</span>
-              <span class="accordion-badge" id="accordionBadge">0</span>
-            </div>
-            <span class="accordion-arrow">⌄</span>
-          </button>
-          <div class="accordion-body open" id="accordionBody">
-            <div id="misReservas"><div class="spinner"></div></div>
-          </div>
+    <!-- MIS RESERVAS ACTIVAS -->
+    <div>
+      <button class="accordion-trigger open" id="accordionTrigger">
+        <div class="accordion-trigger__left">
+          <span class="accordion-trigger__label">Mis reservas activas</span>
+          <span class="accordion-badge" id="accordionBadge">0</span>
         </div>
-
-        <!-- Selectores de fecha y cancha -->
-        <div>
-          <div class="section-title">Reservar turno</div>
-          <div class="date-tabs"   id="dateTabs"></div>
-          <div class="cancha-tabs" id="canchaTabs"></div>
-          <div class="info-bar"    id="infoBar"></div>
-        </div>
-
+        <span class="accordion-arrow">⌄</span>
+      </button>
+      <div class="accordion-body open" id="accordionBody">
+        <div id="misReservas"><div class="spinner"></div></div>
       </div>
-
-      <!-- ── PANEL DERECHO ──────────────────────────────── -->
-      <div class="booking-right">
-        <div class="section-title">Horarios disponibles</div>
-        <div class="slot-grid" id="slotGrid">
-          <div class="spinner" style="grid-column:1/-1"></div>
-        </div>
-        <div class="legend">
-          <div class="legend__item">
-            <div class="legend__swatch legend__swatch--libre"></div>
-            Disponible
-          </div>
-          <div class="legend__item">
-            <div class="legend__swatch legend__swatch--mia"></div>
-            Tu reserva
-          </div>
-          <div class="legend__item">
-            <div class="legend__swatch legend__swatch--ocupado"></div>
-            Ocupado
-          </div>
-        </div>
-      </div>
-
     </div>
+
+    <!-- RESERVAR TURNO -->
+    <div>
+      <div class="section-title">Reservar turno</div>
+      <div class="date-tabs"  id="dateTabs"></div>
+      <div class="cancha-tabs" id="canchaTabs"></div>
+      <div class="info-bar"    id="infoBar"></div>
+      <div class="slot-grid"   id="slotGrid">
+        <div class="spinner" style="grid-column:1/-1"></div>
+      </div>
+      <div class="legend">
+        <div class="legend__item">
+          <div class="legend__swatch legend__swatch--libre"></div>
+          Disponible
+        </div>
+        <div class="legend__item">
+          <div class="legend__swatch legend__swatch--mia"></div>
+          Tu reserva
+        </div>
+        <div class="legend__item">
+          <div class="legend__swatch legend__swatch--ocupado"></div>
+          Ocupado
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 
