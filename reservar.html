@@ -10,318 +10,358 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg:          #060c1a;
-      --surface:     #0d1528;
-      --surfaceHov:  #111d38;
-      --cardBorder:  rgba(255,255,255,0.07);
-      --headerBg:    rgba(6,12,26,0.92);
-      --accent:      #4a9eff;
-      --accentGrad:  linear-gradient(135deg,#2979d6,#5ab4ff);
-      --accentGlow:  rgba(74,158,255,0.3);
-      --available:   #00c97a;
-      --availBg:     rgba(0,201,122,0.12);
-      --availBorder: rgba(0,201,122,0.3);
-      --pending:     #f59e0b;
-      --danger:      rgba(255,60,60,0.85);
-      --text:        #f0f4ff;
-      --textMuted:   rgba(200,215,255,0.5);
-      --textSub:     rgba(200,215,255,0.35);
-      --reservaCard: linear-gradient(135deg,rgba(41,121,214,0.18),rgba(90,180,255,0.08));
-      --reservaBorder: rgba(74,158,255,0.2);
+      /* ── Surfaces ── */
+      --bg:    #050c1b;
+      --sur-0: #0b1225;
+      --sur-1: #101a30;
+      --sur-2: #162038;
+      --sur-3: #1c2844;
+
+      /* ── Borders ── */
+      --bd:     rgba(255,255,255,0.06);
+      --bd-hi:  rgba(255,255,255,0.11);
+
+      /* ── Header ── */
+      --hdr: rgba(5,12,27,0.94);
+
+      /* ── Blue accent ── */
+      --blue:      #4a9eff;
+      --blue-dim:  rgba(74,158,255,0.10);
+      --blue-bd:   rgba(74,158,255,0.20);
+      --blue-grad: linear-gradient(135deg,#2563eb,#5aabff);
+      --blue-glow: rgba(74,158,255,0.22);
+
+      /* ── Green / available ── */
+      --green:     #22d47a;
+      --green-dim: rgba(34,212,122,0.08);
+      --green-bd:  rgba(34,212,122,0.20);
+
+      /* ── Semantic ── */
+      --amber:   #f59e0b;
+      --red-dim: rgba(239,68,68,0.10);
+      --red-bd:  rgba(239,68,68,0.20);
+
+      /* ── Text ── */
+      --t1: #eef2ff;
+      --t2: rgba(200,218,255,0.68);
+      --t3: rgba(180,200,255,0.38);
+      --t4: rgba(160,185,255,0.18);
+
+      /* ── Ease ── */
+      --ease-out: cubic-bezier(.22,.68,0,1.2);
+
+      /* ── Legacy aliases for JS-generated HTML ── */
+      --accent:      var(--blue);
+      --available:   var(--green);
+      --availBg:     var(--green-dim);
+      --availBorder: var(--green-bd);
+      --pending:     var(--amber);
+      --text:        var(--t1);
+      --textMuted:   var(--t2);
+      --textSub:     var(--t3);
     }
 
     html, body {
-      min-height: 100%; background: var(--bg); color: var(--text);
+      min-height: 100%; background: var(--bg); color: var(--t1);
       font-family: 'Inter', system-ui, sans-serif;
       font-size: 15px; line-height: 1.5;
       -webkit-font-smoothing: antialiased;
       overflow-x: hidden;
     }
 
-    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar { width: 4px; }
     ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 2px; }
 
-    /* ── PANTALLAS ──────────────────────────────────────────────── */
+    /* ── SCREENS ─────────────────────────────────────────────── */
     .screen { display: none; min-height: 100vh; flex-direction: column; }
     .screen.active { display: flex; }
 
-    /* ══════════════════════════════════════════════════════════════
-       AUTH — DNI / REGISTRO
-    ══════════════════════════════════════════════════════════════ */
+    /* ══════════════════════════════════════════════════════════
+       AUTH
+    ══════════════════════════════════════════════════════════ */
     .auth-wrap {
       flex: 1; display: flex; flex-direction: column;
       align-items: center; justify-content: center;
-      padding: 40px 20px; gap: 32px;
+      padding: 40px 20px; gap: 28px;
     }
 
     .auth-logo { display: flex; flex-direction: column; align-items: center; gap: 12px; }
     .auth-logo__icon {
-      width: 72px; height: 72px; border-radius: 22px;
-      background: var(--accentGrad);
+      width: 68px; height: 68px; border-radius: 20px;
+      background: var(--blue-grad);
       display: flex; align-items: center; justify-content: center;
-      font-size: 36px; box-shadow: 0 12px 40px var(--accentGlow);
+      font-size: 33px; box-shadow: 0 12px 36px var(--blue-glow);
     }
-    .auth-logo__name { font-size: 22px; font-weight: 800; color: var(--text); }
-    .auth-logo__sub  { font-size: 13px; color: var(--textMuted); }
+    .auth-logo__name { font-size: 21px; font-weight: 800; color: var(--t1); letter-spacing: -.4px; }
+    .auth-logo__sub  { font-size: 13px; color: var(--t3); }
 
     .auth-card {
       width: 100%; max-width: 400px;
-      background: var(--surface); border: 1px solid var(--cardBorder);
+      background: var(--sur-0); border: 1px solid var(--bd);
       border-radius: 20px; padding: 28px;
     }
-    .auth-card__title { font-size: 18px; font-weight: 800; margin-bottom: 6px; }
-    .auth-card__sub   { font-size: 13px; color: var(--textMuted); margin-bottom: 24px; }
+    .auth-card__title { font-size: 18px; font-weight: 800; color: var(--t1); margin-bottom: 5px; letter-spacing: -.3px; }
+    .auth-card__sub   { font-size: 13px; color: var(--t2); margin-bottom: 24px; line-height: 1.5; }
 
-    .form-group { margin-bottom: 18px; }
+    .form-group { margin-bottom: 16px; }
     .form-group label {
       display: block; font-size: 11px; font-weight: 700;
-      color: var(--textMuted); text-transform: uppercase;
-      letter-spacing: .5px; margin-bottom: 8px;
+      color: var(--t3); text-transform: uppercase;
+      letter-spacing: .08em; margin-bottom: 7px;
     }
     .form-group input {
-      width: 100%; background: rgba(255,255,255,0.04);
-      border: 1px solid var(--cardBorder); border-radius: 10px;
-      padding: 12px 16px; font: 500 15px 'Inter', sans-serif;
-      color: var(--text); transition: border-color .15s, box-shadow .15s;
+      width: 100%; background: var(--sur-1);
+      border: 1px solid var(--bd); border-radius: 10px;
+      padding: 11px 14px; font: 500 15px 'Inter', sans-serif;
+      color: var(--t1); transition: border-color .15s, box-shadow .15s;
     }
     .form-group input:focus {
-      outline: none; border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(74,158,255,.15);
+      outline: none; border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(74,158,255,.12);
     }
-    .form-group input::placeholder { color: var(--textSub); }
-    .form-group input:disabled     { opacity: .4; cursor: not-allowed; }
-    .form-group input.is-error     { border-color: rgba(255,80,80,.5); }
-    .field-err { font-size: 11px; color: rgba(255,100,100,.9); margin-top: 5px; min-height: 16px; }
+    .form-group input::placeholder { color: var(--t4); }
+    .form-group input:disabled     { opacity: .35; cursor: not-allowed; }
+    .form-group input.is-error     { border-color: rgba(239,68,68,.45); }
+    .field-err { font-size: 11px; color: rgba(239,110,110,.85); margin-top: 5px; min-height: 16px; }
 
-    /* ── BOTONES ────────────────────────────────────────────────── */
+    /* ── BOTONES ─────────────────────────────────────────────── */
     .btn {
       display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-      padding: 12px 20px; border: 1px solid transparent; border-radius: 10px;
+      padding: 11px 20px; border: 1px solid transparent; border-radius: 10px;
       font: 700 14px 'Inter', sans-serif; cursor: pointer;
-      transition: all .18s; white-space: nowrap; text-align: center;
+      transition: filter .16s, transform .16s, background .16s;
+      white-space: nowrap; text-align: center;
     }
-    .btn:disabled { opacity: .5; cursor: not-allowed; pointer-events: none; }
+    .btn:disabled { opacity: .4; cursor: not-allowed; pointer-events: none; }
     .btn--full    { width: 100%; }
+
     .btn--primary {
-      background: var(--accentGrad); color: #fff; border: none;
-      box-shadow: 0 4px 20px var(--accentGlow);
+      background: var(--blue-grad); color: #fff; border: none;
+      box-shadow: 0 4px 18px var(--blue-glow);
     }
-    .btn--primary:hover { filter: brightness(1.1); }
+    .btn--primary:hover  { filter: brightness(1.1); transform: translateY(-1px); }
+    .btn--primary:active { filter: brightness(.95); transform: translateY(0); }
+
     .btn--success {
-      background: var(--accentGrad); color: #fff; border: none;
-      box-shadow: 0 4px 20px var(--accentGlow);
-      padding: 14px; font-size: 15px; border-radius: 12px;
+      background: var(--blue-grad); color: #fff; border: none;
+      box-shadow: 0 4px 18px var(--blue-glow);
+      padding: 13px; font-size: 14px; border-radius: 11px;
     }
     .btn--success:hover { filter: brightness(1.08); }
+
     .btn--ghost {
-      background: rgba(255,255,255,0.05);
-      border-color: var(--cardBorder); color: var(--textMuted);
-      border-radius: 10px;
+      background: var(--sur-1); border-color: var(--bd); color: var(--t2);
     }
-    .btn--ghost:hover { background: rgba(255,255,255,0.08); color: var(--text); }
+    .btn--ghost:hover { background: var(--sur-2); border-color: var(--bd-hi); color: var(--t1); }
+
     .btn--danger-soft {
-      background: rgba(255,60,60,0.1); border: 1px solid rgba(255,60,60,0.2);
-      color: rgba(255,100,100,.85); border-radius: 8px;
+      background: var(--red-dim); border: 1px solid var(--red-bd);
+      color: rgba(239,100,100,.9); border-radius: 8px;
       padding: 6px 12px; font-size: 12px; font-weight: 600;
+      cursor: pointer; transition: background .15s;
     }
-    .btn--danger-soft:hover { background: rgba(255,60,60,0.18); }
+    .btn--danger-soft:hover { background: rgba(239,68,68,.16); }
+
     .btn--confirm-back {
-      background: var(--availBg); border: 1px solid var(--availBorder);
-      color: var(--available); border-radius: 10px; padding: 13px; font-size: 14px;
+      background: var(--green-dim); border: 1px solid var(--green-bd);
+      color: var(--green); border-radius: 10px;
+      padding: 12px; font-size: 14px; font-weight: 700;
+      cursor: pointer; transition: background .15s;
     }
-    .btn--confirm-back:hover { background: rgba(0,201,122,.2); }
+    .btn--confirm-back:hover { background: rgba(34,212,122,.14); }
 
     .back-btn {
-      background: none; border: none; color: var(--textMuted);
+      background: none; border: none; color: var(--t3);
       font: 600 13px 'Inter', sans-serif; cursor: pointer;
       padding: 0; margin-bottom: 20px;
-      display: flex; align-items: center; gap: 5px;
+      display: flex; align-items: center; gap: 5px; transition: color .15s;
     }
-    .back-btn:hover { color: var(--text); }
+    .back-btn:hover { color: var(--t1); }
 
-    /* ══════════════════════════════════════════════════════════════
-       HEADER PRINCIPAL
-    ══════════════════════════════════════════════════════════════ */
+    /* ══════════════════════════════════════════════════════════
+       HEADER
+    ══════════════════════════════════════════════════════════ */
     .main-header {
-      height: 60px;
-      background: var(--headerBg);
-      backdrop-filter: blur(24px);
-      border-bottom: 1px solid rgba(255,255,255,0.07);
-      padding: 0 20px; display: flex; align-items: center; gap: 12px;
+      height: 58px;
+      background: var(--hdr);
+      backdrop-filter: blur(28px) saturate(1.4);
+      -webkit-backdrop-filter: blur(28px) saturate(1.4);
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      padding: 0 24px; display: flex; align-items: center; gap: 12px;
       position: sticky; top: 0; z-index: 100;
     }
-    @media (max-width:520px) { .main-header { height: 48px; padding: 0 14px; } }
+    @media (max-width:520px) { .main-header { height: 52px; padding: 0 16px; } }
 
     .main-header__logo {
-      width: 34px; height: 34px; border-radius: 8px;
-      background: var(--accentGrad);
+      width: 36px; height: 36px; border-radius: 10px;
+      background: var(--blue-grad);
       display: flex; align-items: center; justify-content: center;
-      font-size: 17px; flex-shrink: 0;
+      font-size: 18px; flex-shrink: 0;
+      box-shadow: 0 4px 14px rgba(74,158,255,.28);
     }
     .main-header__info { flex: 1; min-width: 0; }
     .main-header__complex {
-      font-size: 14px; font-weight: 700; color: var(--text);
+      font-size: 14px; font-weight: 700; color: var(--t1);
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      letter-spacing: -.2px;
     }
-    .main-header__user {
-      font-size: 11px; color: var(--textMuted);
-    }
-    .main-header__user span { color: var(--accent); font-weight: 600; }
+    .main-header__user { font-size: 11px; color: var(--t3); margin-top: 1px; }
+    .main-header__user span { color: var(--blue); font-weight: 600; }
 
     .btn--salir {
-      background: rgba(255,255,255,0.05);
-      border: 1px solid rgba(255,255,255,0.07);
-      color: var(--textMuted); border-radius: 8px;
-      padding: 6px 16px; font: 500 13px 'Inter', sans-serif;
+      background: var(--sur-1); border: 1px solid var(--bd);
+      color: var(--t2); border-radius: 8px;
+      padding: 7px 16px; font: 500 13px 'Inter', sans-serif;
       cursor: pointer; transition: all .15s; flex-shrink: 0;
     }
-    .btn--salir:hover { background: rgba(255,255,255,.1); color: var(--text); }
+    .btn--salir:hover { background: var(--sur-2); color: var(--t1); border-color: var(--bd-hi); }
 
-    /* ══════════════════════════════════════════════════════════════
-       CONTENIDO PRINCIPAL
-    ══════════════════════════════════════════════════════════════ */
+    /* ══════════════════════════════════════════════════════════
+       LAYOUT
+    ══════════════════════════════════════════════════════════ */
     .main-content {
-      flex: 1; padding: 32px 20px 60px;
-      max-width: 860px; margin: 0 auto; width: 100%;
-      display: flex; flex-direction: column; gap: 36px;
+      flex: 1; padding: 32px 24px 64px;
+      max-width: 960px; margin: 0 auto; width: 100%;
+      display: flex; flex-direction: column; gap: 32px;
     }
+    @media (max-width:700px) { .main-content { padding: 24px 16px 56px; gap: 28px; } }
     @media (max-width:520px) { .main-content { padding: 20px 14px 48px; gap: 24px; } }
 
-    /* ══════════════════════════════════════════════════════════════
-       ACCORDION MIS RESERVAS
-    ══════════════════════════════════════════════════════════════ */
+    /* ══════════════════════════════════════════════════════════
+       ACCORDION — MIS RESERVAS
+    ══════════════════════════════════════════════════════════ */
     .accordion-trigger {
       width: 100%; display: flex; align-items: center; justify-content: space-between;
-      background: none; border: none; border-bottom: 1px solid rgba(255,255,255,0.07);
-      padding-bottom: 12px; cursor: pointer;
-      transition: border-color .2s;
+      background: none; border: none; border-bottom: 1px solid var(--bd);
+      padding-bottom: 13px; cursor: pointer; transition: border-color .2s;
     }
-    .accordion-trigger.open {
-      border-bottom-color: rgba(74,158,255,0.2);
-    }
+    .accordion-trigger.open { border-bottom-color: var(--blue-bd); }
+
     .accordion-trigger__left { display: flex; align-items: center; gap: 10px; }
     .accordion-trigger__label {
       font-size: 11px; font-weight: 700; text-transform: uppercase;
-      letter-spacing: .1em; color: var(--textSub);
+      letter-spacing: .12em; color: var(--t3);
     }
     .accordion-badge {
-      width: 18px; height: 18px; border-radius: 99px;
-      background: var(--accentGrad); color: #fff;
+      min-width: 20px; height: 20px; border-radius: 6px; padding: 0 5px;
+      background: var(--blue-grad); color: #fff;
       font-size: 10px; font-weight: 700;
       display: flex; align-items: center; justify-content: center;
     }
     .accordion-arrow {
-      color: var(--accent); font-size: 16px;
+      font-size: 13px; color: var(--t3);
       transition: transform .25s ease; display: inline-block;
     }
     .accordion-trigger.open .accordion-arrow { transform: rotate(180deg); }
 
     .accordion-body { overflow: hidden; transition: max-height .3s ease; }
-    .accordion-body.open { max-height: 1000px; }
+    .accordion-body.open   { max-height: 1000px; }
     .accordion-body.closed { max-height: 0; }
 
-    /* ── TARJETA RESERVA ────────────────────────────────────────── */
+    /* ── TARJETA RESERVA ──────────────────────────────────── */
     .reserva-card {
-      background: var(--reservaCard);
-      border: 1px solid var(--reservaBorder);
+      background: linear-gradient(135deg, rgba(74,158,255,.05), rgba(74,158,255,.02));
+      border: 1px solid rgba(74,158,255,.10);
       border-radius: 14px; padding: 14px 16px;
-      display: flex; align-items: center; gap: 16px;
-      margin-top: 10px;
+      display: flex; align-items: center; gap: 14px;
+      margin-top: 8px;
+      transition: border-color .15s, background .15s;
+    }
+    .reserva-card:hover {
+      border-color: rgba(74,158,255,.18);
+      background: linear-gradient(135deg, rgba(74,158,255,.08), rgba(74,158,255,.03));
     }
     .reserva-card__icon {
-      width: 44px; height: 44px; border-radius: 12px;
+      width: 42px; height: 42px; border-radius: 11px;
       display: flex; align-items: center; justify-content: center;
-      font-size: 20px; flex-shrink: 0;
+      font-size: 18px; flex-shrink: 0;
     }
-    .reserva-card__main { flex: 1; min-width: 0; }
-    .reserva-card__court { font-size: 15px; font-weight: 700; color: var(--text); }
+    .reserva-card__main  { flex: 1; min-width: 0; }
+    .reserva-card__court { font-size: 14px; font-weight: 700; color: var(--t1); }
     .reserva-card__time  {
-      font-size: 12px; color: var(--textMuted);
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 3px;
+      font-size: 12px; color: var(--t2); margin-top: 3px;
+      font-variant-numeric: tabular-nums;
     }
     .reserva-card__right { text-align: right; flex-shrink: 0; }
-    .reserva-card__price { font-size: 14px; font-weight: 700; color: var(--accent); }
+    .reserva-card__price { font-size: 15px; font-weight: 700; color: var(--blue); }
     .reserva-card__badge {
       display: inline-block; margin-top: 4px;
-      font-size: 10px; font-weight: 700; text-transform: uppercase;
-      padding: 2px 8px; border-radius: 99px;
+      font-size: 9px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .06em; padding: 3px 8px; border-radius: 6px;
     }
-    .badge--confirmada { color: var(--available); background: var(--availBg); }
-    .badge--pendiente  { color: var(--pending);   background: rgba(245,158,11,0.12); }
+    .badge--confirmada { color: var(--green); background: var(--green-dim); }
+    .badge--pendiente  { color: var(--amber); background: rgba(245,158,11,.10); }
 
     @media (max-width:520px) {
-      .reserva-card { flex-wrap: wrap; gap: 10px; }
-      .reserva-card__icon { width: 32px; height: 32px; font-size: 15px; border-radius: 8px; }
-      .reserva-card__court { font-size: 14px; }
-      .reserva-card__time  { font-size: 11px; }
+      .reserva-card { flex-wrap: wrap; gap: 10px; padding: 12px 14px; }
+      .reserva-card__icon  { width: 34px; height: 34px; font-size: 15px; border-radius: 9px; }
+      .reserva-card__court { font-size: 13px; }
       .reserva-card__right { flex: 0 0 auto; }
     }
 
     .empty-reservas {
-      margin-top: 12px;
-      background: rgba(255,255,255,0.02);
-      border: 1px solid var(--cardBorder);
-      border-radius: 14px; padding: 28px 20px;
-      text-align: center; color: var(--textSub); font-size: 14px;
+      margin-top: 10px;
+      background: var(--sur-0); border: 1px solid var(--bd);
+      border-radius: 12px; padding: 28px 20px;
+      text-align: center; color: var(--t3); font-size: 13px;
     }
 
-    /* ══════════════════════════════════════════════════════════════
-       RESERVAR TURNO — SECCIÓN
-    ══════════════════════════════════════════════════════════════ */
+    /* ══════════════════════════════════════════════════════════
+       SECCIÓN RESERVAR TURNO
+    ══════════════════════════════════════════════════════════ */
     .section-title {
       font-size: 11px; font-weight: 700; text-transform: uppercase;
-      letter-spacing: .1em; color: var(--textSub);
-      border-bottom: 1px solid rgba(255,255,255,0.07);
-      padding-bottom: 12px; margin-bottom: 16px;
+      letter-spacing: .12em; color: var(--t3);
+      border-bottom: 1px solid var(--bd);
+      padding-bottom: 13px; margin-bottom: 20px;
     }
 
-    /* ── DATE TABS ──────────────────────────────────────────────── */
+    /* ── DATE TABS ──────────────────────────────────────────── */
     .date-tabs {
-      display: flex; gap: 8px;
+      display: flex; gap: 7px;
       overflow-x: auto; padding-bottom: 4px; scrollbar-width: none;
     }
     .date-tabs::-webkit-scrollbar { display: none; }
 
     .date-tab {
       flex-shrink: 0; display: flex; flex-direction: column; align-items: center;
-      min-width: 64px; padding: 10px 8px;
-      background: rgba(255,255,255,0.03); border: 1px solid var(--cardBorder);
-      border-radius: 12px; cursor: pointer; transition: all .15s;
+      min-width: 60px; padding: 10px 6px 8px;
+      background: var(--sur-0); border: 1px solid var(--bd);
+      border-radius: 12px; cursor: pointer;
+      transition: background .15s, border-color .15s, box-shadow .15s;
       position: relative;
     }
-    @media (max-width:520px) { .date-tab { min-width: 52px; padding: 8px 4px; border-radius: 10px; } }
-
-    .date-tab:hover { border-color: rgba(74,158,255,.3); }
+    .date-tab:hover { background: var(--sur-1); border-color: var(--bd-hi); }
     .date-tab.active {
-      background: var(--accentGrad); border-color: transparent;
-      box-shadow: 0 4px 16px var(--accentGlow);
+      background: var(--blue-grad); border-color: transparent;
+      box-shadow: 0 4px 16px var(--blue-glow);
     }
+    @media (max-width:520px) { .date-tab { min-width: 50px; padding: 8px 4px 7px; border-radius: 10px; } }
 
     .date-tab__day {
-      font-size: 10px; font-weight: 600; text-transform: uppercase;
-      color: var(--textMuted);
+      font-size: 9px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .06em; color: var(--t3);
     }
-    .date-tab.active .date-tab__day { color: rgba(255,255,255,.8); }
+    .date-tab.active .date-tab__day { color: rgba(255,255,255,.75); }
 
     .date-tab__num {
-      font-size: 22px; font-weight: 800; color: var(--text); line-height: 1.1;
+      font-size: 20px; font-weight: 800; color: var(--t1); line-height: 1.2;
+      font-variant-numeric: tabular-nums;
     }
-    @media (max-width:520px) { .date-tab__num { font-size: 18px; } }
     .date-tab.active .date-tab__num { color: #fff; }
+    @media (max-width:520px) { .date-tab__num { font-size: 17px; } }
 
-    .date-tab__mes {
-      font-size: 10px; color: var(--textSub);
-    }
-    .date-tab.active .date-tab__mes { color: rgba(255,255,255,.7); }
+    .date-tab__mes { font-size: 9px; font-weight: 600; color: var(--t3); }
+    .date-tab.active .date-tab__mes { color: rgba(255,255,255,.65); }
 
     .date-tab__dot {
-      width: 4px; height: 4px; border-radius: 50%; margin-top: 4px;
-      background: var(--accent);
+      width: 3px; height: 3px; border-radius: 50%;
+      margin-top: 5px; background: var(--blue);
     }
-    .date-tab.active .date-tab__dot { background: #fff; }
+    .date-tab.active .date-tab__dot { background: rgba(255,255,255,.55); }
 
-    /* ── CANCHA TABS ────────────────────────────────────────────── */
+    /* ── CANCHA TABS ────────────────────────────────────────── */
     .cancha-tabs {
       display: flex; gap: 6px; flex-wrap: nowrap;
       overflow-x: auto; padding-bottom: 4px; margin-top: 14px;
@@ -331,212 +371,207 @@
 
     .cancha-tab {
       flex-shrink: 0; white-space: nowrap;
-      padding: 8px 18px; border-radius: 99px;
-      background: rgba(255,255,255,0.04); border: 1px solid var(--cardBorder);
-      color: var(--textMuted); font-size: 13px; font-weight: 600;
-      cursor: pointer; transition: all .15s;
+      padding: 8px 16px; border-radius: 8px;
+      background: var(--sur-0); border: 1px solid var(--bd);
+      color: var(--t2); font-size: 13px; font-weight: 600;
+      cursor: pointer;
+      transition: background .15s, border-color .15s, color .15s, box-shadow .15s;
     }
-    @media (max-width:520px) { .cancha-tab { padding: 7px 14px; font-size: 12px; } }
-    .cancha-tab:hover { border-color: rgba(74,158,255,.3); color: var(--text); }
+    .cancha-tab:hover { background: var(--sur-1); border-color: var(--bd-hi); color: var(--t1); }
     .cancha-tab.active {
-      background: var(--accentGrad); border-color: transparent; color: #fff;
-      box-shadow: 0 4px 14px var(--accentGlow);
+      background: var(--blue-grad); border-color: transparent; color: #fff;
+      box-shadow: 0 3px 12px var(--blue-glow);
     }
+    @media (max-width:520px) { .cancha-tab { padding: 7px 13px; font-size: 12px; } }
 
-    /* ── INFO BAR ───────────────────────────────────────────────── */
+    /* ── INFO BAR ───────────────────────────────────────────── */
     .info-bar {
-      display: flex; align-items: center; gap: 8px;
-      background: rgba(255,255,255,0.02); border: 1px solid var(--cardBorder);
-      border-radius: 10px; padding: 10px 16px; margin-top: 14px;
-      font-size: 13px; color: var(--textMuted);
+      display: flex; align-items: center; gap: 7px;
+      background: var(--sur-0); border: 1px solid var(--bd);
+      border-radius: 8px; padding: 9px 14px; margin-top: 12px;
+      font-size: 12px; color: var(--t2); font-weight: 500;
     }
+    .info-bar__dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    .info-bar__sep { color: var(--t4); }
     @media (max-width:520px) { .info-bar { padding: 8px 12px; font-size: 11px; } }
-    .info-bar__dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-    .info-bar__sep { color: var(--textSub); }
 
-    /* ── SLOT GRID ──────────────────────────────────────────────── */
+    /* ── SLOT GRID ──────────────────────────────────────────── */
     .slot-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
-      gap: 8px; margin-top: 14px;
+      grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+      gap: 7px; margin-top: 12px;
     }
-    @media (max-width:520px) {
-      .slot-grid { grid-template-columns: repeat(3, 1fr); gap: 7px; }
-    }
-    @media (max-width:360px) {
-      .slot-grid { grid-template-columns: repeat(2, 1fr); }
-    }
+    @media (max-width:520px) { .slot-grid { grid-template-columns: repeat(3,1fr); gap: 6px; } }
+    @media (max-width:360px) { .slot-grid { grid-template-columns: repeat(2,1fr); } }
 
     .slot {
       border-radius: 10px;
-      border: 1px solid var(--cardBorder);
+      border: 1px solid var(--bd);
       border-left: 3px solid transparent;
       padding: 11px 12px;
       text-align: left;
-      transition: all .18s ease;
-      background: rgba(255,255,255,0.025);
+      background: var(--sur-0);
       cursor: default;
+      transition: background .15s, border-color .15s, transform .15s, box-shadow .15s;
     }
     @media (max-width:520px) { .slot { padding: 9px 10px; border-radius: 8px; } }
 
     .slot__time {
-      font-size: 15px; font-weight: 800; color: var(--text);
-      line-height: 1; letter-spacing: -0.4px;
+      font-size: 15px; font-weight: 800; color: var(--t1);
+      line-height: 1; letter-spacing: -.5px;
       font-variant-numeric: tabular-nums;
     }
     @media (max-width:520px) { .slot__time { font-size: 14px; } }
 
-    .slot__dur {
-      font-size: 10px; color: var(--textSub);
-      margin-top: 3px; font-weight: 500;
-    }
+    .slot__dur { font-size: 10px; color: var(--t3); margin-top: 3px; font-weight: 500; }
     @media (max-width:520px) { .slot__dur { display: none; } }
 
-    .slot__price { font-size: 11px; font-weight: 700; margin-top: 7px; }
+    .slot__price { font-size: 11px; font-weight: 700; margin-top: 8px; }
     @media (max-width:520px) { .slot__price { font-size: 10px; margin-top: 5px; } }
 
+    /* Disponible */
     .slot--libre {
-      background: var(--availBg);
-      border-color: var(--availBorder);
-      border-left-color: var(--available);
+      background: var(--green-dim);
+      border-color: var(--green-bd);
+      border-left-color: var(--green);
       cursor: pointer;
     }
-    .slot--libre .slot__time  { color: var(--text); }
-    .slot--libre .slot__price { color: var(--available); }
+    .slot--libre .slot__price { color: var(--green); }
     .slot--libre:hover {
+      background: rgba(34,212,122,.13);
+      border-color: rgba(34,212,122,.28);
       transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(0,0,0,.3);
-      filter: brightness(1.1);
+      box-shadow: 0 6px 20px rgba(0,0,0,.28);
     }
 
+    /* Mi reserva */
     .slot--mia {
-      background: rgba(74,158,255,.08);
-      border-color: rgba(74,158,255,.2);
-      border-left-color: var(--accent);
+      background: var(--blue-dim);
+      border-color: var(--blue-bd);
+      border-left-color: var(--blue);
     }
-    .slot--mia .slot__time  { color: var(--accent); }
-    .slot--mia .slot__price { color: rgba(74,158,255,.65); font-size: 10px; }
+    .slot--mia .slot__time  { color: var(--blue); }
+    .slot--mia .slot__price { color: rgba(74,158,255,.55); font-size: 10px; }
 
-    .slot--ocupado { opacity: .32; cursor: not-allowed; }
-    .slot--ocupado .slot__time { color: var(--textMuted); }
+    /* Ocupado */
+    .slot--ocupado { opacity: .28; cursor: not-allowed; }
 
-    .slot--pasado  { opacity: .18; cursor: not-allowed; }
+    /* Pasado */
+    .slot--pasado  { opacity: .15; cursor: not-allowed; }
 
-    /* ── LEYENDA ────────────────────────────────────────────────── */
-    .legend {
-      display: flex; gap: 16px; margin-top: 20px; flex-wrap: wrap;
-    }
+    /* ── LEYENDA ────────────────────────────────────────────── */
+    .legend { display: flex; gap: 16px; margin-top: 18px; flex-wrap: wrap; }
     .legend__item {
-      display: flex; align-items: center; gap: 6px;
-      font-size: 12px; color: var(--textSub);
+      display: flex; align-items: center; gap: 7px;
+      font-size: 11px; color: var(--t3); font-weight: 500;
     }
-    @media (max-width:520px) { .legend__item { font-size: 11px; } }
-    .legend__dot {
-      width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0;
+    .legend__swatch {
+      width: 14px; height: 14px; border-radius: 3px; flex-shrink: 0;
+      border: 1px solid transparent; border-left-width: 3px;
     }
+    .legend__swatch--libre   { background: var(--green-dim); border-color: var(--green-bd); border-left-color: var(--green); }
+    .legend__swatch--mia     { background: var(--blue-dim);  border-color: var(--blue-bd);  border-left-color: var(--blue);  }
+    .legend__swatch--ocupado { background: var(--sur-0); border-color: var(--bd); opacity: .5; }
+    @media (max-width:520px) { .legend__item { font-size: 10px; } }
 
-    /* ══════════════════════════════════════════════════════════════
-       MODAL (bottom sheet mobile / centrado desktop)
-    ══════════════════════════════════════════════════════════════ */
+    /* ══════════════════════════════════════════════════════════
+       MODAL
+    ══════════════════════════════════════════════════════════ */
     .modal-overlay {
       display: none; position: fixed; inset: 0;
-      background: rgba(0,0,0,.7);
-      backdrop-filter: blur(8px);
+      background: rgba(0,0,0,.72);
+      backdrop-filter: blur(10px);
       z-index: 500; align-items: flex-end; justify-content: center;
     }
     .modal-overlay.active { display: flex; }
     @media (min-width:521px) { .modal-overlay { align-items: center; padding: 20px; } }
 
     .modal {
-      background: var(--surface); border: 1px solid var(--cardBorder);
+      background: var(--sur-1); border: 1px solid var(--bd-hi);
       border-radius: 20px 20px 0 0;
-      padding: 10px 22px 36px; width: 100%; max-width: 420px;
-      box-shadow: 0 24px 64px rgba(0,0,0,.7);
+      padding: 8px 22px 36px; width: 100%; max-width: 420px;
+      box-shadow: 0 24px 64px rgba(0,0,0,.75);
       animation: slideUp .22s ease;
     }
     @media (min-width:521px) {
-      .modal { border-radius: 24px; padding: 32px; animation: fadeIn .18s ease; }
+      .modal { border-radius: 20px; padding: 30px; animation: fadeIn .18s ease; }
     }
 
-    @keyframes slideUp { from { transform:translateY(30px); opacity:0; } to { transform:translateY(0); opacity:1; } }
+    @keyframes slideUp { from { transform:translateY(28px); opacity:0; } to { transform:translateY(0); opacity:1; } }
     @keyframes fadeIn  { from { opacity:0; transform:scale(.97); } to { opacity:1; transform:scale(1); } }
 
     .modal__handle {
-      width: 40px; height: 4px; border-radius: 2px;
-      background: rgba(255,255,255,.15);
-      margin: 0 auto 20px; display: block;
+      width: 38px; height: 4px; border-radius: 2px;
+      background: rgba(255,255,255,.12); margin: 0 auto 22px; display: block;
     }
     @media (min-width:521px) { .modal__handle { display: none; } }
 
-    /* Modal normal (cancelar / salir) */
     .modal__label {
       font-size: 11px; font-weight: 700; text-transform: uppercase;
-      letter-spacing: .07em; color: var(--accent); margin-bottom: 8px;
+      letter-spacing: .09em; color: var(--blue); margin-bottom: 7px;
     }
-    .modal__title { font-size: 20px; font-weight: 800; color: var(--text); margin-bottom: 4px; }
-    .modal__sub   { font-size: 13px; color: var(--textMuted); margin-bottom: 20px; }
+    .modal__title { font-size: 19px; font-weight: 800; color: var(--t1); margin-bottom: 4px; letter-spacing: -.3px; }
+    .modal__sub   { font-size: 13px; color: var(--t2); margin-bottom: 20px; line-height: 1.5; }
 
     .modal-detail-rows {
-      background: rgba(255,255,255,0.04); border-radius: 12px;
-      padding: 12px 16px; margin-bottom: 20px;
+      background: var(--sur-2); border: 1px solid var(--bd);
+      border-radius: 12px; padding: 12px 14px; margin-bottom: 20px;
       display: flex; flex-direction: column; gap: 10px;
     }
-    .modal-detail-row {
-      display: flex; align-items: center; gap: 12px; font-size: 14px;
-    }
-    .modal-detail-row__icon { font-size: 16px; flex-shrink: 0; }
+    .modal-detail-row { display: flex; align-items: center; gap: 12px; }
+    .modal-detail-row__icon  { font-size: 15px; flex-shrink: 0; }
     .modal-detail-row__label {
-      font-size: 11px; font-weight: 600; text-transform: uppercase;
-      color: var(--textMuted); letter-spacing: .05em;
-      min-width: 60px;
+      font-size: 10px; font-weight: 700; text-transform: uppercase;
+      color: var(--t3); letter-spacing: .06em; min-width: 56px;
     }
-    .modal-detail-row__val  { font-size: 14px; font-weight: 500; color: var(--text); }
+    .modal-detail-row__val { font-size: 13px; font-weight: 500; color: var(--t1); }
 
     .modal-actions { display: flex; gap: 8px; flex-direction: column; }
     .modal-actions--row { flex-direction: row; }
 
-    /* Modal estado confirmado */
     .modal-success {
       display: flex; flex-direction: column; align-items: center;
       text-align: center; gap: 14px; padding: 8px 0;
     }
     .modal-success__circle {
-      width: 72px; height: 72px; border-radius: 50%;
-      background: var(--availBg); border: 2px solid var(--availBorder);
+      width: 68px; height: 68px; border-radius: 50%;
+      background: var(--green-dim); border: 2px solid var(--green-bd);
       display: flex; align-items: center; justify-content: center;
-      font-size: 32px;
+      font-size: 30px;
+      animation: popIn .3s var(--ease-out);
     }
-    .modal-success__title { font-size: 22px; font-weight: 800; color: var(--text); }
-    .modal-success__sub   { font-size: 14px; color: var(--textMuted); margin-bottom: 8px; }
+    @keyframes popIn { from { transform:scale(.5); opacity:0; } to { transform:scale(1); opacity:1; } }
+    .modal-success__title { font-size: 21px; font-weight: 800; color: var(--t1); letter-spacing: -.3px; }
+    .modal-success__sub   { font-size: 13px; color: var(--t2); margin-bottom: 6px; line-height: 1.6; }
 
-    /* ── TOAST ──────────────────────────────────────────────────── */
+    /* ── TOAST ──────────────────────────────────────────────── */
     .toast-wrap {
       position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
       z-index: 999; display: flex; flex-direction: column; align-items: center;
       gap: 8px; pointer-events: none;
     }
     .toast {
-      background: var(--surface); border: 1px solid var(--cardBorder);
-      border-radius: 10px; padding: 10px 22px;
-      font-size: 13px; font-weight: 500; max-width: 320px; text-align: center;
+      background: var(--sur-1); border: 1px solid var(--bd-hi);
+      border-radius: 10px; padding: 10px 20px;
+      font-size: 13px; font-weight: 500; max-width: 300px; text-align: center;
       pointer-events: all; animation: fadeUp .18s ease;
+      box-shadow: 0 8px 24px rgba(0,0,0,.4);
     }
-    .toast--success { border-color: var(--availBorder); color: var(--available); }
-    .toast--error   { border-color: rgba(255,80,80,.3); color: rgba(255,110,110,.9); }
-    .toast--info    { border-color: rgba(74,158,255,.3); color: var(--accent); }
-
+    .toast--success { border-color: var(--green-bd); color: var(--green); }
+    .toast--error   { border-color: var(--red-bd);   color: rgba(239,110,110,.9); }
+    .toast--info    { border-color: var(--blue-bd);  color: var(--blue); }
     @keyframes fadeUp { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
 
-    /* ── SPINNER ────────────────────────────────────────────────── */
+    /* ── SPINNER ────────────────────────────────────────────── */
     .spinner {
-      width: 32px; height: 32px;
-      border: 3px solid rgba(255,255,255,.1); border-top-color: var(--accent);
+      width: 28px; height: 28px;
+      border: 2.5px solid rgba(255,255,255,.07); border-top-color: var(--blue);
       border-radius: 50%; animation: spin .65s linear infinite;
-      margin: 32px auto; display: block;
+      margin: 28px auto; display: block;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* ── LOADING INICIAL ────────────────────────────────────────── */
+    /* ── LOADING INICIAL ────────────────────────────────────── */
     #loadingFull {
       position: fixed; inset: 0; background: var(--bg);
       display: flex; flex-direction: column;
@@ -544,25 +579,25 @@
     }
     #loadingFull.oculto { display: none; }
     .loading-icon {
-      width: 64px; height: 64px; border-radius: 20px;
-      background: var(--accentGrad); font-size: 32px;
+      width: 60px; height: 60px; border-radius: 18px;
+      background: var(--blue-grad); font-size: 30px;
       display: flex; align-items: center; justify-content: center;
-      box-shadow: 0 12px 40px var(--accentGlow);
+      box-shadow: 0 12px 36px var(--blue-glow);
     }
   </style>
 </head>
 <body>
 
-<!-- ── LOADING ───────────────────────────────────────────────────── -->
+<!-- ── LOADING ─────────────────────────────────────────────── -->
 <div id="loadingFull">
   <div class="loading-icon" id="loadIcon">⚽</div>
   <div class="spinner" style="margin:0"></div>
 </div>
 
-<!-- ── TOASTS ────────────────────────────────────────────────────── -->
+<!-- ── TOASTS ──────────────────────────────────────────────── -->
 <div class="toast-wrap" id="toastWrap"></div>
 
-<!-- ── MODAL ─────────────────────────────────────────────────────── -->
+<!-- ── MODAL ───────────────────────────────────────────────── -->
 <div class="modal-overlay" id="modalOverlay">
   <div class="modal" id="modalBox">
     <span class="modal__handle"></span>
@@ -570,9 +605,9 @@
   </div>
 </div>
 
-<!-- ══════════════════════════════════════════════════════════════
+<!-- ══════════════════════════════════════════════════════════
      PANTALLA 1 — DNI
-══════════════════════════════════════════════════════════════ -->
+══════════════════════════════════════════════════════════ -->
 <div class="screen" id="screen-dni">
   <div class="auth-wrap">
     <div class="auth-logo">
@@ -594,9 +629,9 @@
   </div>
 </div>
 
-<!-- ══════════════════════════════════════════════════════════════
+<!-- ══════════════════════════════════════════════════════════
      PANTALLA 2 — REGISTRO
-══════════════════════════════════════════════════════════════ -->
+══════════════════════════════════════════════════════════ -->
 <div class="screen" id="screen-registro">
   <div class="auth-wrap">
     <div class="auth-logo">
@@ -628,9 +663,9 @@
   </div>
 </div>
 
-<!-- ══════════════════════════════════════════════════════════════
+<!-- ══════════════════════════════════════════════════════════
      PANTALLA 3 — PRINCIPAL
-══════════════════════════════════════════════════════════════ -->
+══════════════════════════════════════════════════════════ -->
 <div class="screen" id="screen-main">
 
   <header class="main-header">
@@ -669,15 +704,15 @@
       </div>
       <div class="legend">
         <div class="legend__item">
-          <div class="legend__dot" style="background:var(--available)"></div>
+          <div class="legend__swatch legend__swatch--libre"></div>
           Disponible
         </div>
         <div class="legend__item">
-          <div class="legend__dot" style="background:var(--accent)"></div>
+          <div class="legend__swatch legend__swatch--mia"></div>
           Tu reserva
         </div>
         <div class="legend__item">
-          <div class="legend__dot" style="background:rgba(255,255,255,0.2)"></div>
+          <div class="legend__swatch legend__swatch--ocupado"></div>
           Ocupado
         </div>
       </div>
@@ -686,13 +721,13 @@
   </div>
 </div>
 
-<!-- ══════════════════════════════════════════════════════════════
+<!-- ══════════════════════════════════════════════════════════
      JAVASCRIPT
-══════════════════════════════════════════════════════════════ -->
+══════════════════════════════════════════════════════════ -->
 <script>
 'use strict';
 
-/* ── SUPABASE ──────────────────────────────────────────────────── */
+/* ── SUPABASE ────────────────────────────────────────────── */
 const SB_URL = 'https://ljsrakvyayjguwesmzoi.supabase.co';
 const SB_KEY = 'sb_publishable_fJb0jH0ENWv8ux7MBr3EdA_k1Mlt9p-';
 
@@ -715,7 +750,7 @@ async function sbq(path, opts = {}) {
   return txt ? JSON.parse(txt) : null;
 }
 
-/* ── ESTADO GLOBAL ─────────────────────────────────────────────── */
+/* ── ESTADO GLOBAL ───────────────────────────────────────── */
 const S = {
   cliente:      null,
   config:       {},
@@ -725,7 +760,7 @@ const S = {
   dniPendiente: '',
 };
 
-/* ── HELPERS ───────────────────────────────────────────────────── */
+/* ── HELPERS ─────────────────────────────────────────────── */
 function fechaHoy() {
   const d = new Date();
   return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
@@ -778,7 +813,7 @@ function deporteInfo(deporte='') {
   return { emoji:'🏟️', color:'#4a9eff', bg:'rgba(74,158,255,0.15)' };
 }
 
-/* ── TOAST ─────────────────────────────────────────────────────── */
+/* ── TOAST ───────────────────────────────────────────────── */
 function toast(msg, tipo='info', ms=3200) {
   const el = document.createElement('div');
   el.className = `toast toast--${tipo}`;
@@ -787,7 +822,7 @@ function toast(msg, tipo='info', ms=3200) {
   setTimeout(() => el.remove(), ms);
 }
 
-/* ── MODAL ─────────────────────────────────────────────────────── */
+/* ── MODAL ───────────────────────────────────────────────── */
 function abrirModal(html) {
   document.getElementById('modalContent').innerHTML = html;
   document.getElementById('modalOverlay').classList.add('active');
@@ -799,14 +834,14 @@ document.getElementById('modalOverlay').addEventListener('click', e => {
   if (e.target.id === 'modalOverlay') cerrarModal();
 });
 
-/* ── PANTALLAS ─────────────────────────────────────────────────── */
+/* ── PANTALLAS ───────────────────────────────────────────── */
 function ir(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   window.scrollTo(0,0);
 }
 
-/* ── VALIDACIONES ──────────────────────────────────────────────── */
+/* ── VALIDACIONES ────────────────────────────────────────── */
 function validarDNI(v) {
   const n = v.replace(/\D/g,'');
   if (!n.length) return 'Ingresá tu DNI.';
@@ -831,9 +866,9 @@ function marcarError(inputId, errId, msg) {
   inp.classList.remove('is-error'); err.textContent=''; return true;
 }
 
-/* ══════════════════════════════════════════════════════════════
+/* ══════════════════════════════════════════════════════════
    PANTALLA 1 — DNI
-══════════════════════════════════════════════════════════════ */
+══════════════════════════════════════════════════════════ */
 document.getElementById('inDNI').addEventListener('input', e => {
   e.target.value = e.target.value.replace(/\D/g,'');
 });
@@ -862,9 +897,9 @@ document.getElementById('btnContinuar').addEventListener('click', async () => {
   finally { btn.disabled=false; btn.textContent='Continuar →'; }
 });
 
-/* ══════════════════════════════════════════════════════════════
+/* ══════════════════════════════════════════════════════════
    PANTALLA 2 — REGISTRO
-══════════════════════════════════════════════════════════════ */
+══════════════════════════════════════════════════════════ */
 document.getElementById('btnVolver').addEventListener('click', () => ir('screen-dni'));
 document.getElementById('regTel').addEventListener('input', e => {
   e.target.value = e.target.value.replace(/\D/g,'');
@@ -887,13 +922,13 @@ document.getElementById('btnRegistrar').addEventListener('click', async () => {
   finally { btn.disabled=false; btn.textContent='Crear cuenta →'; }
 });
 
-/* ── SESIÓN ─────────────────────────────────────────────────────── */
+/* ── SESIÓN ──────────────────────────────────────────────── */
 function guardarSesion() { localStorage.setItem('rv_cliente', JSON.stringify(S.cliente)); }
 function borrarSesion()  { localStorage.removeItem('rv_cliente'); }
 
-/* ══════════════════════════════════════════════════════════════
+/* ══════════════════════════════════════════════════════════
    ENTRAR AL SISTEMA
-══════════════════════════════════════════════════════════════ */
+══════════════════════════════════════════════════════════ */
 async function entrar() {
   ir('screen-main');
   const nombre = S.config.nombre || 'Reservas';
@@ -913,7 +948,7 @@ async function entrar() {
   await Promise.all([renderSlots(), renderMisReservas()]);
 }
 
-/* ── ACCORDION ──────────────────────────────────────────────────── */
+/* ── ACCORDION ───────────────────────────────────────────── */
 document.getElementById('accordionTrigger').addEventListener('click', () => {
   const trigger = document.getElementById('accordionTrigger');
   const body    = document.getElementById('accordionBody');
@@ -923,7 +958,7 @@ document.getElementById('accordionTrigger').addEventListener('click', () => {
   body.classList.toggle('closed',  isOpen);
 });
 
-/* ── DATE TABS ──────────────────────────────────────────────────── */
+/* ── DATE TABS ───────────────────────────────────────────── */
 function renderDateTabs() {
   const wrap = document.getElementById('dateTabs');
   wrap.innerHTML = '';
@@ -947,7 +982,7 @@ function renderDateTabs() {
   });
 }
 
-/* ── CANCHA TABS ────────────────────────────────────────────────── */
+/* ── CANCHA TABS ─────────────────────────────────────────── */
 function renderCanchaTabs() {
   const wrap = document.getElementById('canchaTabs');
   wrap.innerHTML = '';
@@ -966,7 +1001,7 @@ function renderCanchaTabs() {
   });
 }
 
-/* ── INFO BAR ───────────────────────────────────────────────────── */
+/* ── INFO BAR ────────────────────────────────────────────── */
 function renderInfoBar() {
   const cancha = S.canchas.find(c => c.id === S.canchaActual);
   const bar    = document.getElementById('infoBar');
@@ -983,7 +1018,7 @@ function renderInfoBar() {
     <span>${esHoy ? 'Hoy' : fechaCorta(S.fechaActual)}</span>`;
 }
 
-/* ── SLOT GRID ──────────────────────────────────────────────────── */
+/* ── SLOT GRID ───────────────────────────────────────────── */
 async function renderSlots() {
   const grid = document.getElementById('slotGrid');
   grid.innerHTML = '<div class="spinner" style="grid-column:1/-1"></div>';
@@ -1006,7 +1041,7 @@ async function renderSlots() {
   grid.innerHTML = '';
 
   if (!slotsCalc.length) {
-    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:32px;color:var(--textSub);font-size:13px">No hay turnos configurados para este día.</div>';
+    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:32px;color:var(--t3);font-size:13px">No hay turnos configurados para este día.</div>';
     return;
   }
 
@@ -1029,9 +1064,9 @@ async function renderSlots() {
       <div class="slot__time">${slot.horaInicio}</div>
       <div class="slot__dur">${cancha.duracionTurno} min</div>
       <div class="slot__price">
-        ${esMio   ? '✓ Mi reserva'                           :
-          ocupado ? 'Ocupado'                                 :
-          pasado  ? '<span style="color:var(--textSub);font-size:9px;font-weight:500">—</span>' :
+        ${esMio   ? '✓ Mi reserva' :
+          ocupado ? 'Ocupado'      :
+          pasado  ? ''             :
           `$${cancha.precio.toLocaleString('es-AR')}`}
       </div>`;
     if (libre) div.addEventListener('click', () => pedirConfirmacion(slot, turnoExistente, cancha));
@@ -1050,9 +1085,8 @@ function calcularSlots(cancha) {
   return slots;
 }
 
-/* ── CONFIRMAR RESERVA ──────────────────────────────────────────── */
+/* ── CONFIRMAR RESERVA ───────────────────────────────────── */
 function pedirConfirmacion(slot, turnoExistente, cancha) {
-  const info = deporteInfo(cancha.deporte);
   abrirModal(`
     <div class="modal__label">Confirmar reserva</div>
     <div class="modal__title">${cancha.nombre}</div>
@@ -1084,7 +1118,6 @@ function pedirConfirmacion(slot, turnoExistente, cancha) {
 }
 
 async function hacerReserva(slot, turnoExistente, cancha) {
-  // Estado loading
   const btnConfirmar = document.getElementById('btnConfirmarReserva');
   if (btnConfirmar) { btnConfirmar.disabled=true; btnConfirmar.textContent='Procesando…'; }
 
@@ -1116,7 +1149,6 @@ async function hacerReserva(slot, turnoExistente, cancha) {
     }
     await sbq('/reservas', { method:'POST', body:JSON.stringify({ id:uid('r'), clienteId:S.cliente.id, turnoId }) });
 
-    // Estado confirmado
     abrirModal(`
       <div class="modal-success">
         <div class="modal-success__circle">✓</div>
@@ -1133,7 +1165,7 @@ async function hacerReserva(slot, turnoExistente, cancha) {
   }
 }
 
-/* ── MIS RESERVAS ───────────────────────────────────────────────── */
+/* ── MIS RESERVAS ────────────────────────────────────────── */
 async function renderMisReservas() {
   const wrap = document.getElementById('misReservas');
   wrap.innerHTML = '<div class="spinner"></div>';
@@ -1216,7 +1248,7 @@ function actualizarBadge(n) {
   document.getElementById('accordionBadge').textContent = n;
 }
 
-/* ── CANCELAR ───────────────────────────────────────────────────── */
+/* ── CANCELAR ────────────────────────────────────────────── */
 function pedirCancelacion(rid, tid, cancha, fecha, inicio, fin) {
   abrirModal(`
     <div class="modal__label">Cancelar reserva</div>
@@ -1263,7 +1295,7 @@ async function ejecutarCancelacion(rid, tid) {
   }
 }
 
-/* ── SALIR ──────────────────────────────────────────────────────── */
+/* ── SALIR ───────────────────────────────────────────────── */
 document.getElementById('btnSalir').addEventListener('click', () => {
   abrirModal(`
     <div class="modal__label">Sesión</div>
@@ -1283,9 +1315,9 @@ document.getElementById('btnSalir').addEventListener('click', () => {
   };
 });
 
-/* ══════════════════════════════════════════════════════════════
+/* ══════════════════════════════════════════════════════════
    INIT
-══════════════════════════════════════════════════════════════ */
+══════════════════════════════════════════════════════════ */
 async function init() {
   try {
     const rows = await sbq('/config');
@@ -1328,7 +1360,7 @@ async function init() {
 
 init();
 
-/* ── REFRESCO AUTOMÁTICO ────────────────────────────────────────── */
+/* ── REFRESCO AUTOMÁTICO ─────────────────────────────────── */
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState==='visible' && S.cliente)
     Promise.all([renderSlots(), renderMisReservas()]);
