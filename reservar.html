@@ -357,55 +357,70 @@
     /* ── SLOT GRID ──────────────────────────────────────────────── */
     .slot-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-      gap: 10px; margin-top: 14px;
+      grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+      gap: 8px; margin-top: 14px;
     }
     @media (max-width:520px) {
-      .slot-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+      .slot-grid { grid-template-columns: repeat(3, 1fr); gap: 7px; }
     }
     @media (max-width:360px) {
       .slot-grid { grid-template-columns: repeat(2, 1fr); }
     }
 
     .slot {
-      border-radius: 12px; border: 1px solid var(--cardBorder);
-      padding: 14px 16px; text-align: center; transition: all .2s ease;
-      background: rgba(255,255,255,0.03);
+      border-radius: 10px;
+      border: 1px solid var(--cardBorder);
+      border-left: 3px solid transparent;
+      padding: 11px 12px;
+      text-align: left;
+      transition: all .18s ease;
+      background: rgba(255,255,255,0.025);
+      cursor: default;
     }
-    @media (max-width:520px) { .slot { padding: 10px 8px; border-radius: 10px; } }
+    @media (max-width:520px) { .slot { padding: 9px 10px; border-radius: 8px; } }
 
     .slot__time {
-      font-size: 22px; font-weight: 700; color: var(--text); line-height: 1;
+      font-size: 15px; font-weight: 800; color: var(--text);
+      line-height: 1; letter-spacing: -0.4px;
+      font-variant-numeric: tabular-nums;
     }
-    @media (max-width:520px) { .slot__time { font-size: 17px; } }
+    @media (max-width:520px) { .slot__time { font-size: 14px; } }
 
-    .slot__dur  { font-size: 11px; color: var(--textMuted); margin-top: 4px; }
+    .slot__dur {
+      font-size: 10px; color: var(--textSub);
+      margin-top: 3px; font-weight: 500;
+    }
     @media (max-width:520px) { .slot__dur { display: none; } }
 
-    .slot__price { font-size: 13px; font-weight: 600; margin-top: 6px; }
-    @media (max-width:520px) { .slot__price { font-size: 11px; margin-top: 4px; } }
+    .slot__price { font-size: 11px; font-weight: 700; margin-top: 7px; }
+    @media (max-width:520px) { .slot__price { font-size: 10px; margin-top: 5px; } }
 
     .slot--libre {
-      background: var(--availBg); border-color: var(--availBorder); cursor: pointer;
+      background: var(--availBg);
+      border-color: var(--availBorder);
+      border-left-color: var(--available);
+      cursor: pointer;
     }
     .slot--libre .slot__time  { color: var(--text); }
     .slot--libre .slot__price { color: var(--available); }
     .slot--libre:hover {
       transform: translateY(-2px);
-      box-shadow: 0 8px 24px rgba(0,0,0,.3);
+      box-shadow: 0 6px 20px rgba(0,0,0,.3);
+      filter: brightness(1.1);
     }
-    .slot--libre:hover .slot__time { color: var(--available); }
 
     .slot--mia {
-      background: rgba(74,158,255,.1); border-color: rgba(74,158,255,.3);
+      background: rgba(74,158,255,.08);
+      border-color: rgba(74,158,255,.2);
+      border-left-color: var(--accent);
     }
     .slot--mia .slot__time  { color: var(--accent); }
-    .slot--mia .slot__price { color: var(--accent); font-size: 11px; }
+    .slot--mia .slot__price { color: rgba(74,158,255,.65); font-size: 10px; }
 
-    .slot--ocupado { opacity: .4; cursor: not-allowed; }
-    .slot--ocupado .slot__time { color: rgba(255,255,255,.3); }
+    .slot--ocupado { opacity: .32; cursor: not-allowed; }
+    .slot--ocupado .slot__time { color: var(--textMuted); }
 
-    .slot--pasado  { opacity: .25; cursor: not-allowed; }
+    .slot--pasado  { opacity: .18; cursor: not-allowed; }
 
     /* ── LEYENDA ────────────────────────────────────────────────── */
     .legend {
@@ -1014,9 +1029,9 @@ async function renderSlots() {
       <div class="slot__time">${slot.horaInicio}</div>
       <div class="slot__dur">${cancha.duracionTurno} min</div>
       <div class="slot__price">
-        ${esMio   ? '✓ Mi reserva' :
-          ocupado ? 'Ocupado'      :
-          pasado  ? ''             :
+        ${esMio   ? '✓ Mi reserva'                           :
+          ocupado ? 'Ocupado'                                 :
+          pasado  ? '<span style="color:var(--textSub);font-size:9px;font-weight:500">—</span>' :
           `$${cancha.precio.toLocaleString('es-AR')}`}
       </div>`;
     if (libre) div.addEventListener('click', () => pedirConfirmacion(slot, turnoExistente, cancha));
