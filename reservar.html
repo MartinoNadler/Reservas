@@ -889,7 +889,9 @@ async function sbq(path, opts = {}) {
   });
   if (!r.ok) {
     const txt = await r.text();
-    throw new Error(`SB ${r.status}: ${txt}`);
+    const err = new Error(`SB ${r.status}: ${txt}`);
+    err.status = r.status;
+    throw err;
   }
   const txt = await r.text();
   return txt ? JSON.parse(txt) : null;
@@ -1345,8 +1347,8 @@ async function renderSlots() {
 
   slotsCalc.forEach(slot => {
     const turnoExistente = turnosDB.find(t => t.horaInicio===slot.horaInicio);
-    const esMio   = turnoExistente && turnoExistente.estado!=='disponible' && misTurnoIds.has(turnoExistente.id);
-    const ocupado = turnoExistente && turnoExistente.estado!=='disponible' && !esMio;
+    const esMio   = turnoExistente && misTurnoIds.has(turnoExistente.id);
+    const ocupado = turnoExistente && !esMio;
     const pasado  = esHoy && minutos(slot.horaInicio) <= ahoraMin;
     const libre   = !ocupado && !pasado && !esMio;
 
@@ -1420,32 +1422,15 @@ async function hacerReserva(slot, turnoExistente, cancha) {
   if (btnConfirmar) { btnConfirmar.disabled=true; btnConfirmar.textContent='Procesando…'; }
 
   try {
-    let turnoId;
-    if (turnoExistente) {
-      const [actual] = await sbq(`/turnos?id=eq.${turnoExistente.id}`) || [];
-      if (!actual || actual.estado!=='disponible') {
-        cerrarModal();
-        toast('Este turno ya no está disponible 😕','error');
-        await renderSlots(); return;
-      }
-      await sbq(`/turnos?id=eq.${turnoExistente.id}`, {
-        method:'PATCH', body:JSON.stringify({ estado:'reservado' }),
-      });
-      turnoId = turnoExistente.id;
-    } else {
-      const nuevoTurno = { id:uid('t'), canchaId:cancha.id, fecha:S.fechaActual, horaInicio:slot.horaInicio, horaFin:slot.horaFin, estado:'reservado' };
-      const existentes = await sbq(`/turnos?canchaId=eq.${cancha.id}&fecha=eq.${S.fechaActual}&horaInicio=eq.${slot.horaInicio}`) || [];
-      if (existentes.length) {
-        const ex = existentes[0];
-        if (ex.estado!=='disponible') { cerrarModal(); toast('Este turno ya no está disponible 😕','error'); await renderSlots(); return; }
-        await sbq(`/turnos?id=eq.${ex.id}`, { method:'PATCH', body:JSON.stringify({ estado:'reservado' }) });
-        turnoId = ex.id;
-      } else {
-        const created = await sbq('/turnos', { method:'POST', body:JSON.stringify(nuevoTurno) });
-        turnoId = (Array.isArray(created)?created[0]:created)?.id || nuevoTurno.id;
-      }
-    }
-    await sbq('/reservas', { method:'POST', body:JSON.stringify({ id:uid('r'), clienteId:S.cliente.id, turnoId }) });
+    // Siempre INSERT — el índice único en DB (canchaId, fecha, horaInicio) rechaza dobles reservas
+    const nuevoTurno = {
+      id: uid('t'), canchaId: cancha.id, fecha: S.fechaActual,
+      horaInicio: slot.horaInicio, horaFin: slot.horaFin, estado: 'reservado',
+    };
+    const created = await sbq('/turnos', { method: 'POST', body: JSON.stringify(nuevoTurno) });
+    const turnoId = (Array.isArray(created) ? created[0] : created)?.id || nuevoTurno.id;
+
+    await sbq('/reservas', { method: 'POST', body: JSON.stringify({ id: uid('r'), clienteId: S.cliente.id, turnoId }) });
 
     abrirModal(`
       <div class="modal-success">
@@ -1458,8 +1443,13 @@ async function hacerReserva(slot, turnoExistente, cancha) {
     await Promise.all([renderSlots(), renderMisReservas()]);
   } catch(e) {
     cerrarModal();
-    toast('Error al reservar. Intentá de nuevo.','error');
-    console.error(e);
+    if (e.status === 409) {
+      toast('Este turno acaba de ser reservado por otra persona 😕', 'error');
+    } else {
+      toast('Error al reservar. Intentá de nuevo.', 'error');
+      console.error(e);
+    }
+    await renderSlots();
   }
 }
 
@@ -1583,12 +1573,13 @@ function pedirCancelacion(rid, tid, cancha, fecha, inicio, fin) {
 async function ejecutarCancelacion(rid, tid) {
   cerrarModal();
   try {
-    await sbq(`/turnos?id=eq.${tid}`, { method:'PATCH', body:JSON.stringify({ estado:'disponible' }) });
-    await sbq(`/reservas?id=eq.${rid}`, { method:'DELETE' });
-    toast('Reserva cancelada.','info');
+    // Eliminar reserva y turno (el slot vuelve a estar disponible implícitamente)
+    await sbq(`/reservas?id=eq.${rid}`, { method: 'DELETE' });
+    await sbq(`/turnos?id=eq.${tid}`,   { method: 'DELETE' });
+    toast('Reserva cancelada.', 'info');
     await Promise.all([renderSlots(), renderMisReservas()]);
   } catch(e) {
-    toast('Error al cancelar. Intentá de nuevo.','error');
+    toast('Error al cancelar. Intentá de nuevo.', 'error');
     console.error(e);
   }
 }
