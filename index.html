@@ -699,7 +699,57 @@
     .period-nav {
       display: flex; align-items: center; gap: 8px; margin-left: auto;
     }
-    .period-label { font-weight: 600; font-size: 14px; min-width: 220px; text-align: center; }
+    .period-label-wrap { position: relative; }
+    .period-label {
+      font-weight: 600; font-size: 14px; min-width: 220px; text-align: center;
+      cursor: pointer; user-select: none;
+      padding: 5px 14px; border-radius: 8px;
+      background: var(--surface); border: 1px solid var(--accent);
+      transition: background .14s;
+    }
+    .period-label:hover { background: var(--surface-2); }
+
+    /* Popover calendario reportes */
+    .rcal-pop {
+      display: none; position: absolute; top: calc(100% + 8px); left: 50%;
+      transform: translateX(-50%);
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 14px; padding: 16px; width: 280px; z-index: 300;
+      box-shadow: 0 12px 40px rgba(0,0,0,.55);
+      animation: calFadeIn .15s ease;
+    }
+    .rcal-pop.open { display: block; }
+
+    /* Popover rango custom */
+    .custom-pop {
+      display: none; position: absolute; top: calc(100% + 8px); right: 0;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 14px; padding: 18px; width: 320px; z-index: 300;
+      box-shadow: 0 12px 40px rgba(0,0,0,.55);
+      animation: calFadeIn .15s ease;
+    }
+    .custom-pop.open { display: block; }
+    .custom-pop__title {
+      font-size: 12px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .08em; color: var(--text-muted); margin-bottom: 14px;
+    }
+    .custom-pop__fields {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px;
+    }
+    .custom-pop__field label {
+      display: block; font-size: 11px; font-weight: 600;
+      color: var(--text-muted); margin-bottom: 5px;
+    }
+    .custom-pop__field input[type="date"] {
+      width: 100%; background: var(--surface-2); border: 1px solid var(--border);
+      border-radius: 7px; padding: 7px 10px; color: var(--text);
+      font-size: 13px; font-family: inherit; cursor: pointer;
+      transition: border-color .14s;
+    }
+    .custom-pop__field input[type="date"]:focus {
+      outline: none; border-color: var(--accent);
+    }
+    .custom-pop__wrap { position: relative; }
 
     /* ============================================================
        REPORTES — KPIs
@@ -1124,12 +1174,32 @@
             <button class="period-btn" data-periodo="semanal">Semanal</button>
             <button class="period-btn" data-periodo="mensual">Mensual</button>
             <button class="period-btn" data-periodo="anual">Anual</button>
+            <button class="period-btn" data-periodo="custom">Custom</button>
           </div>
           <div class="period-nav">
             <button class="datebar__btn" id="rPrev">←</button>
-            <span class="period-label" id="rLabel">—</span>
+            <div class="period-label-wrap">
+              <span class="period-label" id="rLabel">—</span>
+              <div class="rcal-pop" id="rCalPop"></div>
+            </div>
             <button class="datebar__btn" id="rNext">→</button>
             <button class="datebar__today" id="rHoy">Hoy</button>
+            <div class="custom-pop__wrap">
+              <div class="custom-pop" id="customPop">
+                <div class="custom-pop__title">Rango personalizado</div>
+                <div class="custom-pop__fields">
+                  <div class="custom-pop__field">
+                    <label>Desde</label>
+                    <input type="date" id="rDesde" />
+                  </div>
+                  <div class="custom-pop__field">
+                    <label>Hasta</label>
+                    <input type="date" id="rHasta" />
+                  </div>
+                </div>
+                <button class="datebar__today" id="btnAplicarCustom" style="width:100%">Aplicar</button>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -2503,8 +2573,10 @@ function acEliminarCliente(clienteId) {
    REPORTES — ESTADO DE UI
 ==================================================================== */
 const REPORT = {
-  periodo: 'diario',
-  ref:     hoy(),
+  periodo:      'diario',
+  ref:          hoy(),
+  desdeCustom:  hoy(),
+  hastaCustom:  hoy(),
 };
 
 /* ====================================================================
@@ -2544,12 +2616,15 @@ function getRango(periodo, ref) {
       const y = ref.split('-')[0];
       return { desde: `${y}-01-01`, hasta: `${y}-12-31` };
     }
+    case 'custom':
+      return { desde: REPORT.desdeCustom, hasta: REPORT.hastaCustom };
   }
 }
 
 /** Mueve la referencia del reporte al período anterior (-1) o siguiente (+1). */
 function navReporte(dir) {
   const { periodo, ref } = REPORT;
+  if (periodo === 'custom')  return; // flechas deshabilitadas en custom
   if (periodo === 'diario')  { REPORT.ref = sumarDias(ref, dir); }
   if (periodo === 'semanal') { REPORT.ref = sumarDias(ref, dir * 7); }
   if (periodo === 'mensual') {
@@ -2580,7 +2655,8 @@ function labelPeriodo(periodo, ref) {
       .toLocaleDateString('es-AR', { month: 'long', year: 'numeric', timeZone: 'UTC' });
     return s.charAt(0).toUpperCase() + s.slice(1);
   }
-  if (periodo === 'anual') return desde.split('-')[0];
+  if (periodo === 'anual')  return desde.split('-')[0];
+  if (periodo === 'custom') return `${fCorta(REPORT.desdeCustom)} — ${fCorta(REPORT.hastaCustom)}`;
 }
 
 /* ====================================================================
@@ -2633,6 +2709,22 @@ function calcularSegmentos(desde, hasta, periodo) {
       const lastD = new Date(Date.UTC(y, i + 1, 0)).toISOString().split('T')[0];
       return { label: MESES[i], desde: `${y}-${mp}-01`, hasta: lastD, ingresos: 0, ocupados: 0 };
     });
+  }
+  if (periodo === 'custom') {
+    const dias = getFechasEnRango(desde, hasta).length;
+    if (dias <= 1)  return calcularSegmentos(desde, hasta, 'diario');
+    if (dias <= 60) return getFechasEnRango(desde, hasta).map(f => {
+      const [y,m,d] = f.split('-').map(Number);
+      return { label: `${d}/${m}`, desde: f, hasta: f, ingresos: 0, ocupados: 0 };
+    });
+    // > 60 días: agrupar por semana
+    const segs = []; let cur = desde;
+    while (cur <= hasta) {
+      const fin = sumarDias(cur, 6) <= hasta ? sumarDias(cur, 6) : hasta;
+      segs.push({ label: fCorta(cur), desde: cur, hasta: fin, ingresos: 0, ocupados: 0 });
+      cur = sumarDias(fin, 1);
+    }
+    return segs;
   }
   return [];
 }
@@ -3381,6 +3473,115 @@ document.querySelectorAll('.period-btn').forEach(btn => {
 document.getElementById('rPrev').addEventListener('click', () => navReporte(-1));
 document.getElementById('rNext').addEventListener('click', () => navReporte(+1));
 document.getElementById('rHoy').addEventListener('click', () => { REPORT.ref = hoy(); renderReportes(); });
+
+// ── Calendario popover en rLabel ─────────────────────────────
+(function () {
+  const pop  = document.getElementById('rCalPop');
+  const lbl  = document.getElementById('rLabel');
+  const WD   = ['L','M','X','J','V','S','D'];
+  let rCalAno = null, rCalMes = null;
+
+  function pad2(n) { return String(n).padStart(2,'0'); }
+
+  function abrirRCal() {
+    if (REPORT.periodo === 'custom') return; // custom tiene su propio UI
+    const ref = REPORT.ref || hoy();
+    const [y,m] = ref.split('-').map(Number);
+    rCalAno = y; rCalMes = m;
+    renderRCal();
+    pop.classList.add('open');
+  }
+  function cerrarRCal() { pop.classList.remove('open'); }
+
+  function renderRCal() {
+    const hoyStr   = hoy();
+    const firstWd  = new Date(rCalAno, rCalMes - 1, 1).getDay();
+    const offset   = (firstWd + 6) % 7;
+    const daysInMo = new Date(rCalAno, rCalMes, 0).getDate();
+    const labelRaw = new Date(rCalAno, rCalMes - 1, 1)
+      .toLocaleDateString('es-AR', { month: 'long', year: 'numeric' });
+    const label = labelRaw.charAt(0).toUpperCase() + labelRaw.slice(1);
+
+    let cells = '';
+    for (let i = 0; i < offset; i++) cells += `<div class="cal-pop__day cp-empty"></div>`;
+    for (let d = 1; d <= daysInMo; d++) {
+      const f   = `${rCalAno}-${pad2(rCalMes)}-${pad2(d)}`;
+      let cls   = 'cal-pop__day';
+      if (f === REPORT.ref)  cls += ' cp-active';
+      else if (f === hoyStr) cls += ' cp-today';
+      cells += `<div class="${cls}" data-f="${f}">${d}</div>`;
+    }
+
+    pop.innerHTML = `
+      <div class="cal-pop__header">
+        <button class="cal-pop__nav" id="rcPrev">‹</button>
+        <span class="cal-pop__month">${label}</span>
+        <button class="cal-pop__nav" id="rcNext">›</button>
+      </div>
+      <div class="cal-pop__wdays">${WD.map(w=>`<div class="cal-pop__wd">${w}</div>`).join('')}</div>
+      <div class="cal-pop__days" id="rcDays">${cells}</div>`;
+
+    document.getElementById('rcPrev').onclick = e => {
+      e.stopPropagation();
+      rCalMes--; if (rCalMes < 1) { rCalMes = 12; rCalAno--; } renderRCal();
+    };
+    document.getElementById('rcNext').onclick = e => {
+      e.stopPropagation();
+      rCalMes++; if (rCalMes > 12) { rCalMes = 1; rCalAno++; } renderRCal();
+    };
+    document.getElementById('rcDays').addEventListener('click', e => {
+      e.stopPropagation();
+      const cell = e.target.closest('.cal-pop__day');
+      if (!cell || cell.classList.contains('cp-empty')) return;
+      REPORT.ref = cell.dataset.f;
+      cerrarRCal();
+      renderReportes();
+    });
+  }
+
+  lbl.addEventListener('click', e => {
+    e.stopPropagation();
+    if (REPORT.periodo === 'custom') return;
+    pop.classList.contains('open') ? cerrarRCal() : abrirRCal();
+  });
+  document.addEventListener('click', () => cerrarRCal());
+})();
+
+// ── Custom range popover ─────────────────────────────────────
+(function () {
+  const pop       = document.getElementById('customPop');
+  const inDesde   = document.getElementById('rDesde');
+  const inHasta   = document.getElementById('rHasta');
+  const btnApl    = document.getElementById('btnAplicarCustom');
+
+  // Abrir/cerrar al activar el período custom
+  document.querySelectorAll('.period-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (btn.dataset.periodo === 'custom') {
+        inDesde.value = REPORT.desdeCustom;
+        inHasta.value = REPORT.hastaCustom;
+        pop.classList.add('open');
+      } else {
+        pop.classList.remove('open');
+      }
+    });
+  });
+
+  btnApl.addEventListener('click', e => {
+    e.stopPropagation();
+    const d = inDesde.value, h = inHasta.value;
+    if (!d || !h || d > h) { alert('Seleccioná un rango válido (Desde ≤ Hasta).'); return; }
+    REPORT.desdeCustom = d;
+    REPORT.hastaCustom = h;
+    pop.classList.remove('open');
+    renderReportes();
+  });
+
+  pop.addEventListener('click', e => e.stopPropagation());
+  document.addEventListener('click', () => {
+    if (REPORT.periodo !== 'custom') pop.classList.remove('open');
+  });
+})();
 
 // Cerrar modal al hacer clic en el fondo oscuro
 document.getElementById('overlay').addEventListener('click', e => {
