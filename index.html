@@ -701,13 +701,60 @@
     }
     .period-label-wrap { position: relative; }
     .period-label {
-      font-weight: 600; font-size: 14px; min-width: 220px; text-align: center;
+      font-weight: 600; font-size: 14px; min-width: 200px; text-align: center;
       cursor: pointer; user-select: none;
       padding: 5px 14px; border-radius: 8px;
       background: var(--surface); border: 1px solid var(--accent);
-      transition: background .14s;
+      transition: background .14s; color: var(--text);
     }
     .period-label:hover { background: var(--surface-2); }
+
+    /* Botón "Seleccionar Rango" */
+    .btn-rango {
+      background: var(--surface-2); border: 1px solid var(--border);
+      color: var(--text-muted); border-radius: 8px;
+      padding: 6px 14px; font-size: 13px; font-weight: 600;
+      cursor: pointer; transition: all .15s; font-family: inherit;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .btn-rango:hover { border-color: var(--accent); color: var(--text); }
+    .btn-rango.active {
+      background: var(--accent-muted); border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* Barra de rango custom (segunda fila) */
+    .range-bar {
+      padding: 10px 28px 14px;
+      display: flex; align-items: flex-end; gap: 12px; flex-wrap: wrap;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      animation: calFadeIn .15s ease;
+    }
+    .range-bar__field label {
+      display: block; font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .06em;
+      color: var(--text-muted); margin-bottom: 5px;
+    }
+    .range-bar__field input[type="date"] {
+      background: var(--surface-2); border: 1px solid var(--border);
+      border-radius: 8px; padding: 7px 12px; color: var(--text);
+      font-size: 13px; font-family: inherit; cursor: pointer;
+      transition: border-color .14s; min-width: 150px;
+    }
+    .range-bar__field input[type="date"]:focus {
+      outline: none; border-color: var(--accent);
+    }
+    .range-bar__sep {
+      color: var(--text-muted); font-size: 18px;
+      padding-bottom: 6px;
+    }
+    .range-bar__cancel {
+      background: none; border: none; color: var(--text-muted);
+      font-size: 18px; cursor: pointer; padding: 6px;
+      transition: color .14s; line-height: 1;
+    }
+    .range-bar__cancel:hover { color: var(--text); }
 
     /* Popover calendario reportes */
     .rcal-pop {
@@ -719,37 +766,6 @@
       animation: calFadeIn .15s ease;
     }
     .rcal-pop.open { display: block; }
-
-    /* Popover rango custom */
-    .custom-pop {
-      display: none; position: absolute; top: calc(100% + 8px); right: 0;
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: 14px; padding: 18px; width: 320px; z-index: 300;
-      box-shadow: 0 12px 40px rgba(0,0,0,.55);
-      animation: calFadeIn .15s ease;
-    }
-    .custom-pop.open { display: block; }
-    .custom-pop__title {
-      font-size: 12px; font-weight: 700; text-transform: uppercase;
-      letter-spacing: .08em; color: var(--text-muted); margin-bottom: 14px;
-    }
-    .custom-pop__fields {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px;
-    }
-    .custom-pop__field label {
-      display: block; font-size: 11px; font-weight: 600;
-      color: var(--text-muted); margin-bottom: 5px;
-    }
-    .custom-pop__field input[type="date"] {
-      width: 100%; background: var(--surface-2); border: 1px solid var(--border);
-      border-radius: 7px; padding: 7px 10px; color: var(--text);
-      font-size: 13px; font-family: inherit; cursor: pointer;
-      transition: border-color .14s;
-    }
-    .custom-pop__field input[type="date"]:focus {
-      outline: none; border-color: var(--accent);
-    }
-    .custom-pop__wrap { position: relative; }
 
     /* ============================================================
        REPORTES — KPIs
@@ -1174,8 +1190,8 @@
             <button class="period-btn" data-periodo="semanal">Semanal</button>
             <button class="period-btn" data-periodo="mensual">Mensual</button>
             <button class="period-btn" data-periodo="anual">Anual</button>
-            <button class="period-btn" data-periodo="custom">Custom</button>
           </div>
+          <button class="btn-rango" id="btnRango">📅 Seleccionar Rango</button>
           <div class="period-nav">
             <button class="datebar__btn" id="rPrev">←</button>
             <div class="period-label-wrap">
@@ -1184,23 +1200,22 @@
             </div>
             <button class="datebar__btn" id="rNext">→</button>
             <button class="datebar__today" id="rHoy">Hoy</button>
-            <div class="custom-pop__wrap">
-              <div class="custom-pop" id="customPop">
-                <div class="custom-pop__title">Rango personalizado</div>
-                <div class="custom-pop__fields">
-                  <div class="custom-pop__field">
-                    <label>Desde</label>
-                    <input type="date" id="rDesde" />
-                  </div>
-                  <div class="custom-pop__field">
-                    <label>Hasta</label>
-                    <input type="date" id="rHasta" />
-                  </div>
-                </div>
-                <button class="datebar__today" id="btnAplicarCustom" style="width:100%">Aplicar</button>
-              </div>
-            </div>
           </div>
+        </div>
+
+        <!-- Barra de rango custom (se muestra al activar Seleccionar Rango) -->
+        <div class="range-bar" id="rangeBar" style="display:none">
+          <div class="range-bar__field">
+            <label>Desde</label>
+            <input type="date" id="rDesde" />
+          </div>
+          <div class="range-bar__sep">→</div>
+          <div class="range-bar__field">
+            <label>Hasta</label>
+            <input type="date" id="rHasta" />
+          </div>
+          <button class="datebar__today" id="btnAplicarCustom">Aplicar</button>
+          <button class="range-bar__cancel" id="btnCancelRango" title="Cerrar">✕</button>
         </div>
 
         <!-- KPI cards -->
@@ -3547,40 +3562,64 @@ document.getElementById('rHoy').addEventListener('click', () => { REPORT.ref = h
   document.addEventListener('click', () => cerrarRCal());
 })();
 
-// ── Custom range popover ─────────────────────────────────────
+// ── Seleccionar Rango (barra de rango custom) ────────────────
 (function () {
-  const pop       = document.getElementById('customPop');
+  const btnRango  = document.getElementById('btnRango');
+  const rangeBar  = document.getElementById('rangeBar');
   const inDesde   = document.getElementById('rDesde');
   const inHasta   = document.getElementById('rHasta');
   const btnApl    = document.getElementById('btnAplicarCustom');
+  const btnCancel = document.getElementById('btnCancelRango');
 
-  // Abrir/cerrar al activar el período custom
+  function abrirRango() {
+    inDesde.value = REPORT.desdeCustom;
+    inHasta.value = REPORT.hastaCustom;
+    rangeBar.style.display = 'flex';
+    btnRango.classList.add('active');
+    // Activar período custom y actualizar UI
+    REPORT.periodo = 'custom';
+    document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+    renderReportes();
+  }
+
+  function cerrarRango() {
+    rangeBar.style.display = 'none';
+    btnRango.classList.remove('active');
+    // Si el período sigue siendo custom, volvemos a diario
+    if (REPORT.periodo === 'custom') {
+      REPORT.periodo = 'diario';
+      document.querySelectorAll('.period-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.periodo === 'diario');
+      });
+      renderReportes();
+    }
+  }
+
+  btnRango.addEventListener('click', () => {
+    if (rangeBar.style.display === 'none') {
+      abrirRango();
+    } else {
+      cerrarRango();
+    }
+  });
+
+  // Cerrar rango al elegir un período normal
   document.querySelectorAll('.period-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-      if (btn.dataset.periodo === 'custom') {
-        inDesde.value = REPORT.desdeCustom;
-        inHasta.value = REPORT.hastaCustom;
-        pop.classList.add('open');
-      } else {
-        pop.classList.remove('open');
-      }
+      rangeBar.style.display = 'none';
+      btnRango.classList.remove('active');
     });
   });
 
-  btnApl.addEventListener('click', e => {
-    e.stopPropagation();
+  btnApl.addEventListener('click', () => {
     const d = inDesde.value, h = inHasta.value;
     if (!d || !h || d > h) { alert('Seleccioná un rango válido (Desde ≤ Hasta).'); return; }
     REPORT.desdeCustom = d;
     REPORT.hastaCustom = h;
-    pop.classList.remove('open');
     renderReportes();
   });
 
-  pop.addEventListener('click', e => e.stopPropagation());
-  document.addEventListener('click', () => {
-    if (REPORT.periodo !== 'custom') pop.classList.remove('open');
-  });
+  btnCancel.addEventListener('click', () => cerrarRango());
 })();
 
 // Cerrar modal al hacer clic en el fondo oscuro
