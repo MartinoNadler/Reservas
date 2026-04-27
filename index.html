@@ -198,8 +198,73 @@
       color: var(--text); letter-spacing: -.01em;
       padding: 6px 18px;
       background: var(--surface); border: 1px solid var(--accent);
-      border-radius: 8px;
+      border-radius: 8px; cursor: pointer;
+      user-select: none; transition: background .14s;
     }
+    .datebar__label:hover { background: var(--surface-2); }
+
+    /* ── CALENDARIO POPOVER ─────────────────────────────────── */
+    .datebar-wrap { position: relative; }
+    .cal-pop {
+      display: none; position: absolute; top: calc(100% + 8px); left: 50%;
+      transform: translateX(-50%);
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 14px; padding: 16px;
+      width: 280px; z-index: 300;
+      box-shadow: 0 12px 40px rgba(0,0,0,.55);
+      animation: calFadeIn .15s ease;
+    }
+    .cal-pop.open { display: block; }
+    @keyframes calFadeIn { from { opacity:0; transform: translateX(-50%) translateY(-6px); } to { opacity:1; transform: translateX(-50%) translateY(0); } }
+
+    .cal-pop__header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .cal-pop__month {
+      font-size: 13px; font-weight: 700; color: var(--text);
+    }
+    .cal-pop__nav {
+      width: 26px; height: 26px; border-radius: 6px;
+      background: var(--surface-2); border: 1px solid var(--border);
+      color: var(--text-muted); font-size: 14px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: background .13s, color .13s;
+    }
+    .cal-pop__nav:hover { background: var(--sub); color: var(--text); }
+
+    .cal-pop__wdays {
+      display: grid; grid-template-columns: repeat(7,1fr);
+      margin-bottom: 4px;
+    }
+    .cal-pop__wd {
+      text-align: center; font-size: 10px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .04em;
+      color: var(--text-muted); padding: 3px 0; opacity: .6;
+    }
+    .cal-pop__days {
+      display: grid; grid-template-columns: repeat(7,1fr); gap: 2px;
+    }
+    .cal-pop__day {
+      aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 500; color: var(--text-muted);
+      border-radius: 7px; cursor: pointer;
+      transition: background .12s, color .12s;
+      font-variant-numeric: tabular-nums;
+    }
+    .cal-pop__day:not(.cp-empty):hover { background: var(--surface-2); color: var(--text); }
+    .cal-pop__day.cp-empty  { cursor: default; }
+    .cal-pop__day.cp-today  { color: var(--accent); font-weight: 700; }
+    .cal-pop__day.cp-today::after {
+      content: ''; position: absolute; bottom: 3px;
+      width: 4px; height: 4px; border-radius: 50%; background: var(--accent);
+    }
+    .cal-pop__day { position: relative; }
+    .cal-pop__day.cp-active {
+      background: var(--accent) !important; color: #fff !important;
+      font-weight: 700;
+    }
+    .cal-pop__day.cp-active::after { display: none; }
     .datebar__today {
       background: var(--accent); border: none;
       color: #fff; padding: 6px 14px;
@@ -975,7 +1040,10 @@
         <!-- NAVEGACIÓN DE FECHA -->
         <div class="datebar">
           <button class="datebar__btn" id="btnPrev">← Anterior</button>
-          <div class="datebar__label" id="lblFecha">Cargando…</div>
+          <div class="datebar-wrap">
+            <div class="datebar__label" id="lblFecha">Cargando…</div>
+            <div class="cal-pop" id="calPop"></div>
+          </div>
           <button class="datebar__btn" id="btnNext">Siguiente →</button>
           <button class="datebar__today" id="btnHoy">Hoy</button>
         </div>
@@ -3165,6 +3233,77 @@ function acGuardarConfig() {
     toast('Configuración guardada.', 'success');
   }
 }
+
+/* ====================================================================
+   CALENDARIO POPOVER (datebar)
+==================================================================== */
+(function () {
+  const pop  = document.getElementById('calPop');
+  const lbl  = document.getElementById('lblFecha');
+  const DAYS = ['L','M','X','J','V','S','D'];
+  let calAno = null, calMes = null;
+
+  function pad2(n) { return String(n).padStart(2,'0'); }
+
+  function abrirCal() {
+    const [y,m] = UI.fechaActual.split('-').map(Number);
+    calAno = y; calMes = m;
+    renderCal();
+    pop.classList.add('open');
+  }
+  function cerrarCal() { pop.classList.remove('open'); }
+
+  function renderCal() {
+    const hoyStr   = hoy();
+    const firstWd  = new Date(calAno, calMes - 1, 1).getDay();
+    const offset   = (firstWd + 6) % 7;
+    const daysInMo = new Date(calAno, calMes, 0).getDate();
+    const labelRaw = new Date(calAno, calMes - 1, 1)
+      .toLocaleDateString('es-AR', { month: 'long', year: 'numeric' });
+    const label = labelRaw.charAt(0).toUpperCase() + labelRaw.slice(1);
+
+    let cells = '';
+    for (let i = 0; i < offset; i++) cells += `<div class="cal-pop__day cp-empty"></div>`;
+    for (let d = 1; d <= daysInMo; d++) {
+      const f  = `${calAno}-${pad2(calMes)}-${pad2(d)}`;
+      let cls  = 'cal-pop__day';
+      if (f === UI.fechaActual) cls += ' cp-active';
+      else if (f === hoyStr)   cls += ' cp-today';
+      cells += `<div class="${cls}" data-f="${f}">${d}</div>`;
+    }
+
+    pop.innerHTML = `
+      <div class="cal-pop__header">
+        <button class="cal-pop__nav" id="cpPrev">‹</button>
+        <span class="cal-pop__month">${label}</span>
+        <button class="cal-pop__nav" id="cpNext">›</button>
+      </div>
+      <div class="cal-pop__wdays">${DAYS.map(w=>`<div class="cal-pop__wd">${w}</div>`).join('')}</div>
+      <div class="cal-pop__days" id="cpDays">${cells}</div>`;
+
+    document.getElementById('cpPrev').onclick = () => {
+      calMes--; if (calMes < 1) { calMes = 12; calAno--; } renderCal();
+    };
+    document.getElementById('cpNext').onclick = () => {
+      calMes++; if (calMes > 12) { calMes = 1; calAno++; } renderCal();
+    };
+    document.getElementById('cpDays').addEventListener('click', e => {
+      const cell = e.target.closest('.cal-pop__day');
+      if (!cell || cell.classList.contains('cp-empty')) return;
+      UI.fechaActual = cell.dataset.f;
+      cerrarCal();
+      renderGrilla();
+    });
+  }
+
+  lbl.addEventListener('click', e => {
+    e.stopPropagation();
+    pop.classList.contains('open') ? cerrarCal() : abrirCal();
+  });
+  document.addEventListener('click', e => {
+    if (!pop.contains(e.target)) cerrarCal();
+  });
+})();
 
 /* ====================================================================
    EVENT LISTENERS
