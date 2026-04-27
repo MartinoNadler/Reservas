@@ -798,8 +798,8 @@
 
     /* Botones de fecha en el range-bar (reemplazan input[type=date]) */
     .range-date-wrap { position: relative; }
-    /* Anclar el popover al borde izquierdo del botón (evita que se salga hacia la izquierda) */
-    .range-date-wrap .rcal-pop { left: 0; transform: none; }
+    /* Fixed escapa cualquier stacking context (animation, transforms del padre) */
+    .range-date-wrap .rcal-pop { position: fixed; left: 0; top: 0; transform: none; }
     .range-date-btn {
       background: var(--surface-2); border: 1px solid var(--border);
       border-radius: 8px; padding: 7px 14px; color: var(--text);
@@ -3837,19 +3837,25 @@ document.getElementById('rHoy').addEventListener('click', () => { REPORT.ref = h
   }
 
   /* ── Botones toggle ── */
+  function positionPop(popEl, btnEl) {
+    const r = btnEl.getBoundingClientRect();
+    popEl.style.top  = (r.bottom + 6) + 'px';
+    popEl.style.left = r.left + 'px';
+  }
+
   desdeBtn.addEventListener('click', e => {
     e.stopPropagation();
     const isOpen = desdePop.classList.contains('open');
     hastaPop.classList.remove('open'); hastaBtn.classList.remove('rdb-open');
     if (isOpen) { desdePop.classList.remove('open'); desdeBtn.classList.remove('rdb-open'); }
-    else { initD(); renderDesde(); desdePop.classList.add('open'); desdeBtn.classList.add('rdb-open'); }
+    else { initD(); renderDesde(); positionPop(desdePop, desdeBtn); desdePop.classList.add('open'); desdeBtn.classList.add('rdb-open'); }
   });
   hastaBtn.addEventListener('click', e => {
     e.stopPropagation();
     const isOpen = hastaPop.classList.contains('open');
     desdePop.classList.remove('open'); desdeBtn.classList.remove('rdb-open');
     if (isOpen) { hastaPop.classList.remove('open'); hastaBtn.classList.remove('rdb-open'); }
-    else { initH(); renderHasta(); hastaPop.classList.add('open'); hastaBtn.classList.add('rdb-open'); }
+    else { initH(); renderHasta(); positionPop(hastaPop, hastaBtn); hastaPop.classList.add('open'); hastaBtn.classList.add('rdb-open'); }
   });
 
   desdePop.addEventListener('click', e => e.stopPropagation());
