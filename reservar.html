@@ -779,7 +779,7 @@
       <div class="form-group">
         <label for="regTel">Teléfono</label>
         <input id="regTel" type="tel" inputmode="numeric"
-               placeholder="Ej: 1134567890" maxlength="13" autocomplete="tel" />
+               placeholder="Ej: 1134567890" maxlength="10" autocomplete="tel" />
         <div class="field-err" id="errTel"></div>
       </div>
       <button class="btn btn--primary btn--full" id="btnRegistrar">Crear cuenta →</button>
@@ -1006,7 +1006,7 @@ function validarNombre(v) {
 }
 function validarTelefono(v) {
   const n = v.replace(/\D/g,'');
-  if (n.length<8||n.length>13) return 'Ingresá un número válido (8 a 13 dígitos).';
+  if (!/^\d{8,10}$/.test(n)) return 'El teléfono debe tener entre 8 y 10 dígitos (solo números).';
   return null;
 }
 function marcarError(inputId, errId, msg) {
