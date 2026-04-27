@@ -92,7 +92,9 @@
       background: var(--blue-grad);
       display: flex; align-items: center; justify-content: center;
       font-size: 33px; box-shadow: 0 12px 36px var(--blue-glow);
+      overflow: hidden; flex-shrink: 0;
     }
+    .auth-logo__icon img { width: 68px; height: 68px; object-fit: cover; display: block; }
     .auth-logo__name { font-size: 21px; font-weight: 800; color: var(--t1); letter-spacing: -.4px; }
     .auth-logo__sub  { font-size: 13px; color: var(--t3); }
 
@@ -199,7 +201,9 @@
       display: flex; align-items: center; justify-content: center;
       font-size: 18px; flex-shrink: 0;
       box-shadow: 0 4px 14px rgba(74,158,255,.28);
+      overflow: hidden;
     }
+    .main-header__logo img { width: 36px; height: 36px; object-fit: cover; display: block; }
     .main-header__info { flex: 1; min-width: 0; }
     .main-header__complex {
       font-size: 14px; font-weight: 700; color: var(--t1);
@@ -782,8 +786,17 @@
 
         <!-- Selector de fecha -->
         <div class="panel-card">
-          <div class="section-title">Reservar turno</div>
-          <div id="miniCal"></div>
+          <button class="accordion-trigger open" id="calTrigger">
+            <div class="accordion-trigger__left">
+              <span class="accordion-trigger__label">Reservar turno</span>
+            </div>
+            <span class="accordion-arrow" id="calArrow">⌄</span>
+          </button>
+          <div class="accordion-body open" id="calBody">
+            <div style="padding-top:14px">
+              <div id="miniCal"></div>
+            </div>
+          </div>
         </div>
 
       </div>
@@ -1033,11 +1046,9 @@ async function entrar() {
   const first  = S.cliente.nombre.split(' ')[0];
   document.getElementById('hComplex').textContent = nombre;
   const hLogoEl = document.getElementById('hLogo');
-  if (S.config.logo) {
-    hLogoEl.innerHTML = `<img src="${S.config.logo}" style="width:100%;height:100%;object-fit:cover;border-radius:10px;display:block;">`;
-  } else {
-    hLogoEl.textContent = emoji;
-  }
+  hLogoEl.innerHTML = S.config.logo
+    ? `<img src="${S.config.logo}" alt="logo">`
+    : emoji;
   document.getElementById('hUser').innerHTML =
     `Hola, <span>${first}</span> 👋`;
 
@@ -1051,10 +1062,19 @@ async function entrar() {
   await Promise.all([renderSlots(), renderMisReservas()]);
 }
 
-/* ── ACCORDION ───────────────────────────────────────────── */
+/* ── ACCORDIONS ──────────────────────────────────────────── */
 document.getElementById('accordionTrigger').addEventListener('click', () => {
   const trigger = document.getElementById('accordionTrigger');
   const body    = document.getElementById('accordionBody');
+  const isOpen  = trigger.classList.contains('open');
+  trigger.classList.toggle('open', !isOpen);
+  body.classList.toggle('open',   !isOpen);
+  body.classList.toggle('closed',  isOpen);
+});
+
+document.getElementById('calTrigger').addEventListener('click', () => {
+  const trigger = document.getElementById('calTrigger');
+  const body    = document.getElementById('calBody');
   const isOpen  = trigger.classList.contains('open');
   trigger.classList.toggle('open', !isOpen);
   body.classList.toggle('open',   !isOpen);
@@ -1543,14 +1563,12 @@ async function init() {
 
   const emoji  = S.config.emoji  || '⚽';
   const nombre = S.config.nombre || 'Reservas';
-  const logoContent = S.config.logo
-    ? `<img src="${S.config.logo}" style="width:100%;height:100%;object-fit:cover;border-radius:16px;display:block;">`
+  const logoImgAuth = S.config.logo
+    ? `<img src="${S.config.logo}" alt="logo">`
     : emoji;
-  ['logoA','logoB'].forEach(id => { document.getElementById(id).innerHTML = logoContent; });
+  ['logoA','logoB'].forEach(id => { document.getElementById(id).innerHTML = logoImgAuth; });
   ['nameA','nameB'].forEach(id => { document.getElementById(id).textContent = nombre; });
-  document.getElementById('loadIcon').innerHTML = S.config.logo
-    ? `<img src="${S.config.logo}" style="width:100%;height:100%;object-fit:cover;border-radius:14px;display:block;">`
-    : emoji;
+  document.getElementById('loadIcon').textContent = emoji;
   document.title = `Reservar · ${nombre}`;
 
   const saved = localStorage.getItem('rv_cliente');
