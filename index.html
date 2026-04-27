@@ -1523,7 +1523,12 @@ const DB = {
       document.getElementById('loginScreen').style.display = 'flex';
       throw new Error('Sesión vencida. Ingresá tu contraseña de nuevo.');
     }
-    if (!r.ok) throw new Error(`[DB] ${opts.method || 'GET'} ${path}: ${await r.text()}`);
+    if (!r.ok) {
+      const body = await r.text();
+      const err  = new Error(`[DB] ${opts.method || 'GET'} ${path}: ${body}`);
+      err.status = r.status;
+      throw err;
+    }
     const txt = await r.text();
     return txt ? JSON.parse(txt) : null;
   },
@@ -1616,12 +1621,23 @@ const DB = {
     this._sync(() => this._q('/turnos', { method: 'POST', body: JSON.stringify(t) }));
     return t;
   },
+  /** INSERT awaitable — agrega al cache SOLO si la DB acepta (lanza 409 si ya existe). */
+  async guardarTurnoDirecto(t) {
+    await this._q('/turnos', { method: 'POST', body: JSON.stringify(t) });
+    this._cache.turnos.push(t);
+    return t;
+  },
   actualizarTurno(id, cambios) {
     const i = this._cache.turnos.findIndex(t => t.id === id);
     if (i === -1) return null;
     this._cache.turnos[i] = { ...this._cache.turnos[i], ...cambios };
     this._sync(() => this._q(`/turnos?id=eq.${id}`, { method: 'PATCH', body: JSON.stringify(cambios) }));
     return this._cache.turnos[i];
+  },
+  /** DELETE optimista: saca del cache y borra en DB. */
+  eliminarTurno(id) {
+    this._cache.turnos = this._cache.turnos.filter(t => t.id !== id);
+    this._sync(() => this._q(`/turnos?id=eq.${id}`, { method: 'DELETE' }));
   },
 
   // ─── RESERVAS ─────────────────────────────────────────────────────
@@ -1725,10 +1741,9 @@ function formatFecha(fecha) {
  * Retorna { turno, reserva, cliente } o lanza Error.
  * Futuro: POST /api/reservas (el backend valida y confirma).
  */
-function crearReserva(turnoId, datosCliente) {
-  const turno = DB.obtenerTurnoPorId(turnoId);
-  if (!turno)                       throw new Error('Turno no encontrado.');
-  if (turno.estado !== 'disponible') throw new Error('El turno ya no está disponible.');
+async function crearReserva(turnoId, datosCliente) {
+  const turno = DB.obtenerTurnoPorId(turnoId) || UI.slotsVirtuales.get(turnoId);
+  if (!turno) throw new Error('Turno no encontrado.');
 
   // Si el teléfono ya existe, reutilizamos ese cliente en lugar de crear uno nuevo
   const telefono = datosCliente.telefono.trim();
@@ -1740,17 +1755,28 @@ function crearReserva(turnoId, datosCliente) {
     fechaRegistro: new Date().toISOString(),
   });
 
+  // INSERT directo — la DB rechaza con 409 si el slot ya fue tomado (índice único)
+  await DB.guardarTurnoDirecto({
+    id:         uid('t'),
+    canchaId:   turno.canchaId,
+    fecha:      turno.fecha,
+    horaInicio: turno.horaInicio,
+    horaFin:    turno.horaFin,
+    estado:     'reservado',
+  });
+  const turnoGuardado = DB.obtenerTurnosPorFecha(turno.fecha)
+    .find(t => t.canchaId === turno.canchaId && t.horaInicio === turno.horaInicio);
+  const turnoId2 = turnoGuardado?.id;
+
   const reserva = DB.guardarReserva({
     id:            uid('r'),
-    turnoId,
+    turnoId:       turnoId2,
     clienteId:     cliente.id,
     fechaCreacion: new Date().toISOString(),
     estadoPago:    'pendiente',
   });
 
-  // Recepción confirma directamente → estado "reservado"
-  const turnoActualizado = DB.actualizarTurno(turnoId, { estado: 'reservado' });
-  return { turno: turnoActualizado, reserva, cliente };
+  return { turno: turnoGuardado, reserva, cliente };
 }
 
 /**
@@ -1770,9 +1796,10 @@ function aprobarReserva(turnoId) {
  * Futuro: PATCH /api/reservas/:id { accion: 'rechazar' }
  */
 function rechazarReserva(turnoId) {
-  DB.actualizarTurno(turnoId, { estado: 'rechazado' });
   const reserva = DB.obtenerReservaPorTurno(turnoId);
   if (reserva) DB.actualizarReserva(reserva.id, { estado: 'rechazada' });
+  // DELETE turno → slot queda libre para nuevas reservas
+  DB.eliminarTurno(turnoId);
   return reserva;
 }
 
@@ -1797,7 +1824,8 @@ function cancelarReserva(turnoId) {
 
   const reserva = DB.obtenerReservaPorTurno(turnoId);
   if (reserva) DB.actualizarReserva(reserva.id, { estado: 'cancelada' });
-  DB.actualizarTurno(turnoId, { estado: 'disponible' });
+  // DELETE turno → el slot vuelve a estar disponible (virtual)
+  DB.eliminarTurno(turnoId);
   return { cargo, porcentaje, hsRestantes: Math.max(0, hsRestantes) };
 }
 
@@ -1805,16 +1833,24 @@ function cancelarReserva(turnoId) {
  * Bloquea un turno manualmente (mantenimiento, evento, etc.).
  * Futuro: PATCH /api/turnos/:id { estado: 'bloqueado' }
  */
-function bloquearTurno(turnoId) {
-  return DB.actualizarTurno(turnoId, { estado: 'bloqueado' });
+async function bloquearTurno(turnoId) {
+  const turno = DB.obtenerTurnoPorId(turnoId) || UI.slotsVirtuales.get(turnoId);
+  if (!turno) throw new Error('Turno no encontrado.');
+  await DB.guardarTurnoDirecto({
+    id:         uid('t'),
+    canchaId:   turno.canchaId,
+    fecha:      turno.fecha,
+    horaInicio: turno.horaInicio,
+    horaFin:    turno.horaFin,
+    estado:     'bloqueado',
+  });
 }
 
 /**
- * Desbloquea un turno → vuelve a "disponible".
- * Futuro: PATCH /api/turnos/:id { estado: 'disponible' }
+ * Desbloquea → elimina el registro de la DB (el slot vuelve a ser virtual/disponible).
  */
 function desbloquearTurno(turnoId) {
-  return DB.actualizarTurno(turnoId, { estado: 'disponible' });
+  DB.eliminarTurno(turnoId);
 }
 
 /**
@@ -1839,36 +1875,39 @@ function marcarPagado(turnoId) {
  * Genera y persiste los turnos del día para todas las canchas,
  * solo si aún no existen. Seguro de llamar múltiples veces.
  */
-function asegurarTurnosDia(fecha) {
-  const canchas  = DB.obtenerCanchas().filter(c => c.activa !== false);
-  const existentes = new Set(
-    DB.obtenerTurnosPorFecha(fecha).map(t => `${t.canchaId}_${t.horaInicio}`)
-  );
-
+/**
+ * Genera slots virtuales para todas las canchas en una fecha.
+ * No escribe nada en la DB — la disponibilidad es solo frontend.
+ * Retorna Map<canchaId, slot[]>.
+ */
+function generarSlotsDia(fecha) {
+  const canchas = DB.obtenerCanchas().filter(c => c.activa !== false);
+  const porCancha = new Map();
   canchas.forEach(cancha => {
-    let cur     = hm(CONFIG.HORA_APERTURA);
-    const tope  = hm(CONFIG.HORA_CIERRE);
-
+    const slots = [];
+    let cur = hm(CONFIG.HORA_APERTURA);
+    const tope = hm(CONFIG.HORA_CIERRE);
     while (cur + cancha.duracionTurno <= tope) {
       const inicio = mh(cur);
       const fin    = mh(cur + cancha.duracionTurno);
-      const key    = `${cancha.id}_${inicio}`;
-
-      if (!existentes.has(key)) {
-        DB.guardarTurno({
-          id:         uid('t'),
-          canchaId:   cancha.id,
-          fecha,
-          horaInicio: inicio,
-          horaFin:    fin,
-          estado:     'disponible',
-        });
-        existentes.add(key); // evita duplicados en la misma llamada
-      }
+      slots.push({
+        _virtual:   true,
+        id:         `v_${cancha.id}_${fecha}_${inicio.replace(':','')}`,
+        canchaId:   cancha.id,
+        fecha,
+        horaInicio: inicio,
+        horaFin:    fin,
+        estado:     'disponible',
+      });
       cur += cancha.duracionTurno;
     }
+    porCancha.set(cancha.id, slots);
   });
+  return porCancha;
 }
+
+/** @deprecated — sustituida por generarSlotsDia(). Mantenida para no romper llamadas legacy. */
+function asegurarTurnosDia(fecha) { /* no-op */ }
 
 /* ====================================================================
    DATOS DE PRUEBA (SEED)
@@ -1896,6 +1935,7 @@ function cargarDatosDePrueba() {
 const UI = {
   fechaActual:      hoy(),
   turnoActivoId:    null,
+  slotsVirtuales:   new Map(), // id → slot virtual (disponible, no en DB)
 };
 
 /* ====================================================================
@@ -1914,10 +1954,15 @@ function renderGrilla() {
   container.innerHTML = '';
 
   const fecha   = UI.fechaActual;
-  asegurarTurnosDia(fecha);
+  const canchas = DB.obtenerCanchas().filter(c => c.activa !== false);
 
-  const canchas   = DB.obtenerCanchas().filter(c => c.activa !== false);
-  const turnos    = DB.obtenerTurnosPorFecha(fecha);
+  // Slots virtuales (disponibles, solo frontend)
+  const virtualPorCancha = generarSlotsDia(fecha);
+  UI.slotsVirtuales.clear();
+  virtualPorCancha.forEach(slots => slots.forEach(s => UI.slotsVirtuales.set(s.id, s)));
+
+  // Turnos reales en DB para este día (excluye rechazados/cancelados que ya fueron borrados)
+  const turnosDB = DB.obtenerTurnosPorFecha(fecha);
   const minInicio = hm(CONFIG.HORA_APERTURA);
   const minFin    = hm(CONFIG.HORA_CIERRE);
   const totalFilas = (minFin - minInicio) / CONFIG.MINUTOS_BASE;
@@ -1965,10 +2010,13 @@ function renderGrilla() {
       area.appendChild(linea);
     }
 
-    // Tarjetas de turnos de esta cancha
-    turnos
-      .filter(t => t.canchaId === cancha.id)
-      .forEach(turno => area.appendChild(crearTarjeta(turno, cancha, minInicio)));
+    // Tarjetas: slots virtuales sobreescritos por turnos reales de DB
+    const realesCancha = turnosDB.filter(t => t.canchaId === cancha.id);
+    const slotsCancha  = virtualPorCancha.get(cancha.id) || [];
+    const tarjetas = slotsCancha.map(vSlot =>
+      realesCancha.find(t => t.horaInicio === vSlot.horaInicio) || vSlot
+    );
+    tarjetas.forEach(turno => area.appendChild(crearTarjeta(turno, cancha, minInicio)));
 
     // Línea de hora actual
     const lineaTiempo = document.createElement('div');
@@ -2042,7 +2090,7 @@ const LABELS = {
 function abrirModal(turnoId) {
   UI.turnoActivoId = turnoId;
 
-  const turno   = DB.obtenerTurnoPorId(turnoId);
+  const turno   = DB.obtenerTurnoPorId(turnoId) || UI.slotsVirtuales.get(turnoId);
   const cancha  = DB.obtenerCanchaPorId(turno.canchaId);
   const ESTADOS_CON_CLIENTE = ['pendiente', 'reservado', 'pagado'];
   const reserva = ESTADOS_CON_CLIENTE.includes(turno.estado)
@@ -2169,23 +2217,26 @@ function cerrarModal() {
    Muestran feedback (toasts) y refrescan la grilla.
 ==================================================================== */
 
-function acConfirmar(turnoId) {
+async function acConfirmar(turnoId) {
   const nombre   = document.getElementById('iNombre')?.value.trim();
   const telefono = document.getElementById('iTel')?.value.trim();
 
   if (!nombre || nombre.length < 3) {
     toast('El nombre debe tener al menos 3 letras.', 'warning'); return;
   }
-  // Solo dígitos, entre 8 y 10 caracteres
   if (!/^\d{8,10}$/.test(telefono)) {
     toast('El teléfono debe tener entre 8 y 10 dígitos (solo números).', 'warning'); return;
   }
   try {
-    const { cliente } = crearReserva(turnoId, { nombre, telefono });
-    cerrarModal();
-    renderGrilla();
+    const { cliente } = await crearReserva(turnoId, { nombre, telefono });
+    cerrarModal(); renderGrilla();
     toast(`Reserva confirmada para ${cliente.nombre}`, 'success');
-  } catch (e) { toast(e.message, 'error'); }
+  } catch (e) {
+    if (e.status === 409) {
+      cerrarModal(); renderGrilla();
+      toast('Este turno acaba de ser reservado por otra persona. 😕', 'error');
+    } else { toast(e.message, 'error'); }
+  }
 }
 
 function acAprobar(turnoId) {
@@ -2199,7 +2250,7 @@ function acAprobar(turnoId) {
 function acRechazar(turnoId) {
   rechazarReserva(turnoId);
   cerrarModal(); renderGrilla();
-  toast('Reserva rechazada. El turno está rechazado.', 'info');
+  toast('Reserva rechazada. El slot quedó libre.', 'info');
 }
 
 function acCancelar(turnoId) {
@@ -2212,10 +2263,17 @@ function acCancelar(turnoId) {
   }
 }
 
-function acBloquear(turnoId) {
-  bloquearTurno(turnoId);
-  cerrarModal(); renderGrilla();
-  toast('Turno bloqueado.', 'info');
+async function acBloquear(turnoId) {
+  try {
+    await bloquearTurno(turnoId);
+    cerrarModal(); renderGrilla();
+    toast('Turno bloqueado.', 'info');
+  } catch (e) {
+    if (e.status === 409) {
+      cerrarModal(); renderGrilla();
+      toast('Este turno ya fue reservado, no se puede bloquear.', 'error');
+    } else { toast(e.message, 'error'); }
+  }
 }
 
 function acDesbloquear(turnoId) {
@@ -3155,19 +3213,7 @@ function editarCanchaAdmin(id, datos) {
     precio:        Number(datos.precio),
   });
 
-  if (cambioDuracion) {
-    const hoyStr    = hoy();
-    const aEliminar = DB._cache.turnos.filter(
-      t => t.canchaId === id && t.estado === 'disponible' && t.fecha >= hoyStr
-    );
-    DB._cache.turnos = DB._cache.turnos.filter(
-      t => !(t.canchaId === id && t.estado === 'disponible' && t.fecha >= hoyStr)
-    );
-    aEliminar.forEach(t =>
-      DB._sync(() => DB._q(`/turnos?id=eq.${t.id}`, { method: 'DELETE' }))
-    );
-    asegurarTurnosDia(UI.fechaActual);
-  }
+  if (cambioDuracion) renderGrilla();
 }
 
 /** Valida los campos comunes de un formulario de cancha. */
@@ -3415,19 +3461,8 @@ function acGuardarConfig() {
   DB.guardarConfig({ nombre, emoji, subtitulo, horaApertura: apertura, horaCierre: cierre });
   aplicarConfig();
 
-  if (cambioHorario) {
-    // Eliminar todos los turnos "disponible" del día visible para regenerarlos
-    // con el nuevo horario (turnos reservados/pagados no se tocan)
-    const fechaHoy = UI.fechaActual;
-    const aEliminar = DB._cache.turnos.filter(t => t.fecha === fechaHoy && t.estado === 'disponible');
-    DB._cache.turnos = DB._cache.turnos.filter(t => !(t.fecha === fechaHoy && t.estado === 'disponible'));
-    aEliminar.forEach(t => DB._sync(() => DB._q(`/turnos?id=eq.${t.id}`, { method: 'DELETE' })));
-    // Pre-generar los nuevos slots con el horario actualizado
-    asegurarTurnosDia(fechaHoy);
-    toast('Configuración guardada. Horario actualizado ✓', 'success');
-  } else {
-    toast('Configuración guardada.', 'success');
-  }
+  if (cambioHorario) renderGrilla();
+  toast(cambioHorario ? 'Configuración guardada. Horario actualizado ✓' : 'Configuración guardada.', 'success');
 }
 
 /* ====================================================================
