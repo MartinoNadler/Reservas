@@ -798,8 +798,15 @@
 
     /* Botones de fecha en el range-bar (reemplazan input[type=date]) */
     .range-date-wrap { position: relative; }
-    /* Fixed escapa cualquier stacking context (animation, transforms del padre) */
-    .range-date-wrap .rcal-pop { position: fixed; left: 0; top: 0; transform: none; }
+    /* Fixed escapa el stacking context del padre; animación propia sin translateX */
+    .range-date-wrap .rcal-pop {
+      position: fixed; left: 0; top: 0; transform: none;
+      animation: rdCalFadeIn .15s ease;
+    }
+    @keyframes rdCalFadeIn {
+      from { opacity: 0; transform: translateY(-6px); }
+      to   { opacity: 1; transform: translateY(0);    }
+    }
     .range-date-btn {
       background: var(--surface-2); border: 1px solid var(--border);
       border-radius: 8px; padding: 7px 14px; color: var(--text);
