@@ -241,13 +241,11 @@
 
     .booking-left {
       display: flex; flex-direction: column; gap: 24px;
-      position: sticky; top: 70px;
-      max-height: calc(100vh - 86px);
-      overflow-y: auto; scrollbar-width: none;
+      position: sticky; top: 78px;
+      align-self: start;
     }
-    .booking-left::-webkit-scrollbar { display: none; }
     @media (max-width:1060px) {
-      .booking-left { position: static; max-height: none; overflow: visible; gap: 22px; }
+      .booking-left { position: static; gap: 22px; }
     }
 
     .booking-right { min-width: 0; }
