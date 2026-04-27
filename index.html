@@ -290,10 +290,50 @@
     }
     .cal-pop__day { position: relative; }
     .cal-pop__day.cp-active {
-      background: var(--accent) !important; color: #fff !important;
-      font-weight: 700;
+      background: linear-gradient(135deg, #2f81f7 0%, #388bfd 100%) !important;
+      color: #fff !important; font-weight: 700;
+      box-shadow: 0 3px 10px rgba(47,129,247,.4);
     }
     .cal-pop__day.cp-active::after { display: none; }
+
+    /* Botón del mes en el header del calendario */
+    .cal-pop__month-btn {
+      background: none; border: none; cursor: pointer;
+      font-size: 13px; font-weight: 700; color: var(--text);
+      display: flex; align-items: center; gap: 3px;
+      padding: 3px 8px; border-radius: 7px; font-family: inherit;
+      transition: background .13s;
+    }
+    .cal-pop__month-btn:hover { background: var(--surface-2); }
+    .cal-pop__month-btn .cp-arrow { font-size: 10px; opacity: .6; }
+
+    /* Selector de año/mes */
+    .cp-ym-grid {
+      max-height: 220px; overflow-y: auto;
+      scrollbar-width: thin; scrollbar-color: var(--border) transparent;
+    }
+    .cp-ym-year {
+      font-size: 11px; font-weight: 700; color: var(--text-muted);
+      padding: 8px 4px 4px; border-bottom: 1px solid var(--border);
+      margin-bottom: 4px; text-transform: uppercase; letter-spacing: .05em;
+    }
+    .cp-ym-months {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 3px;
+      margin-bottom: 8px;
+    }
+    .cp-ym-month {
+      padding: 7px 2px; text-align: center; border-radius: 7px;
+      font-size: 12px; font-weight: 500; cursor: pointer;
+      color: var(--text-muted); transition: background .12s, color .12s;
+      font-family: inherit;
+    }
+    .cp-ym-month:hover { background: var(--surface-2); color: var(--text); }
+    .cp-ym-month.cp-ym-active {
+      background: linear-gradient(135deg, #2f81f7 0%, #388bfd 100%);
+      color: #fff; font-weight: 700;
+      box-shadow: 0 2px 8px rgba(47,129,247,.4);
+    }
+
     .datebar__today {
       background: var(--accent); border: none;
       color: #fff; padding: 6px 14px;
@@ -3371,19 +3411,22 @@ function acGuardarConfig() {
   const pop  = document.getElementById('calPop');
   const lbl  = document.getElementById('lblFecha');
   const DAYS = ['L','M','X','J','V','S','D'];
-  let calAno = null, calMes = null;
+  const MESES = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  let calAno = null, calMes = null, calModoYM = false;
 
   function pad2(n) { return String(n).padStart(2,'0'); }
 
   function abrirCal() {
     const [y,m] = UI.fechaActual.split('-').map(Number);
-    calAno = y; calMes = m;
+    calAno = y; calMes = m; calModoYM = false;
     renderCal();
     pop.classList.add('open');
   }
-  function cerrarCal() { pop.classList.remove('open'); }
+  function cerrarCal() { pop.classList.remove('open'); calModoYM = false; }
 
   function renderCal() {
+    if (calModoYM) { renderCalYM(); return; }
+
     const hoyStr   = hoy();
     const firstWd  = new Date(calAno, calMes - 1, 1).getDay();
     const offset   = (firstWd + 6) % 7;
@@ -3405,12 +3448,15 @@ function acGuardarConfig() {
     pop.innerHTML = `
       <div class="cal-pop__header">
         <button class="cal-pop__nav" id="cpPrev">‹</button>
-        <span class="cal-pop__month">${label}</span>
+        <button class="cal-pop__month-btn" id="cpMonthBtn">${label} <span class="cp-arrow">▾</span></button>
         <button class="cal-pop__nav" id="cpNext">›</button>
       </div>
       <div class="cal-pop__wdays">${DAYS.map(w=>`<div class="cal-pop__wd">${w}</div>`).join('')}</div>
       <div class="cal-pop__days" id="cpDays">${cells}</div>`;
 
+    document.getElementById('cpMonthBtn').onclick = e => {
+      e.stopPropagation(); calModoYM = true; renderCal();
+    };
     document.getElementById('cpPrev').onclick = e => {
       e.stopPropagation();
       calMes--; if (calMes < 1) { calMes = 12; calAno--; } renderCal();
@@ -3426,6 +3472,39 @@ function acGuardarConfig() {
       UI.fechaActual = cell.dataset.f;
       cerrarCal();
       renderGrilla();
+    });
+  }
+
+  function renderCalYM() {
+    const [hy] = hoy().split('-').map(Number);
+    let html = '';
+    for (let y = hy - 2; y <= hy + 4; y++) {
+      const mHtml = MESES.map((mn, idx) => {
+        const m = idx + 1;
+        const isActive = (y === calAno && m === calMes);
+        return `<div class="cp-ym-month${isActive ? ' cp-ym-active' : ''}" data-y="${y}" data-m="${m}">${mn}</div>`;
+      }).join('');
+      html += `<div class="cp-ym-year">${y}</div><div class="cp-ym-months">${mHtml}</div>`;
+    }
+    pop.innerHTML = `
+      <div class="cal-pop__header">
+        <button class="cal-pop__nav" id="cpYMBack">‹</button>
+        <span class="cal-pop__month" style="font-size:12px">Ir a mes</span>
+        <div style="width:26px"></div>
+      </div>
+      <div class="cp-ym-grid" id="cpYMGrid">${html}</div>`;
+
+    document.getElementById('cpYMBack').onclick = e => {
+      e.stopPropagation(); calModoYM = false; renderCal();
+    };
+    const grid = document.getElementById('cpYMGrid');
+    setTimeout(() => { const el = grid.querySelector('.cp-ym-active'); if (el) el.scrollIntoView({ block: 'center' }); }, 0);
+    grid.addEventListener('click', e => {
+      e.stopPropagation();
+      const cell = e.target.closest('.cp-ym-month');
+      if (!cell) return;
+      calAno = +cell.dataset.y; calMes = +cell.dataset.m;
+      calModoYM = false; renderCal();
     });
   }
 
@@ -3494,21 +3573,24 @@ document.getElementById('rHoy').addEventListener('click', () => { REPORT.ref = h
   const pop  = document.getElementById('rCalPop');
   const lbl  = document.getElementById('rLabel');
   const WD   = ['L','M','X','J','V','S','D'];
-  let rCalAno = null, rCalMes = null;
+  const MESES = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  let rCalAno = null, rCalMes = null, rCalModoYM = false;
 
   function pad2(n) { return String(n).padStart(2,'0'); }
 
   function abrirRCal() {
-    if (REPORT.periodo === 'custom') return; // custom tiene su propio UI
+    if (REPORT.periodo === 'custom') return;
     const ref = REPORT.ref || hoy();
     const [y,m] = ref.split('-').map(Number);
-    rCalAno = y; rCalMes = m;
+    rCalAno = y; rCalMes = m; rCalModoYM = false;
     renderRCal();
     pop.classList.add('open');
   }
-  function cerrarRCal() { pop.classList.remove('open'); }
+  function cerrarRCal() { pop.classList.remove('open'); rCalModoYM = false; }
 
   function renderRCal() {
+    if (rCalModoYM) { renderRCalYM(); return; }
+
     const hoyStr   = hoy();
     const firstWd  = new Date(rCalAno, rCalMes - 1, 1).getDay();
     const offset   = (firstWd + 6) % 7;
@@ -3530,12 +3612,15 @@ document.getElementById('rHoy').addEventListener('click', () => { REPORT.ref = h
     pop.innerHTML = `
       <div class="cal-pop__header">
         <button class="cal-pop__nav" id="rcPrev">‹</button>
-        <span class="cal-pop__month">${label}</span>
+        <button class="cal-pop__month-btn" id="rcMonthBtn">${label} <span class="cp-arrow">▾</span></button>
         <button class="cal-pop__nav" id="rcNext">›</button>
       </div>
       <div class="cal-pop__wdays">${WD.map(w=>`<div class="cal-pop__wd">${w}</div>`).join('')}</div>
       <div class="cal-pop__days" id="rcDays">${cells}</div>`;
 
+    document.getElementById('rcMonthBtn').onclick = e => {
+      e.stopPropagation(); rCalModoYM = true; renderRCal();
+    };
     document.getElementById('rcPrev').onclick = e => {
       e.stopPropagation();
       rCalMes--; if (rCalMes < 1) { rCalMes = 12; rCalAno--; } renderRCal();
@@ -3551,6 +3636,39 @@ document.getElementById('rHoy').addEventListener('click', () => { REPORT.ref = h
       REPORT.ref = cell.dataset.f;
       cerrarRCal();
       renderReportes();
+    });
+  }
+
+  function renderRCalYM() {
+    const [hy] = hoy().split('-').map(Number);
+    let html = '';
+    for (let y = hy - 2; y <= hy + 4; y++) {
+      const mHtml = MESES.map((mn, idx) => {
+        const m = idx + 1;
+        const isActive = (y === rCalAno && m === rCalMes);
+        return `<div class="cp-ym-month${isActive ? ' cp-ym-active' : ''}" data-y="${y}" data-m="${m}">${mn}</div>`;
+      }).join('');
+      html += `<div class="cp-ym-year">${y}</div><div class="cp-ym-months">${mHtml}</div>`;
+    }
+    pop.innerHTML = `
+      <div class="cal-pop__header">
+        <button class="cal-pop__nav" id="rcYMBack">‹</button>
+        <span class="cal-pop__month" style="font-size:12px">Ir a mes</span>
+        <div style="width:26px"></div>
+      </div>
+      <div class="cp-ym-grid" id="rcYMGrid">${html}</div>`;
+
+    document.getElementById('rcYMBack').onclick = e => {
+      e.stopPropagation(); rCalModoYM = false; renderRCal();
+    };
+    const grid = document.getElementById('rcYMGrid');
+    setTimeout(() => { const el = grid.querySelector('.cp-ym-active'); if (el) el.scrollIntoView({ block: 'center' }); }, 0);
+    grid.addEventListener('click', e => {
+      e.stopPropagation();
+      const cell = e.target.closest('.cp-ym-month');
+      if (!cell) return;
+      rCalAno = +cell.dataset.y; rCalMes = +cell.dataset.m;
+      rCalModoYM = false; renderRCal();
     });
   }
 

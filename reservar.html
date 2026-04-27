@@ -359,6 +359,16 @@
     .mini-cal__month-label {
       font-size: 13px; font-weight: 700; color: var(--t1); letter-spacing: -.2px;
     }
+    /* Botón clicable del mes en el header */
+    .mini-cal__month-btn {
+      background: none; border: none; cursor: pointer;
+      font-size: 13px; font-weight: 700; color: var(--t1); letter-spacing: -.2px;
+      display: flex; align-items: center; gap: 3px;
+      padding: 2px 6px; border-radius: 7px; font-family: inherit;
+      transition: background .13s;
+    }
+    .mini-cal__month-btn:hover { background: var(--sur-2); }
+    .mini-cal__month-btn .mc-arrow { font-size: 10px; opacity: .55; }
     .mini-cal__nav {
       width: 28px; height: 28px; border-radius: 7px;
       background: var(--sur-1); border: 1px solid var(--bd);
@@ -403,6 +413,33 @@
       font-weight: 700; box-shadow: 0 3px 10px var(--blue-glow);
     }
     .mini-cal__day.mc-active::after { display: none; }
+
+    /* Selector año/mes (mini-cal YM picker) */
+    .mc-ym-grid {
+      max-height: 220px; overflow-y: auto;
+      scrollbar-width: thin; scrollbar-color: var(--bd) transparent;
+    }
+    .mc-ym-year {
+      font-size: 11px; font-weight: 700; color: var(--t4);
+      padding: 8px 4px 4px; border-bottom: 1px solid var(--bd);
+      margin-bottom: 4px; text-transform: uppercase; letter-spacing: .05em;
+    }
+    .mc-ym-months {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 3px;
+      margin-bottom: 8px;
+    }
+    .mc-ym-month {
+      padding: 7px 2px; text-align: center; border-radius: 7px;
+      font-size: 12px; font-weight: 500; cursor: pointer;
+      color: var(--t2); transition: background .12s, color .12s;
+      font-family: inherit;
+    }
+    .mc-ym-month:not(.mc-ym-past):hover { background: var(--sur-2); color: var(--t1); }
+    .mc-ym-month.mc-ym-active {
+      background: var(--blue-grad); color: #fff; font-weight: 700;
+      box-shadow: 0 2px 8px var(--blue-glow);
+    }
+    .mc-ym-month.mc-ym-past { color: var(--t4); cursor: default; }
 
     /* ── CANCHA TABS ────────────────────────────────────────── */
     .cancha-tabs {
@@ -868,6 +905,7 @@ const S = {
   dniPendiente: '',
   calAno: null,
   calMes: null,
+  calModoYM: false,
 };
 
 /* ── HELPERS ─────────────────────────────────────────────── */
@@ -1079,6 +1117,8 @@ document.getElementById('calTrigger').addEventListener('click', () => {
 });
 
 /* ── MINI CALENDAR ───────────────────────────────────────── */
+const MESES_CORTOS = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+
 function renderCalendar() {
   const wrap = document.getElementById('miniCal');
   if (!wrap) return;
@@ -1086,27 +1126,58 @@ function renderCalendar() {
   const hoy = fechaHoy();
   const [hy, hm] = hoy.split('-').map(Number);
 
-  // Initialize month to current month on first render
   if (!S.calAno) { S.calAno = hy; S.calMes = hm; }
 
+  // ── Modo selector de año/mes ──────────────────────────────
+  if (S.calModoYM) {
+    let html = '';
+    for (let y = hy - 1; y <= hy + 5; y++) {
+      const mHtml = MESES_CORTOS.map((mn, idx) => {
+        const m = idx + 1;
+        const isPast = (y < hy) || (y === hy && m < hm);
+        const isActive = (y === S.calAno && m === S.calMes);
+        let cls = 'mc-ym-month';
+        if (isActive) cls += ' mc-ym-active';
+        if (isPast)   cls += ' mc-ym-past';
+        return `<div class="${cls}" data-y="${y}" data-m="${m}">${mn}</div>`;
+      }).join('');
+      html += `<div class="mc-ym-year">${y}</div><div class="mc-ym-months">${mHtml}</div>`;
+    }
+    wrap.innerHTML = `
+      <div class="mini-cal__header">
+        <button class="mini-cal__nav" id="calYMBack">‹</button>
+        <span class="mini-cal__month-label">Seleccionar mes</span>
+        <div style="width:28px"></div>
+      </div>
+      <div class="mc-ym-grid" id="calYMGrid">${html}</div>`;
+
+    document.getElementById('calYMBack').addEventListener('click', () => {
+      S.calModoYM = false; renderCalendar();
+    });
+    const grid = document.getElementById('calYMGrid');
+    setTimeout(() => { const el = grid.querySelector('.mc-ym-active'); if (el) el.scrollIntoView({ block: 'center' }); }, 0);
+    grid.addEventListener('click', e => {
+      const cell = e.target.closest('.mc-ym-month');
+      if (!cell || cell.classList.contains('mc-ym-past')) return;
+      S.calAno = +cell.dataset.y; S.calMes = +cell.dataset.m;
+      S.calModoYM = false; renderCalendar();
+    });
+    return;
+  }
+
+  // ── Modo normal (días) ────────────────────────────────────
   const ano = S.calAno, mes = S.calMes;
 
-  // Month label in Spanish
   const labelRaw = new Date(ano, mes - 1, 1)
     .toLocaleDateString('es-AR', { month: 'long', year: 'numeric' });
   const label = labelRaw.charAt(0).toUpperCase() + labelRaw.slice(1);
 
-  // First weekday of month (Mon-first: Mon=0 … Sun=6)
   const firstWd  = new Date(ano, mes - 1, 1).getDay();
   const offset   = (firstWd + 6) % 7;
   const daysInMo = new Date(ano, mes, 0).getDate();
-
-  // Can we go back? Only if viewed month is ahead of today's month
-  const canPrev = (ano > hy) || (ano === hy && mes > hm);
-
+  const canPrev  = (ano > hy) || (ano === hy && mes > hm);
   const wdLabels = ['L','M','X','J','V','S','D'];
 
-  // Build day cells
   let cellsHtml = '';
   for (let i = 0; i < offset; i++) {
     cellsHtml += `<div class="mini-cal__day mc-empty"></div>`;
@@ -1126,7 +1197,7 @@ function renderCalendar() {
   wrap.innerHTML = `
     <div class="mini-cal__header">
       <button class="mini-cal__nav" id="calPrev" ${canPrev ? '' : 'disabled'}>‹</button>
-      <span class="mini-cal__month-label">${label}</span>
+      <button class="mini-cal__month-btn" id="calMonthBtn">${label} <span class="mc-arrow">▾</span></button>
       <button class="mini-cal__nav" id="calNext">›</button>
     </div>
     <div class="mini-cal__weekdays">
@@ -1134,6 +1205,9 @@ function renderCalendar() {
     </div>
     <div class="mini-cal__days" id="calDays">${cellsHtml}</div>`;
 
+  document.getElementById('calMonthBtn').addEventListener('click', () => {
+    S.calModoYM = true; renderCalendar();
+  });
   document.getElementById('calPrev').addEventListener('click', () => {
     if (!canPrev) return;
     S.calMes--;
