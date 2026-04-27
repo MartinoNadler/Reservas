@@ -798,6 +798,8 @@
 
     /* Botones de fecha en el range-bar (reemplazan input[type=date]) */
     .range-date-wrap { position: relative; }
+    /* Anclar el popover al borde izquierdo del botón (evita que se salga hacia la izquierda) */
+    .range-date-wrap .rcal-pop { left: 0; transform: none; }
     .range-date-btn {
       background: var(--surface-2); border: 1px solid var(--border);
       border-radius: 8px; padding: 7px 14px; color: var(--text);
