@@ -3281,13 +3281,16 @@ function acGuardarConfig() {
       <div class="cal-pop__wdays">${DAYS.map(w=>`<div class="cal-pop__wd">${w}</div>`).join('')}</div>
       <div class="cal-pop__days" id="cpDays">${cells}</div>`;
 
-    document.getElementById('cpPrev').onclick = () => {
+    document.getElementById('cpPrev').onclick = e => {
+      e.stopPropagation();
       calMes--; if (calMes < 1) { calMes = 12; calAno--; } renderCal();
     };
-    document.getElementById('cpNext').onclick = () => {
+    document.getElementById('cpNext').onclick = e => {
+      e.stopPropagation();
       calMes++; if (calMes > 12) { calMes = 1; calAno++; } renderCal();
     };
     document.getElementById('cpDays').addEventListener('click', e => {
+      e.stopPropagation();
       const cell = e.target.closest('.cal-pop__day');
       if (!cell || cell.classList.contains('cp-empty')) return;
       UI.fechaActual = cell.dataset.f;
