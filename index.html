@@ -999,7 +999,7 @@
   <!-- SIDEBAR (desktop) -->
   <nav class="sidebar">
     <div class="sidebar__logo">
-      <div class="sidebar__logo-icon">⚽</div>
+      <div class="sidebar__logo-icon"><img src="fotologo-128x128.png" alt="logo"></div>
       <div class="sidebar__logo-title" id="sidebarTitle">Reservas</div>
       <div class="sidebar__logo-sub">Gestión de canchas</div>
     </div>
@@ -1187,17 +1187,7 @@
                   <label for="cfgSubtitulo">Subtítulo</label>
                   <input id="cfgSubtitulo" type="text" placeholder="Gestión de canchas" autocomplete="off" />
                 </div>
-                <div class="form-group" style="margin:0;">
-                  <label>Logo</label>
-                  <div class="logo-upload-row">
-                    <div class="logo-preview-box" id="logoPreviewBox">🏟️</div>
-                    <div class="logo-upload-info">
-                      <button type="button" class="logo-upload-btn" id="btnLogoUpload">Subir imagen</button>
-                      <input type="file" id="cfgLogo" accept="image/*" style="display:none" />
-                      <div class="logo-upload-hint">PNG, JPG, WebP · Recomendado 128×128 px</div>
-                    </div>
-                  </div>
-                  <!-- opciones fantasma para no romper código viejo -->
+                <div class="form-group" style="margin:0;display:none">
                   <select id="cfgEmoji" style="display:none">
                     <option value="⚽">⚽ Fútbol</option>
                     <option value="🎾">🎾 Pádel</option>
@@ -3051,15 +3041,7 @@ function aplicarConfig() {
     document.title = nombre + ' — Panel de Recepción';
   }
 
-  const logoIcon = document.querySelector('.sidebar__logo-icon');
-  if (logoIcon) {
-    const logo = cfg.logo || null;
-    if (logo) {
-      logoIcon.innerHTML = `<img src="${logo}" alt="logo">`;
-    } else {
-      logoIcon.innerHTML = emoji;
-    }
-  }
+  // logo hardcodeado en HTML
 
   document.querySelectorAll('.sidebar__logo-sub, .mobile-header__sub').forEach(el => {
     el.textContent = subtitulo;
@@ -3238,12 +3220,7 @@ function cargarFormConfig() {
   document.getElementById('cfgSubtitulo').value = cfg.subtitulo     || 'Gestión de canchas';
   document.getElementById('cfgApertura').value  = cfg.horaApertura  || CONFIG.HORA_APERTURA;
   document.getElementById('cfgCierre').value    = cfg.horaCierre    || CONFIG.HORA_CIERRE;
-  // Preview del logo en el panel admin
-  const previewBox = document.getElementById('logoPreviewBox');
-  if (previewBox) {
-    const logo = cfg.logo || null;
-    previewBox.innerHTML = logo ? `<img src="${logo}" alt="logo">` : '🏟️';
-  }
+  // logo hardcodeado en HTML
 }
 
 /** Guarda la configuración del complejo y la aplica al instante. */
@@ -3367,29 +3344,7 @@ document.getElementById('btnHoy').addEventListener('click', () => {
   UI.fechaActual = hoy(); renderGrilla();
 });
 
-// ── Logo upload ─────────────────────────────────────────────
-document.getElementById('btnLogoUpload').addEventListener('click', () => {
-  document.getElementById('cfgLogo').click();
-});
-document.getElementById('cfgLogo').addEventListener('change', e => {
-  const file = e.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = ev => {
-    const dataUrl = ev.target.result;
-    // Preview
-    const box = document.getElementById('logoPreviewBox');
-    if (box) box.innerHTML = `<img src="${dataUrl}" alt="logo">`;
-    // Guardar en localStorage inmediatamente
-    const local = JSON.parse(localStorage.getItem(DB._LOCAL_CFG_KEY) || '{}');
-    local.logo = dataUrl;
-    localStorage.setItem(DB._LOCAL_CFG_KEY, JSON.stringify(local));
-    // Aplicar al sidebar en vivo
-    const icon = document.querySelector('.sidebar__logo-icon');
-    if (icon) icon.innerHTML = `<img src="${dataUrl}" alt="logo">`;
-  };
-  reader.readAsDataURL(file);
-});
+// (logo upload eliminado — logo hardcodeado en HTML)
 
 // Sidebar items + Bottom tabs
 document.querySelectorAll('.sidebar__item, .bottom-tab').forEach(btn => {

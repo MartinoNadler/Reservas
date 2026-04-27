@@ -677,7 +677,7 @@
 
 <!-- ── LOADING ─────────────────────────────────────────────── -->
 <div id="loadingFull">
-  <div class="loading-icon" id="loadIcon">⚽</div>
+  <div class="loading-icon" id="loadIcon"><img src="fotologo-128x128.png" alt="logo"></div>
   <div class="spinner" style="margin:0"></div>
 </div>
 
@@ -698,7 +698,7 @@
 <div class="screen" id="screen-dni">
   <div class="auth-wrap">
     <div class="auth-logo">
-      <div class="auth-logo__icon" id="logoA">⚽</div>
+      <div class="auth-logo__icon" id="logoA"><img src="fotologo-128x128.png" alt="logo"></div>
       <div class="auth-logo__name" id="nameA">Reservas</div>
       <div class="auth-logo__sub">Reservá tu turno en segundos</div>
     </div>
@@ -722,7 +722,7 @@
 <div class="screen" id="screen-registro">
   <div class="auth-wrap">
     <div class="auth-logo">
-      <div class="auth-logo__icon" id="logoB">⚽</div>
+      <div class="auth-logo__icon" id="logoB"><img src="fotologo-128x128.png" alt="logo"></div>
       <div class="auth-logo__name" id="nameB">Reservas</div>
       <div class="auth-logo__sub">Primera vez aquí</div>
     </div>
@@ -756,7 +756,7 @@
 <div class="screen" id="screen-main">
 
   <header class="main-header">
-    <div class="main-header__logo" id="hLogo">⚽</div>
+    <div class="main-header__logo" id="hLogo"><img src="fotologo-128x128.png" alt="logo"></div>
     <div class="main-header__info">
       <div class="main-header__complex" id="hComplex">Reservas</div>
       <div class="main-header__user"    id="hUser">Cargando…</div>
@@ -1045,10 +1045,7 @@ async function entrar() {
   const emoji  = S.config.emoji  || '⚽';
   const first  = S.cliente.nombre.split(' ')[0];
   document.getElementById('hComplex').textContent = nombre;
-  const hLogoEl = document.getElementById('hLogo');
-  hLogoEl.innerHTML = S.config.logo
-    ? `<img src="${S.config.logo}" alt="logo">`
-    : emoji;
+  // logo hardcodeado en HTML — no necesita JS
   document.getElementById('hUser').innerHTML =
     `Hola, <span>${first}</span> 👋`;
 
@@ -1558,15 +1555,11 @@ async function init() {
     };
     const local = JSON.parse(localStorage.getItem('reservas_local_cfg') || '{}');
     if (local.emoji) S.config.emoji = local.emoji;
-    if (local.logo)  S.config.logo  = local.logo;
   } catch(e) { console.warn('Config no disponible.', e); }
 
   const emoji  = S.config.emoji  || '⚽';
   const nombre = S.config.nombre || 'Reservas';
-  const logoImgAuth = S.config.logo
-    ? `<img src="${S.config.logo}" alt="logo">`
-    : emoji;
-  ['logoA','logoB'].forEach(id => { document.getElementById(id).innerHTML = logoImgAuth; });
+  // logos hardcodeados en HTML
   ['nameA','nameB'].forEach(id => { document.getElementById(id).textContent = nombre; });
   document.getElementById('loadIcon').textContent = emoji;
   document.title = `Reservar · ${nombre}`;
