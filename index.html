@@ -3638,21 +3638,16 @@ function cargarFormSettings() {
 async function uploadLogo(file) {
   const ext  = file.name.split('.').pop().toLowerCase() || 'png';
   const path = `logos/logo.${ext}`;
-  const headers = {
-    'apikey':        SB_KEY,
-    'Authorization': `Bearer ${SB_TOKEN || SB_KEY}`,
-  };
 
-  // Borrar el logo anterior si existe (silencioso)
-  await fetch(`${SB_URL}/storage/v1/object/business-assets/${path}`, {
-    method: 'DELETE', headers,
-  }).catch(() => {});
-
-  // Subir el nuevo
   const r = await fetch(`${SB_URL}/storage/v1/object/business-assets/${path}`, {
     method:  'POST',
-    headers: { ...headers, 'Content-Type': file.type || 'image/png' },
-    body:    file,
+    headers: {
+      'apikey':        SB_KEY,
+      'Authorization': `Bearer ${SB_TOKEN || SB_KEY}`,
+      'Content-Type':  file.type || 'image/png',
+      'x-upsert':      'true',
+    },
+    body: file,
   });
   if (!r.ok) {
     const txt = await r.text();
