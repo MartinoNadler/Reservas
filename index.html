@@ -3640,7 +3640,7 @@ async function uploadLogo(file) {
   const path = `logos/logo.${ext}`;
 
   const r = await fetch(`${SB_URL}/storage/v1/object/business-assets/${path}`, {
-    method:  'POST',
+    method:  'PUT',
     headers: {
       'apikey':        SB_KEY,
       'Authorization': `Bearer ${SB_TOKEN || SB_KEY}`,
