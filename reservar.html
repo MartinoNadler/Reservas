@@ -50,6 +50,11 @@
       /* ── Ease ── */
       --ease-out: cubic-bezier(.22,.68,0,1.2);
 
+      /* ── Secondary (brand neutral) ── */
+      --secondary:        #6b7280;
+      --secondary-muted:  rgba(107,114,128,.15);
+      --secondary-border: rgba(107,114,128,.30);
+
       /* ── Legacy aliases for JS-generated HTML ── */
       --accent:      var(--blue);
       --available:   var(--green);
@@ -564,10 +569,18 @@
     .slot--mia .slot__price { color: rgba(74,158,255,.55); font-size: 10px; }
 
     /* Ocupado */
-    .slot--ocupado { opacity: .28; cursor: not-allowed; }
+    .slot--ocupado {
+      opacity: .35; cursor: not-allowed;
+      border-color: var(--secondary-border);
+      border-left-color: var(--secondary);
+    }
 
     /* Pasado */
-    .slot--pasado  { opacity: .15; cursor: not-allowed; }
+    .slot--pasado  {
+      opacity: .18; cursor: not-allowed;
+      border-color: var(--secondary-border);
+      border-left-color: var(--secondary);
+    }
 
     /* ── LEYENDA ────────────────────────────────────────────── */
     .legend { display: flex; gap: 16px; margin-top: 18px; flex-wrap: wrap; }
@@ -1743,11 +1756,24 @@ function aplicarBrandingPublico() {
     if (hLogo) hLogo.innerHTML = `<img src="${bs.logoUrl}" alt="${nombre}" style="width:36px;height:36px;object-fit:cover;border-radius:8px">`;
   }
 
+  // Helper para derivar variantes con opacidad
+  function _rgba(hex, a) {
+    const h = hex.replace('#', '');
+    const [r, g, b] = [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16));
+    return `rgba(${r},${g},${b},${a})`;
+  }
+
   // Color principal
   if (bs.primaryColor) {
-    document.documentElement.style.setProperty('--accent', bs.primaryColor);
-    document.documentElement.style.setProperty('--accent-muted', bs.primaryColor + '22');
+    document.documentElement.style.setProperty('--accent',       bs.primaryColor);
+    document.documentElement.style.setProperty('--accent-muted', _rgba(bs.primaryColor, 0.13));
   }
+
+  // Color secundario
+  const sec = bs.secondaryColor || '#6b7280';
+  document.documentElement.style.setProperty('--secondary',        sec);
+  document.documentElement.style.setProperty('--secondary-muted',  _rgba(sec, 0.15));
+  document.documentElement.style.setProperty('--secondary-border', _rgba(sec, 0.30));
 
   // Footer — dirección y WhatsApp
   renderLocation();

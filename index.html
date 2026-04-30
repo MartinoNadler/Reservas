@@ -24,6 +24,10 @@
       --accent-hover: #388bfd;
       --accent-muted: #1a3a6b;
 
+      --secondary:        #6b7280;
+      --secondary-muted:  rgba(107,114,128,.15);
+      --secondary-border: rgba(107,114,128,.30);
+
       /* Estados */
       --disponible:    #3fb950;  --disponible-bg:  #0d2e1a;
       --pendiente:     #d29922;  --pendiente-bg:   #2d1e00;
@@ -670,9 +674,9 @@
     .cl-card__foot  { display: flex; gap: 5px; flex-wrap: wrap; align-items: center;
                       padding-top: 13px; border-top: 1px solid var(--border-sub); }
     .cl-chip {
-      background: var(--surface-2); border: 1px solid var(--border);
+      background: var(--secondary-muted); border: 1px solid var(--secondary-border);
       border-radius: 20px; padding: 3px 10px;
-      font-size: 11px; font-weight: 500; color: var(--text-muted);
+      font-size: 11px; font-weight: 500; color: var(--secondary);
     }
     .cl-chip--activo { background: rgba(47,129,247,.12); border-color: rgba(47,129,247,.2); color: var(--accent); }
     .cl-chip--pagado { background: rgba(163,113,247,.10); border-color: rgba(163,113,247,.2); color: var(--pagado); }
@@ -928,7 +932,7 @@
     .stab {
       background: none; border: none; cursor: pointer; font-family: inherit;
       padding: 10px 16px; font-size: 13px; font-weight: 500;
-      color: var(--text-muted); border-bottom: 2px solid transparent;
+      color: var(--secondary); border-bottom: 2px solid transparent;
       margin-bottom: -1px; white-space: nowrap; transition: color .13s;
     }
     .stab:hover { color: var(--text); }
@@ -1413,8 +1417,8 @@
                   <div class="form-group">
                     <label for="bsSecondary">Color secundario</label>
                     <div class="color-wrap">
-                      <input type="color" id="bsSecondaryPicker" value="#ffffff" />
-                      <input type="text"  id="bsSecondary"       value="#ffffff" maxlength="7" placeholder="#ffffff" />
+                      <input type="color" id="bsSecondaryPicker" value="#6b7280" />
+                      <input type="text"  id="bsSecondary"       value="#6b7280" maxlength="7" placeholder="#6b7280" />
                     </div>
                   </div>
                 </div>
@@ -3395,11 +3399,23 @@ function aplicarBranding() {
     el.textContent = sub;
   });
 
+  // Helper para derivar variantes con opacidad
+  function _rgba(hex, a) {
+    const h = hex.replace('#', '');
+    const [r, g, b] = [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16));
+    return `rgba(${r},${g},${b},${a})`;
+  }
+
   // Color principal → variable CSS
   const primaryColor = bs.primary_color || '#2f81f7';
-  document.documentElement.style.setProperty('--accent', primaryColor);
-  // Derivadas del acento (hover un poco más oscuro, muted con opacidad)
-  document.documentElement.style.setProperty('--accent-muted', primaryColor + '22');
+  document.documentElement.style.setProperty('--accent',       primaryColor);
+  document.documentElement.style.setProperty('--accent-muted', _rgba(primaryColor, 0.13));
+
+  // Color secundario → fondos suaves, bordes, estados neutros
+  const secondaryColor = bs.secondary_color || '#6b7280';
+  document.documentElement.style.setProperty('--secondary',        secondaryColor);
+  document.documentElement.style.setProperty('--secondary-muted',  _rgba(secondaryColor, 0.15));
+  document.documentElement.style.setProperty('--secondary-border', _rgba(secondaryColor, 0.30));
 
   // Logo
   if (bs.logo_url) {
@@ -3600,7 +3616,7 @@ function cargarFormSettings() {
   }
   // Colores
   const pColor = bs.primary_color   || '#2f81f7';
-  const sColor = bs.secondary_color || '#ffffff';
+  const sColor = bs.secondary_color || '#6b7280';
   document.getElementById('bsPrimaryPicker').value   = pColor;
   document.getElementById('bsPrimary').value          = pColor;
   document.getElementById('bsSecondaryPicker').value = sColor;
