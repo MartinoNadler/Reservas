@@ -3643,7 +3643,7 @@ async function uploadLogo(file) {
     method: 'PUT',
     headers: {
       'apikey':        SB_KEY,
-      'Authorization': `Bearer ${SB_KEY}`,
+      'Authorization': `Bearer ${SB_TOKEN || SB_KEY}`,
       'Content-Type':  file.type || 'image/png',
       'x-upsert':      'true',
     },
