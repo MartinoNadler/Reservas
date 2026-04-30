@@ -919,6 +919,41 @@
     }
     .admin-section__body { padding: 20px; }
 
+    /* ── Settings tabs ─────────────────────────────────────────── */
+    .stabs {
+      display: flex; overflow-x: auto; gap: 0;
+      border-bottom: 1px solid var(--border); padding: 0 20px; margin: 0;
+    }
+    .stabs::-webkit-scrollbar { display: none; }
+    .stab {
+      background: none; border: none; cursor: pointer; font-family: inherit;
+      padding: 10px 16px; font-size: 13px; font-weight: 500;
+      color: var(--text-muted); border-bottom: 2px solid transparent;
+      margin-bottom: -1px; white-space: nowrap; transition: color .13s;
+    }
+    .stab:hover { color: var(--text); }
+    .stab.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 700; }
+    .stab-panel { display: none; padding: 20px; }
+    .stab-panel.active { display: block; }
+
+    /* ── Logo upload ────────────────────────────────────────────── */
+    .logo-upload { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .logo-upload__preview {
+      width: 56px; height: 56px; border-radius: 10px; border: 1px solid var(--border);
+      background: var(--surface-2); display: flex; align-items: center; justify-content: center;
+      overflow: hidden; flex-shrink: 0; font-size: 10px; color: var(--text-muted); text-align: center;
+    }
+    .logo-upload__preview img { width: 100%; height: 100%; object-fit: cover; }
+    .logo-hint { font-size: 11px; color: var(--text-muted); margin-top: 5px; min-height: 16px; }
+
+    /* ── Color picker ───────────────────────────────────────────── */
+    .color-wrap { display: flex; align-items: center; gap: 8px; }
+    .color-wrap input[type=color] {
+      width: 36px; height: 36px; padding: 2px; border-radius: 8px;
+      border: 1px solid var(--border); background: var(--surface-2); cursor: pointer; flex-shrink: 0;
+    }
+    .color-wrap input[type=text] { flex: 1; min-width: 0; }
+
     /* Grilla de tarjetas de cancha */
     .admin-courts {
       display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px;
@@ -1310,53 +1345,129 @@
           <!-- CONFIGURACIÓN -->
           <div class="admin-section">
             <div class="admin-section__hdr">
-              <div class="admin-section__title">Configuración del complejo</div>
+              <div class="admin-section__title">Configuración</div>
             </div>
-            <div class="admin-section__body">
+            <div class="admin-section__body" style="padding:0">
 
-              <!-- Fila 1: Horarios -->
-              <div class="config-grid" style="margin-bottom:14px;">
-                <div class="form-group">
-                  <label for="cfgApertura">Hora de apertura</label>
-                  <input id="cfgApertura" type="time" />
-                </div>
-                <div class="form-group">
-                  <label for="cfgCierre">Hora de cierre</label>
-                  <input id="cfgCierre" type="time" />
-                </div>
+              <!-- Tabs -->
+              <div class="stabs">
+                <button class="stab active" data-stab="negocio">Negocio</button>
+                <button class="stab" data-stab="branding">Branding</button>
+                <button class="stab" data-stab="horarios">Horarios</button>
+                <button class="stab" data-stab="reglas">Reglas</button>
               </div>
 
-              <!-- Fila 2: Nombre -->
-              <div class="form-group" style="margin-bottom:14px;">
-                <label for="cfgNombre">Nombre del complejo</label>
-                <input id="cfgNombre" type="text" placeholder="Complejo Deportivo" autocomplete="off" />
+              <!-- Panel: Negocio -->
+              <div class="stab-panel active" id="stab-negocio">
+                <div class="form-group">
+                  <label for="bsName">Nombre del negocio</label>
+                  <input id="bsName" type="text" placeholder="Mi Complejo Deportivo" autocomplete="off" />
+                </div>
+                <div class="form-group">
+                  <label for="bsDesc">Descripción / Subtítulo</label>
+                  <input id="bsDesc" type="text" placeholder="El mejor complejo de la zona" autocomplete="off" />
+                </div>
+                <div class="form-group">
+                  <label for="bsAddress">Dirección</label>
+                  <input id="bsAddress" type="text" placeholder="Av. Siempre Viva 742" autocomplete="off" />
+                </div>
+                <div class="form-group">
+                  <label for="bsMaps">Google Maps URL</label>
+                  <input id="bsMaps" type="url" placeholder="https://maps.google.com/..." autocomplete="off" />
+                </div>
+                <div class="config-grid">
+                  <div class="form-group">
+                    <label for="bsPhone">Teléfono</label>
+                    <input id="bsPhone" type="tel" placeholder="1134567890" autocomplete="off" />
+                  </div>
+                  <div class="form-group">
+                    <label for="bsWhatsapp">WhatsApp (con código de país)</label>
+                    <input id="bsWhatsapp" type="tel" placeholder="5491134567890" autocomplete="off" />
+                  </div>
+                </div>
+                <button class="btn btn--success" id="btnGuardarNegocio">Guardar negocio</button>
               </div>
 
-              <!-- Fila 3: Subtítulo + Emoji -->
-              <div class="config-grid" style="grid-template-columns:1fr auto; align-items:end; margin-bottom:20px;">
-                <div class="form-group" style="margin:0;">
-                  <label for="cfgSubtitulo">Subtítulo</label>
-                  <input id="cfgSubtitulo" type="text" placeholder="Gestión de canchas" autocomplete="off" />
+              <!-- Panel: Branding -->
+              <div class="stab-panel" id="stab-branding">
+                <div class="form-group">
+                  <label>Logo</label>
+                  <div class="logo-upload">
+                    <div class="logo-upload__preview" id="logoPreview">
+                      <img id="logoPreviewImg" src="" alt="Logo" style="display:none" />
+                      <span id="logoPreviewEmpty">Sin logo</span>
+                    </div>
+                    <label class="btn btn--ghost" for="logoFileInput" style="font-size:13px;cursor:pointer">Subir imagen</label>
+                    <input type="file" id="logoFileInput" accept="image/png,image/jpeg,image/webp,image/svg+xml" style="display:none" />
+                  </div>
+                  <div class="logo-hint" id="logoHint"></div>
                 </div>
-                <div class="form-group" style="margin:0;display:none">
-                  <select id="cfgEmoji" style="display:none">
-                    <option value="⚽">⚽ Fútbol</option>
-                    <option value="🎾">🎾 Pádel</option>
-                    <option value="🏸">🏸 Tenis</option>
-                    <option value="🏀">🏀 Básquet</option>
-                    <option value="🏐">🏐 Vóley</option>
-                    <option value="🏑">🏑 Hockey</option>
-                    <option value="🏉">🏉 Rugby</option>
-                    <option value="🎱">🎱 Billar</option>
-                    <option value="🏊">🏊 Natación</option>
-                    <option value="🏟️">🏟️ Estadio</option>
-                    <option value="🥊">🥊 Boxeo</option>
-                    <option value="🏋️">🏋️ Gimnasio</option>
+                <div class="config-grid">
+                  <div class="form-group">
+                    <label for="bsPrimary">Color principal</label>
+                    <div class="color-wrap">
+                      <input type="color" id="bsPrimaryPicker" value="#2f81f7" />
+                      <input type="text"  id="bsPrimary"       value="#2f81f7" maxlength="7" placeholder="#2f81f7" />
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label for="bsSecondary">Color secundario</label>
+                    <div class="color-wrap">
+                      <input type="color" id="bsSecondaryPicker" value="#ffffff" />
+                      <input type="text"  id="bsSecondary"       value="#ffffff" maxlength="7" placeholder="#ffffff" />
+                    </div>
+                  </div>
+                </div>
+                <button class="btn btn--success" id="btnGuardarBranding">Guardar branding</button>
+              </div>
+
+              <!-- Panel: Horarios -->
+              <div class="stab-panel" id="stab-horarios">
+                <div class="config-grid">
+                  <div class="form-group">
+                    <label for="bsApertura">Hora de apertura</label>
+                    <input id="bsApertura" type="time" />
+                  </div>
+                  <div class="form-group">
+                    <label for="bsCierre">Hora de cierre</label>
+                    <input id="bsCierre" type="time" />
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label for="bsDuracion">Duración del turno por defecto (min)</label>
+                  <select id="bsDuracion">
+                    <option value="60">60 minutos</option>
+                    <option value="90">90 minutos</option>
                   </select>
                 </div>
+                <button class="btn btn--success" id="btnGuardarHorarios">Guardar horarios</button>
               </div>
 
-              <button class="btn btn--success" id="btnGuardarConfig">Guardar configuración</button>
+              <!-- Panel: Reglas de reserva -->
+              <div class="stab-panel" id="stab-reglas">
+                <div class="config-grid">
+                  <div class="form-group">
+                    <label for="bsMaxPerDay">Máx. reservas por día</label>
+                    <input id="bsMaxPerDay" type="number" min="1" max="20" placeholder="2" />
+                  </div>
+                  <div class="form-group">
+                    <label for="bsMaxActive">Máx. reservas activas</label>
+                    <input id="bsMaxActive" type="number" min="1" max="50" placeholder="3" />
+                  </div>
+                </div>
+                <div class="config-grid">
+                  <div class="form-group">
+                    <label for="bsMaxDays">Máx. días de anticipación</label>
+                    <input id="bsMaxDays" type="number" min="1" max="90" placeholder="7" />
+                  </div>
+                  <div class="form-group">
+                    <label for="bsMaxConsec">Máx. horas consecutivas</label>
+                    <input id="bsMaxConsec" type="number" min="1" max="12" placeholder="2" />
+                  </div>
+                </div>
+                <button class="btn btn--success" id="btnGuardarReglas">Guardar reglas</button>
+              </div>
+
             </div>
           </div>
 
@@ -1503,7 +1614,7 @@ const CONFIG = {
    Contrato de cada función: igual al que tendría un endpoint REST.
 ==================================================================== */
 const DB = {
-  _cache: { canchas: [], turnos: [], reservas: [], clientes: [], config: {} },
+  _cache: { canchas: [], turnos: [], reservas: [], clientes: [], config: {}, bs: {} },
 
   _h() {
     return {
@@ -1542,12 +1653,13 @@ const DB = {
 
   /** Carga todos los datos desde Supabase al cache local. Llamar al iniciar. */
   async cargarTodo() {
-    const [canchas, clientes, turnos, reservas, cfg] = await Promise.all([
+    const [canchas, clientes, turnos, reservas, cfg, bs] = await Promise.all([
       this._q('/canchas'),
       this._q('/clientes'),
       this._q('/turnos'),
       this._q('/reservas'),
       this._q('/config'),
+      this._q('/business_settings'),
     ]);
     this._cache.canchas  = canchas  || [];
     this._cache.clientes = clientes || [];
@@ -1556,6 +1668,7 @@ const DB = {
     const raw = (cfg || [])[0] || {};
     // Supabase guarda 'nombreComplejo', el resto del código usa 'nombre'
     this._cache.config = raw.nombreComplejo ? { ...raw, nombre: raw.nombreComplejo } : raw;
+    this._cache.bs = (bs || [])[0] || {};
   },
 
   // ─── CANCHAS ──────────────────────────────────────────────────────
@@ -1609,6 +1722,21 @@ const DB = {
     // Solo mandar a Supabase los campos que existen en la tabla
     this._sync(() => this._q('/config?id=eq.1', { method: 'PATCH', body: JSON.stringify(sbCfg) }));
     return this._cache.config;
+  },
+
+  // ─── BUSINESS SETTINGS ────────────────────────────────────────────
+  obtenerBS() { return { ...this._cache.bs }; },
+
+  async guardarBS(data) {
+    const id = this._cache.bs.id;
+    const updated = { ...data, updated_at: new Date().toISOString() };
+    this._cache.bs = { ...this._cache.bs, ...updated };
+    if (!id) throw new Error('No se encontró la fila de business_settings en la base de datos.');
+    await this._q(`/business_settings?id=eq.${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(updated),
+    });
+    return this._cache.bs;
   },
 
   // ─── TURNOS ───────────────────────────────────────────────────────
@@ -3245,27 +3373,43 @@ function eliminarCanchaAdmin(canchaId) {
  * Aplica la configuración guardada al CONFIG global y a la UI.
  * Se llama al inicializar y al guardar cambios.
  */
-function aplicarConfig() {
-  const cfg = DB.obtenerConfig();
-  if (cfg.horaApertura) CONFIG.HORA_APERTURA = cfg.horaApertura;
-  if (cfg.horaCierre)   CONFIG.HORA_CIERRE   = cfg.horaCierre;
+function aplicarBranding() {
+  const bs  = DB.obtenerBS();
+  const cfg = DB.obtenerConfig(); // fallback legacy
 
-  const nombre    = cfg.nombre    || '';
-  const emoji     = cfg.emoji     || '⚽';
-  const subtitulo = cfg.subtitulo || 'Gestión de canchas';
+  // Horarios
+  const apertura = bs.opening_time || cfg.horaApertura || CONFIG.HORA_APERTURA;
+  const cierre   = bs.closing_time || cfg.horaCierre   || CONFIG.HORA_CIERRE;
+  CONFIG.HORA_APERTURA = apertura;
+  CONFIG.HORA_CIERRE   = cierre;
 
-  if (nombre) {
-    const sidebarTitle = document.getElementById('sidebarTitle');
-    if (sidebarTitle) sidebarTitle.textContent = nombre;
-    document.title = nombre + ' — Panel de Recepción';
-  }
+  // Nombre
+  const nombre = bs.name || cfg.nombre || 'Complejo Deportivo';
+  const sidebarTitle = document.getElementById('sidebarTitle');
+  if (sidebarTitle) sidebarTitle.textContent = nombre;
+  document.title = nombre + ' — Panel de Recepción';
 
-  // logo hardcodeado en HTML
-
+  // Subtítulo / descripción
+  const sub = bs.description || cfg.subtitulo || 'Gestión de canchas';
   document.querySelectorAll('.sidebar__logo-sub, .mobile-header__sub').forEach(el => {
-    el.textContent = subtitulo;
+    el.textContent = sub;
   });
+
+  // Color principal → variable CSS
+  const primaryColor = bs.primary_color || '#2f81f7';
+  document.documentElement.style.setProperty('--accent', primaryColor);
+  // Derivadas del acento (hover un poco más oscuro, muted con opacidad)
+  document.documentElement.style.setProperty('--accent-muted', primaryColor + '22');
+
+  // Logo
+  if (bs.logo_url) {
+    document.querySelectorAll('.sidebar__logo img').forEach(img => {
+      img.src = bs.logo_url; img.style.display = '';
+    });
+  }
 }
+// Alias legacy por si queda alguna llamada vieja
+function aplicarConfig() { aplicarBranding(); }
 
 /**
  * Renderiza el panel de administración completo:
@@ -3273,7 +3417,7 @@ function aplicarConfig() {
  */
 function renderAdmin() {
   renderCanchasAdmin();
-  cargarFormConfig();
+  cargarFormSettings();
 }
 
 /** Renderiza las tarjetas de canchas en el panel admin. */
@@ -3432,37 +3576,176 @@ function acEliminarCancha(canchaId) {
   } catch (e) { toast(e.message, 'error'); }
 }
 
-/** Carga los valores actuales en el formulario de configuración. */
-function cargarFormConfig() {
-  const cfg = DB.obtenerConfig();
-  document.getElementById('cfgNombre').value    = cfg.nombre        || 'Complejo Deportivo';
-  document.getElementById('cfgSubtitulo').value = cfg.subtitulo     || 'Gestión de canchas';
-  document.getElementById('cfgApertura').value  = cfg.horaApertura  || CONFIG.HORA_APERTURA;
-  document.getElementById('cfgCierre').value    = cfg.horaCierre    || CONFIG.HORA_CIERRE;
-  // logo hardcodeado en HTML
+/** Carga los valores actuales de business_settings en todos los paneles. */
+function cargarFormSettings() {
+  const bs = DB.obtenerBS();
+
+  // Negocio
+  document.getElementById('bsName').value    = bs.name            || '';
+  document.getElementById('bsDesc').value    = bs.description     || '';
+  document.getElementById('bsAddress').value = bs.address         || '';
+  document.getElementById('bsMaps').value    = bs.google_maps_url || '';
+  document.getElementById('bsPhone').value   = bs.phone           || '';
+  document.getElementById('bsWhatsapp').value= bs.whatsapp        || '';
+
+  // Branding — logo
+  const logoUrl = bs.logo_url || '';
+  const previewImg = document.getElementById('logoPreviewImg');
+  const previewEmpty = document.getElementById('logoPreviewEmpty');
+  if (logoUrl) {
+    previewImg.src = logoUrl; previewImg.style.display = '';
+    previewEmpty.style.display = 'none';
+  } else {
+    previewImg.style.display = 'none'; previewEmpty.style.display = '';
+  }
+  // Colores
+  const pColor = bs.primary_color   || '#2f81f7';
+  const sColor = bs.secondary_color || '#ffffff';
+  document.getElementById('bsPrimaryPicker').value   = pColor;
+  document.getElementById('bsPrimary').value          = pColor;
+  document.getElementById('bsSecondaryPicker').value = sColor;
+  document.getElementById('bsSecondary').value        = sColor;
+
+  // Horarios
+  document.getElementById('bsApertura').value = bs.opening_time           || CONFIG.HORA_APERTURA;
+  document.getElementById('bsCierre').value   = bs.closing_time           || CONFIG.HORA_CIERRE;
+  document.getElementById('bsDuracion').value = String(bs.slot_duration_minutes || 60);
+
+  // Reglas
+  document.getElementById('bsMaxPerDay').value  = bs.max_bookings_per_day  ?? 2;
+  document.getElementById('bsMaxActive').value  = bs.max_active_bookings   ?? 3;
+  document.getElementById('bsMaxDays').value    = bs.max_days_in_advance   ?? 7;
+  document.getElementById('bsMaxConsec').value  = bs.max_consecutive_hours ?? 2;
 }
 
-/** Guarda la configuración del complejo y la aplica al instante. */
-function acGuardarConfig() {
-  const nombre    = document.getElementById('cfgNombre').value.trim();
-  const emoji     = '⚽'; // legacy, ya no se usa en UI
-  const subtitulo = document.getElementById('cfgSubtitulo').value.trim() || 'Gestión de canchas';
-  const apertura  = document.getElementById('cfgApertura').value;
-  const cierre    = document.getElementById('cfgCierre').value;
+/* ── Subir logo a Supabase Storage ─────────────────────────────────── */
+async function uploadLogo(file) {
+  const ext  = file.name.split('.').pop().toLowerCase() || 'png';
+  const path = `logos/default/logo.${ext}`;
+  // PUT con x-upsert para sobrescribir si ya existe
+  const r = await fetch(`${SB_URL}/storage/v1/object/business-assets/${path}`, {
+    method: 'PUT',
+    headers: {
+      'apikey':        SB_KEY,
+      'Authorization': `Bearer ${SB_KEY}`,
+      'Content-Type':  file.type || 'image/png',
+      'x-upsert':      'true',
+    },
+    body: file,
+  });
+  if (!r.ok) {
+    const txt = await r.text();
+    throw new Error(`Error al subir imagen: ${txt}`);
+  }
+  return `${SB_URL}/storage/v1/object/public/business-assets/${path}`;
+}
 
-  if (!nombre)   { toast('El nombre del complejo no puede estar vacío.', 'warning'); return; }
-  if (!apertura || !cierre) { toast('Completá los horarios de apertura y cierre.', 'warning'); return; }
-  if (apertura >= cierre)   { toast('La hora de apertura debe ser anterior al cierre.', 'error'); return; }
+/* ── Guardar: Negocio ───────────────────────────────────────────────── */
+async function acGuardarNegocio() {
+  const btn = document.getElementById('btnGuardarNegocio');
+  const name = document.getElementById('bsName').value.trim();
+  if (!name) { toast('El nombre no puede estar vacío.', 'warning'); return; }
+  btn.disabled = true; btn.textContent = 'Guardando…';
+  try {
+    await DB.guardarBS({
+      name,
+      description:     document.getElementById('bsDesc').value.trim(),
+      address:         document.getElementById('bsAddress').value.trim(),
+      google_maps_url: document.getElementById('bsMaps').value.trim(),
+      phone:           document.getElementById('bsPhone').value.trim(),
+      whatsapp:        document.getElementById('bsWhatsapp').value.trim(),
+    });
+    aplicarBranding();
+    toast('Configuración guardada correctamente ✓', 'success');
+  } catch(e) {
+    toast('Error al guardar configuración.', 'error');
+    console.error(e);
+  } finally {
+    btn.disabled = false; btn.textContent = 'Guardar negocio';
+  }
+}
 
-  // Detectar cambio de horario ANTES de guardar
-  const cfgActual    = DB.obtenerConfig();
-  const cambioHorario = cfgActual.horaApertura !== apertura || cfgActual.horaCierre !== cierre;
+/* ── Guardar: Branding ──────────────────────────────────────────────── */
+async function acGuardarBranding() {
+  const btn  = document.getElementById('btnGuardarBranding');
+  const hint = document.getElementById('logoHint');
+  btn.disabled = true; btn.textContent = 'Guardando…';
+  try {
+    const data = {
+      primary_color:   document.getElementById('bsPrimary').value.trim()   || '#2f81f7',
+      secondary_color: document.getElementById('bsSecondary').value.trim() || '#ffffff',
+    };
+    const fileInput = document.getElementById('logoFileInput');
+    if (fileInput.files?.length) {
+      hint.textContent = 'Subiendo logo…';
+      data.logo_url = await uploadLogo(fileInput.files[0]);
+      hint.textContent = '';
+      fileInput.value = '';
+    }
+    await DB.guardarBS(data);
+    aplicarBranding();
+    toast('Configuración guardada correctamente ✓', 'success');
+  } catch(e) {
+    hint.textContent = '';
+    toast('Error al guardar configuración.', 'error');
+    console.error(e);
+  } finally {
+    btn.disabled = false; btn.textContent = 'Guardar branding';
+  }
+}
 
-  DB.guardarConfig({ nombre, emoji, subtitulo, horaApertura: apertura, horaCierre: cierre });
-  aplicarConfig();
+/* ── Guardar: Horarios ──────────────────────────────────────────────── */
+async function acGuardarHorarios() {
+  const btn      = document.getElementById('btnGuardarHorarios');
+  const apertura = document.getElementById('bsApertura').value;
+  const cierre   = document.getElementById('bsCierre').value;
+  const duracion = Number(document.getElementById('bsDuracion').value);
+  if (!apertura || !cierre) { toast('Completá los horarios.', 'warning'); return; }
+  if (apertura >= cierre)   { toast('La apertura debe ser anterior al cierre.', 'error'); return; }
+  if (!duracion || duracion <= 0) { toast('La duración debe ser mayor a 0.', 'error'); return; }
 
-  if (cambioHorario) renderGrilla();
-  toast(cambioHorario ? 'Configuración guardada. Horario actualizado ✓' : 'Configuración guardada.', 'success');
+  const bsActual = DB.obtenerBS();
+  const cambioHorario = bsActual.opening_time !== apertura || bsActual.closing_time !== cierre;
+
+  btn.disabled = true; btn.textContent = 'Guardando…';
+  try {
+    await DB.guardarBS({ opening_time: apertura, closing_time: cierre, slot_duration_minutes: duracion });
+    aplicarBranding();
+    if (cambioHorario) renderGrilla();
+    toast(cambioHorario ? 'Configuración guardada. Horario actualizado ✓' : 'Configuración guardada correctamente ✓', 'success');
+  } catch(e) {
+    toast('Error al guardar configuración.', 'error');
+    console.error(e);
+  } finally {
+    btn.disabled = false; btn.textContent = 'Guardar horarios';
+  }
+}
+
+/* ── Guardar: Reglas ────────────────────────────────────────────────── */
+async function acGuardarReglas() {
+  const btn         = document.getElementById('btnGuardarReglas');
+  const maxPerDay   = Number(document.getElementById('bsMaxPerDay').value);
+  const maxActive   = Number(document.getElementById('bsMaxActive').value);
+  const maxDays     = Number(document.getElementById('bsMaxDays').value);
+  const maxConsec   = Number(document.getElementById('bsMaxConsec').value);
+  if ([maxPerDay, maxActive, maxDays, maxConsec].some(v => !v || v <= 0)) {
+    toast('Todos los valores deben ser mayores a 0.', 'warning'); return;
+  }
+  btn.disabled = true; btn.textContent = 'Guardando…';
+  try {
+    await DB.guardarBS({
+      max_bookings_per_day:  maxPerDay,
+      max_active_bookings:   maxActive,
+      max_days_in_advance:   maxDays,
+      max_consecutive_hours: maxConsec,
+    });
+    toast('Configuración guardada correctamente ✓', 'success');
+  } catch(e) {
+    toast('Error al guardar configuración.', 'error');
+    console.error(e);
+  } finally {
+    btn.disabled = false; btn.textContent = 'Guardar reglas';
+  }
 }
 
 /* ====================================================================
@@ -3609,8 +3892,43 @@ document.getElementById('btnNuevoCliente').addEventListener('click', () => abrir
 // Admin — nueva cancha
 document.getElementById('btnNuevaCancha').addEventListener('click', () => abrirFormCancha(null));
 
-// Admin — guardar configuración
-document.getElementById('btnGuardarConfig').addEventListener('click', acGuardarConfig);
+// Admin — settings tabs
+document.querySelector('.stabs').addEventListener('click', e => {
+  const btn = e.target.closest('.stab');
+  if (!btn) return;
+  document.querySelectorAll('.stab').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.stab-panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('stab-' + btn.dataset.stab).classList.add('active');
+});
+
+// Admin — guardar por sección
+document.getElementById('btnGuardarNegocio').addEventListener('click',  acGuardarNegocio);
+document.getElementById('btnGuardarBranding').addEventListener('click', acGuardarBranding);
+document.getElementById('btnGuardarHorarios').addEventListener('click', acGuardarHorarios);
+document.getElementById('btnGuardarReglas').addEventListener('click',   acGuardarReglas);
+
+// Admin — color pickers ↔ hex inputs sync
+['Primary','Secondary'].forEach(k => {
+  const picker = document.getElementById(`bs${k}Picker`);
+  const hex    = document.getElementById(`bs${k}`);
+  picker.addEventListener('input', () => { hex.value = picker.value; });
+  hex.addEventListener('input', () => {
+    if (/^#[0-9a-fA-F]{6}$/.test(hex.value)) picker.value = hex.value;
+  });
+});
+
+// Admin — logo preview on file select
+document.getElementById('logoFileInput').addEventListener('change', e => {
+  const file = e.target.files?.[0];
+  const hint = document.getElementById('logoHint');
+  if (!file) return;
+  const url = URL.createObjectURL(file);
+  const img = document.getElementById('logoPreviewImg');
+  img.src = url; img.style.display = '';
+  document.getElementById('logoPreviewEmpty').style.display = 'none';
+  hint.textContent = file.name;
+});
 
 // Selector de período (Diario / Semanal / Mensual / Anual)
 document.querySelectorAll('.period-btn').forEach(btn => {
@@ -3964,7 +4282,7 @@ async function inicializar() {
   }
   loader.style.display = 'none';
   cargarDatosDePrueba();       // Solo carga canchas si la DB está vacía (primer uso)
-  aplicarConfig();             // Aplica nombre y horarios guardados
+  aplicarBranding();           // Aplica nombre, horarios, colores y logo desde business_settings
   document.body.setAttribute('data-view', 'recepcion');
   renderGrilla();
   actualizarBadgePendientes();

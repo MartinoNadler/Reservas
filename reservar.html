@@ -900,7 +900,8 @@ async function sbq(path, opts = {}) {
 /* ── ESTADO GLOBAL ───────────────────────────────────────── */
 const S = {
   cliente:      null,
-  config:       {},
+  config:       {},   // legacy, mantener para compat
+  bs:           {},   // business_settings
   canchas:      [],
   fechaActual:  fechaHoy(),
   canchaActual: null,
@@ -1306,16 +1307,25 @@ function renderCanchaHero() {
 function renderLocation() {
   const footer = document.getElementById('locationFooter');
   if (!footer) return;
-  const dir  = S.config.direccion;
-  const maps = S.config.googleMaps;
-  if (!dir && !maps) { footer.style.display = 'none'; return; }
-  const href = maps || `https://maps.google.com/?q=${encodeURIComponent(dir || '')}`;
+  const bs      = S.bs;
+  const hasAddr = bs.address || bs.googleMapsUrl;
+  const hasWa   = bs.whatsapp;
+  if (!hasAddr && !hasWa) { footer.style.display = 'none'; return; }
   footer.style.display = '';
-  footer.innerHTML = `
-    <a class="location-link" href="${href}" target="_blank" rel="noopener noreferrer">
-      <span class="location-link__icon">📍</span>
-      ${dir || 'Ver en Google Maps'}
+  let html = '';
+  if (hasAddr) {
+    const href = bs.googleMapsUrl || `https://maps.google.com/?q=${encodeURIComponent(bs.address)}`;
+    html += `<a class="location-link" href="${href}" target="_blank" rel="noopener noreferrer">
+      <span class="location-link__icon">📍</span>${bs.address || 'Ver en Google Maps'}
     </a>`;
+  }
+  if (hasWa) {
+    const waHref = `https://wa.me/${bs.whatsapp.replace(/\D/g,'')}`;
+    html += `<a class="location-link" href="${waHref}" target="_blank" rel="noopener noreferrer">
+      <span class="location-link__icon">💬</span>Escribinos por WhatsApp
+    </a>`;
+  }
+  footer.innerHTML = html;
 }
 
 /* ── SLOT GRID ───────────────────────────────────────────── */
@@ -1375,8 +1385,8 @@ async function renderSlots() {
 }
 
 function calcularSlots(cancha) {
-  const apertura = S.config.horaApertura || '08:00';
-  const cierre   = S.config.horaCierre   || '22:00';
+  const apertura = S.bs.openingTime || S.config.horaApertura || '08:00';
+  const cierre   = S.bs.closingTime || S.config.horaCierre   || '22:00';
   const slots = []; let h = apertura;
   while (minutos(h) + cancha.duracionTurno <= minutos(cierre)) {
     slots.push({ horaInicio:h, horaFin:sumar(h,cancha.duracionTurno) });
@@ -1422,7 +1432,58 @@ async function hacerReserva(slot, turnoExistente, cancha) {
   if (btnConfirmar) { btnConfirmar.disabled=true; btnConfirmar.textContent='Procesando…'; }
 
   try {
-    // Siempre INSERT — el índice único en DB (canchaId, fecha, horaInicio) rechaza dobles reservas
+    // ── Validar reglas de reserva ──────────────────────────────────────
+    const bs = S.bs;
+
+    // max_days_in_advance
+    const hoyMs    = new Date(fechaHoy()).getTime();
+    const fechaMs  = new Date(S.fechaActual).getTime();
+    const diffDias = Math.round((fechaMs - hoyMs) / 86400000);
+    if (diffDias > bs.maxDaysInAdvance) {
+      cerrarModal();
+      toast(`Solo podés reservar con ${bs.maxDaysInAdvance} días de anticipación.`, 'error');
+      return;
+    }
+
+    // max_active_bookings y max_bookings_per_day
+    const misReservas = await sbq(`/reservas?clienteId=eq.${S.cliente.id}`) || [];
+    if (misReservas.length) {
+      const ids = misReservas.map(r => r.turnoId).join(',');
+      const activos = await sbq(
+        `/turnos?id=in.(${ids})&estado=in.(reservado,pendiente,pagado)&fecha=gte.${fechaHoy()}`
+      ) || [];
+
+      if (activos.length >= bs.maxActiveBookings) {
+        cerrarModal();
+        toast(`Tenés el máximo de ${bs.maxActiveBookings} reservas activas permitidas.`, 'error');
+        return;
+      }
+      const delDia = activos.filter(t => t.fecha === S.fechaActual);
+      if (delDia.length >= bs.maxBookingsPerDay) {
+        cerrarModal();
+        toast(`Ya tenés ${bs.maxBookingsPerDay} reservas para este día.`, 'error');
+        return;
+      }
+
+      // max_consecutive_hours — verificar que el nuevo slot no genere un bloque > límite
+      const delDiaConNuevo = [
+        ...delDia.map(t => ({ s: minutos(t.horaInicio), e: minutos(t.horaFin) })),
+        { s: minutos(slot.horaInicio), e: minutos(slot.horaFin) },
+      ].sort((a, b) => a.s - b.s);
+      let maxBloque = 0, cs = null, ce = null;
+      for (const seg of delDiaConNuevo) {
+        if (ce === null || seg.s > ce) { cs = seg.s; ce = seg.e; }
+        else { ce = Math.max(ce, seg.e); }
+        maxBloque = Math.max(maxBloque, ce - cs);
+      }
+      if (maxBloque > bs.maxConsecutiveHours * 60) {
+        cerrarModal();
+        toast(`No podés reservar más de ${bs.maxConsecutiveHours} horas seguidas.`, 'error');
+        return;
+      }
+    }
+
+    // ── Siempre INSERT — el índice único en DB (canchaId, fecha, horaInicio) rechaza dobles reservas
     const nuevoTurno = {
       id: uid('t'), canchaId: cancha.id, fecha: S.fechaActual,
       horaInicio: slot.horaInicio, horaFin: slot.horaFin, estado: 'reservado',
@@ -1608,26 +1669,37 @@ document.getElementById('btnSalir').addEventListener('click', () => {
    INIT
 ══════════════════════════════════════════════════════════ */
 async function init() {
+  // Cargar business_settings (fuente de verdad) con fallback a config legacy
   try {
-    const rows = await sbq('/config');
-    const cfg  = rows?.[0] || {};
-    S.config = {
-      nombre:       cfg.nombreComplejo || cfg.nombre || 'Reservas',
-      horaApertura: cfg.horaApertura   || '08:00',
-      horaCierre:   cfg.horaCierre     || '22:00',
-      direccion:    cfg.direccion      || cfg.address   || null,
-      googleMaps:   cfg.googleMaps     || cfg.google_maps || cfg.mapsUrl || null,
+    const [bsRows, cfgRows] = await Promise.all([
+      sbq('/business_settings'),
+      sbq('/config').catch(() => []),
+    ]);
+    const bs  = bsRows?.[0]  || {};
+    const cfg = cfgRows?.[0] || {};
+
+    S.bs = {
+      name:                bs.name            || cfg.nombreComplejo || cfg.nombre || 'Reservas',
+      description:         bs.description     || cfg.subtitulo      || '',
+      address:             bs.address         || cfg.direccion      || '',
+      googleMapsUrl:       bs.google_maps_url || cfg.googleMaps     || '',
+      whatsapp:            bs.whatsapp        || '',
+      phone:               bs.phone           || '',
+      logoUrl:             bs.logo_url        || '',
+      primaryColor:        bs.primary_color   || '#2f81f7',
+      secondaryColor:      bs.secondary_color || '#ffffff',
+      openingTime:         bs.opening_time    || cfg.horaApertura   || '08:00',
+      closingTime:         bs.closing_time    || cfg.horaCierre     || '22:00',
+      maxBookingsPerDay:   bs.max_bookings_per_day  ?? 2,
+      maxActiveBookings:   bs.max_active_bookings   ?? 3,
+      maxDaysInAdvance:    bs.max_days_in_advance   ?? 7,
+      maxConsecutiveHours: bs.max_consecutive_hours ?? 2,
     };
-    const local = JSON.parse(localStorage.getItem('reservas_local_cfg') || '{}');
-    if (local.emoji) S.config.emoji = local.emoji;
+    // Compat legacy
+    S.config = { nombre: S.bs.name, horaApertura: S.bs.openingTime, horaCierre: S.bs.closingTime };
   } catch(e) { console.warn('Config no disponible.', e); }
 
-  const emoji  = S.config.emoji  || '⚽';
-  const nombre = S.config.nombre || 'Reservas';
-  // logos hardcodeados en HTML
-  ['nameA','nameB'].forEach(id => { document.getElementById(id).textContent = nombre; });
-  document.getElementById('loadIcon').textContent = emoji;
-  document.title = `Reservar · ${nombre}`;
+  aplicarBrandingPublico();
 
   const saved = localStorage.getItem('rv_cliente');
   if (saved) {
@@ -1647,6 +1719,38 @@ async function init() {
   document.getElementById('loadingFull').classList.add('oculto');
   ir('screen-dni');
   setTimeout(() => document.getElementById('inDNI').focus(), 100);
+}
+
+/** Aplica branding de business_settings al frontend público. */
+function aplicarBrandingPublico() {
+  const bs = S.bs;
+  const nombre = bs.name || 'Reservas';
+
+  // Nombre en pantallas de auth y header
+  ['nameA','nameB'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.textContent = nombre;
+  });
+  const hComplex = document.getElementById('hComplex'); if (hComplex) hComplex.textContent = nombre;
+  document.title = `Reservar · ${nombre}`;
+
+  // Logo
+  if (bs.logoUrl) {
+    ['logoA','logoB'].forEach(id => {
+      const el = document.getElementById(id); if (!el) return;
+      el.innerHTML = `<img src="${bs.logoUrl}" alt="${nombre}" style="width:68px;height:68px;object-fit:cover;border-radius:12px">`;
+    });
+    const hLogo = document.getElementById('hLogo');
+    if (hLogo) hLogo.innerHTML = `<img src="${bs.logoUrl}" alt="${nombre}" style="width:36px;height:36px;object-fit:cover;border-radius:8px">`;
+  }
+
+  // Color principal
+  if (bs.primaryColor) {
+    document.documentElement.style.setProperty('--accent', bs.primaryColor);
+    document.documentElement.style.setProperty('--accent-muted', bs.primaryColor + '22');
+  }
+
+  // Footer — dirección y WhatsApp
+  renderLocation();
 }
 
 init();
