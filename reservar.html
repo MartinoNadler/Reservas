@@ -1754,6 +1754,8 @@ function aplicarBrandingPublico() {
     });
     const hLogo = document.getElementById('hLogo');
     if (hLogo) hLogo.innerHTML = `<img src="${bs.logoUrl}" alt="${nombre}" style="width:36px;height:36px;object-fit:cover;border-radius:8px">`;
+    const loadIcon = document.getElementById('loadIcon');
+    if (loadIcon) loadIcon.innerHTML = `<img src="${bs.logoUrl}" alt="${nombre}" style="width:80px;height:80px;object-fit:cover;border-radius:16px">`;
   }
 
   // Helper para derivar variantes con opacidad
