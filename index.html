@@ -1301,6 +1301,7 @@
         </div>
 
         <!-- GRILLA -->
+        <div id="gridCerradoBanner" style="display:none;margin:0 16px 10px;padding:10px 16px;border-radius:8px;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.35);color:#ef4444;font-size:13px;font-weight:600"></div>
         <div class="grid-wrap">
           <div class="grid-inner" id="gridInner">
             <!-- Generado por JavaScript -->
@@ -2183,6 +2184,18 @@ function renderGrilla() {
   const fecha   = UI.fechaActual;
   const canchas = DB.obtenerCanchas().filter(c => c.activa !== false);
 
+  // ¿Día cerrado?
+  const diaCerrado = DB.obtenerFeriados().find(f => f.fecha === fecha);
+  const banner = document.getElementById('gridCerradoBanner');
+  if (banner) {
+    if (diaCerrado) {
+      banner.innerHTML = `🔴 <strong>${diaCerrado.motivo || 'Cerrado'}</strong> — Este día está marcado como cerrado. Los slots disponibles no se muestran.`;
+      banner.style.display = '';
+    } else {
+      banner.style.display = 'none';
+    }
+  }
+
   // Slots virtuales (disponibles, solo frontend)
   const virtualPorCancha = generarSlotsDia(fecha);
   UI.slotsVirtuales.clear();
@@ -2238,11 +2251,12 @@ function renderGrilla() {
     }
 
     // Tarjetas: slots virtuales sobreescritos por turnos reales de DB
+    // En días cerrados no se muestran slots virtuales (disponibles)
     const realesCancha = turnosDB.filter(t => t.canchaId === cancha.id);
     const slotsCancha  = virtualPorCancha.get(cancha.id) || [];
-    const tarjetas = slotsCancha.map(vSlot =>
-      realesCancha.find(t => t.horaInicio === vSlot.horaInicio) || vSlot
-    );
+    const tarjetas = diaCerrado
+      ? realesCancha
+      : slotsCancha.map(vSlot => realesCancha.find(t => t.horaInicio === vSlot.horaInicio) || vSlot);
     tarjetas.forEach(turno => area.appendChild(crearTarjeta(turno, cancha, minInicio)));
 
     // Línea de hora actual
@@ -3944,23 +3958,45 @@ function renderFeriadosList() {
 
 async function acConfirmarFeriado() {
   if (!CF.selFecha) return;
+  const fecha = CF.selFecha;
+
+  // Buscar reservas activas para ese día
+  const ACTIVOS = ['pendiente', 'reservado', 'pagado'];
+  const turnosConReserva = DB.obtenerTurnosPorFecha(fecha).filter(t => ACTIVOS.includes(t.estado));
+
+  if (turnosConReserva.length > 0) {
+    const n = turnosConReserva.length;
+    const msg = `Este día tiene ${n} reserva${n>1?'s':''} activa${n>1?'s':''}.\nAl confirmar se cancelarán todas. ¿Continuar?`;
+    if (!confirm(msg)) return;
+  }
+
   const motivo = document.getElementById('feriadoMotivo').value.trim();
   const btn = document.getElementById('btnConfirmarFeriado');
   btn.disabled = true; btn.textContent = 'Guardando…';
   try {
-    await DB.agregarFeriado(CF.selFecha, motivo || null);
+    // Cancelar todas las reservas activas del día
+    turnosConReserva.forEach(t => rechazarReserva(t.id));
+
+    await DB.agregarFeriado(fecha, motivo || null);
     CF.selFecha = null;
     document.getElementById('diasCerradosForm').style.display = 'none';
     renderFeriadosList(); renderCalDiasCerrados();
-    toast('Día cerrado agregado ✓', 'success');
+    if (UI.fechaActual === fecha) renderGrilla();
+
+    const msg = turnosConReserva.length > 0
+      ? `Día cerrado. ${turnosConReserva.length} reserva${turnosConReserva.length>1?'s':''} cancelada${turnosConReserva.length>1?'s':''} ✓`
+      : 'Día cerrado agregado ✓';
+    toast(msg, 'success');
   } catch(e) { toast('Error al guardar: ' + e.message, 'error'); }
   finally    { btn.disabled = false; btn.textContent = 'Confirmar'; }
 }
 
 function acEliminarFeriado(id) {
   if (!confirm('¿Eliminar este día cerrado?')) return;
+  const f = DB.obtenerFeriados().find(x => x.id === id);
   DB.eliminarFeriado(id);
   renderFeriadosList(); renderCalDiasCerrados();
+  if (f && UI.fechaActual === f.fecha) renderGrilla();
   toast('Día eliminado ✓', 'success');
 }
 
