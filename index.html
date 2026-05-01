@@ -3974,8 +3974,16 @@ async function acConfirmarFeriado() {
   const btn = document.getElementById('btnConfirmarFeriado');
   btn.disabled = true; btn.textContent = 'Guardando…';
   try {
-    // Cancelar todas las reservas activas del día
-    turnosConReserva.forEach(t => rechazarReserva(t.id));
+    // Cancelar todas las reservas activas del día con mensaje para el cliente
+    const fechaDisplay = new Date(fecha + 'T12:00:00')
+      .toLocaleDateString('es-AR', { weekday:'long', day:'numeric', month:'long' });
+    const mensajeCancel = `Tu reserva fue cancelada ya que nos encontramos cerrados el ${fechaDisplay}${motivo ? ` (${motivo})` : ''}.`;
+
+    turnosConReserva.forEach(t => {
+      const reserva = DB.obtenerReservaPorTurno(t.id);
+      if (reserva) DB.actualizarReserva(reserva.id, { estado: 'rechazada', mensaje: mensajeCancel });
+      DB.eliminarTurno(t.id);
+    });
 
     await DB.agregarFeriado(fecha, motivo || null);
     CF.selFecha = null;

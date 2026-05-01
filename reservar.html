@@ -611,6 +611,22 @@
     .location-link:hover { color: var(--blue); }
     .location-link__icon { font-size: 14px; }
 
+    /* ── NOTIF CANCELACIÓN ───────────────────────────────────── */
+    #notifCancelaciones { padding: 0 16px; margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
+    .cancel-notif {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 12px 14px; border-radius: 10px;
+      background: rgba(239,68,68,.10); border: 1px solid rgba(239,68,68,.30);
+      animation: fadeIn .3s ease;
+    }
+    .cancel-notif__icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+    .cancel-notif__msg  { flex: 1; font-size: 13px; color: var(--t1); line-height: 1.5; }
+    .cancel-notif__close {
+      background: none; border: none; cursor: pointer; padding: 0;
+      color: var(--t3); font-size: 15px; flex-shrink: 0; transition: color .15s;
+    }
+    .cancel-notif__close:hover { color: #ef4444; }
+
     /* ── FERIADO ─────────────────────────────────────────────── */
     .mc-feriado { color: #ef4444 !important; position: relative; }
     .mc-feriado::after {
@@ -842,6 +858,8 @@
     </div>
     <button class="btn--salir" id="btnSalir">Salir</button>
   </header>
+
+  <div id="notifCancelaciones"></div>
 
   <div class="main-content">
     <div class="booking-layout">
@@ -1141,6 +1159,37 @@ async function entrar() {
   renderCanchaHero();
   renderLocation();
   await Promise.all([renderSlots(), renderMisReservas()]);
+  verificarCancelaciones();
+}
+
+/* ── NOTIFICACIONES DE CANCELACIÓN ───────────────────────── */
+async function verificarCancelaciones() {
+  if (!S.cliente) return;
+  try {
+    const canceladas = await sbq(
+      `/reservas?clienteId=eq.${S.cliente.id}&estado=eq.rechazada&mensaje=not.is.null&order=fechaCreacion.desc`
+    ) || [];
+    const vistas = new Set(JSON.parse(localStorage.getItem('rv_cancel_vistas') || '[]'));
+    const nuevas = canceladas.filter(r => !vistas.has(r.id));
+    if (!nuevas.length) return;
+
+    const container = document.getElementById('notifCancelaciones');
+    if (!container) return;
+    container.innerHTML = nuevas.map(r => `
+      <div class="cancel-notif" id="cn-${r.id}">
+        <span class="cancel-notif__icon">🔴</span>
+        <span class="cancel-notif__msg">${r.mensaje}</span>
+        <button class="cancel-notif__close" onclick="dismissCancelNotif('${r.id}')" aria-label="Cerrar">✕</button>
+      </div>`).join('');
+
+    nuevas.forEach(r => vistas.add(r.id));
+    localStorage.setItem('rv_cancel_vistas', JSON.stringify([...vistas]));
+  } catch(e) { console.warn('Error al verificar cancelaciones:', e); }
+}
+
+function dismissCancelNotif(id) {
+  const el = document.getElementById(`cn-${id}`);
+  if (el) { el.style.opacity = '0'; el.style.transition = 'opacity .2s'; setTimeout(() => el.remove(), 200); }
 }
 
 /* ── ACCORDIONS ──────────────────────────────────────────── */
