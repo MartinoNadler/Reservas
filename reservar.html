@@ -611,6 +611,21 @@
     .location-link:hover { color: var(--blue); }
     .location-link__icon { font-size: 14px; }
 
+    /* ── FERIADO ─────────────────────────────────────────────── */
+    .mc-feriado { color: #f97316 !important; position: relative; }
+    .mc-feriado::after {
+      content: ''; position: absolute; bottom: 3px; left: 50%;
+      transform: translateX(-50%);
+      width: 4px; height: 4px; border-radius: 50%; background: #f97316;
+    }
+    .slot-feriado {
+      grid-column: 1 / -1; text-align: center;
+      padding: 48px 20px; color: var(--t3);
+    }
+    .slot-feriado__icon { font-size: 36px; margin-bottom: 12px; }
+    .slot-feriado__title { font-size: 16px; font-weight: 700; color: var(--t1); margin-bottom: 6px; }
+    .slot-feriado__sub   { font-size: 13px; }
+
     /* ── WHATSAPP FAB ─────────────────────────────────────────── */
     .wa-fab {
       position: fixed; bottom: 28px; right: 28px; z-index: 999;
@@ -936,6 +951,7 @@ const S = {
   calAno: null,
   calMes: null,
   calModoYM: false,
+  feriados:  [],
 };
 
 /* ── HELPERS ─────────────────────────────────────────────── */
@@ -1214,13 +1230,15 @@ function renderCalendar() {
   }
   for (let d = 1; d <= daysInMo; d++) {
     const fStr    = `${ano}-${pad(mes)}-${pad(d)}`;
-    const isPast  = fStr < hoy;
-    const isToday = fStr === hoy;
-    const isActive= fStr === S.fechaActual;
+    const isPast    = fStr < hoy;
+    const isToday   = fStr === hoy;
+    const isActive  = fStr === S.fechaActual;
+    const isFeriado = S.feriados.some(f => f.fecha === fStr);
     let cls = 'mini-cal__day';
-    if      (isActive) cls += ' mc-active';
-    else if (isPast)   cls += ' mc-past';
-    else if (isToday)  cls += ' mc-today';
+    if      (isActive)  cls += ' mc-active';
+    else if (isPast)    cls += ' mc-past';
+    else if (isFeriado) cls += ' mc-feriado';
+    else if (isToday)   cls += ' mc-today';
     cellsHtml += `<div class="${cls}" data-fecha="${fStr}">${d}</div>`;
   }
 
@@ -1368,6 +1386,17 @@ async function renderSlots() {
 
   const cancha = S.canchas.find(c => c.id === S.canchaActual);
   if (!cancha) { grid.innerHTML=''; return; }
+
+  // ¿Día feriado?
+  const feriado = S.feriados.find(f => f.fecha === S.fechaActual);
+  if (feriado) {
+    grid.innerHTML = `<div class="slot-feriado">
+      <div class="slot-feriado__icon">🗓️</div>
+      <div class="slot-feriado__title">Feriado${feriado.motivo ? ` — ${feriado.motivo}` : ''}</div>
+      <div class="slot-feriado__sub">No hay turnos disponibles para este día.</div>
+    </div>`;
+    return;
+  }
 
   const turnosDB = await sbq(
     `/turnos?canchaId=eq.${cancha.id}&fecha=eq.${S.fechaActual}&order=horaInicio`
@@ -1704,10 +1733,12 @@ document.getElementById('btnSalir').addEventListener('click', () => {
 async function init() {
   // Cargar business_settings (fuente de verdad) con fallback a config legacy
   try {
-    const [bsRows, cfgRows] = await Promise.all([
+    const [bsRows, cfgRows, feriadosRows] = await Promise.all([
       sbq('/business_settings'),
       sbq('/config').catch(() => []),
+      sbq('/feriados?order=fecha').catch(() => []),
     ]);
+    S.feriados = feriadosRows || [];
     const bs  = bsRows?.[0]  || {};
     const cfg = cfgRows?.[0] || {};
 

@@ -940,6 +940,18 @@
     .stab-panel { display: none; padding: 20px; }
     .stab-panel.active { display: block; }
 
+    /* ── Feriados list ───────────────────────────────────────────── */
+    .feriado-row {
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      padding: 10px 14px; border-radius: 8px;
+      background: var(--card2); border: 1px solid var(--border);
+      margin-bottom: 8px;
+    }
+    .feriado-row__fecha { font-size: 13px; font-weight: 600; color: var(--text); text-transform: capitalize; }
+    .feriado-row__motivo { font-size: 12px; color: var(--secondary); margin-top: 2px; }
+    .feriado-add { display: flex; gap: 8px; flex-wrap: wrap; align-items: flex-end; margin-top: 8px; }
+    .feriado-add > div { display: flex; flex-direction: column; gap: 4px; }
+
     /* ── Logo upload ────────────────────────────────────────────── */
     .logo-upload { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
     .logo-upload__preview {
@@ -1359,6 +1371,7 @@
                 <button class="stab" data-stab="branding">Branding</button>
                 <button class="stab" data-stab="horarios">Horarios</button>
                 <button class="stab" data-stab="reglas">Reglas</button>
+                <button class="stab" data-stab="feriados">Feriados</button>
               </div>
 
               <!-- Panel: Negocio -->
@@ -1470,6 +1483,25 @@
                   </div>
                 </div>
                 <button class="btn btn--success" id="btnGuardarReglas">Guardar reglas</button>
+              </div>
+
+              <!-- Panel: Feriados -->
+              <div class="stab-panel" id="stab-feriados">
+                <div class="form-group" style="margin-bottom:20px">
+                  <label>Agregar feriado</label>
+                  <div class="feriado-add">
+                    <div style="flex:0 0 auto">
+                      <span style="font-size:11px;color:var(--secondary)">Fecha</span>
+                      <input id="feriadoFecha" type="date" style="width:160px" />
+                    </div>
+                    <div style="flex:1;min-width:180px">
+                      <span style="font-size:11px;color:var(--secondary)">Motivo (opcional)</span>
+                      <input id="feriadoMotivo" type="text" placeholder="Ej: Día de la Independencia" autocomplete="off" />
+                    </div>
+                    <button class="btn btn--primary" id="btnAgregarFeriado" style="align-self:flex-end">+ Agregar</button>
+                  </div>
+                </div>
+                <div id="feriadosList"></div>
               </div>
 
             </div>
@@ -1618,7 +1650,7 @@ const CONFIG = {
    Contrato de cada función: igual al que tendría un endpoint REST.
 ==================================================================== */
 const DB = {
-  _cache: { canchas: [], turnos: [], reservas: [], clientes: [], config: {}, bs: {} },
+  _cache: { canchas: [], turnos: [], reservas: [], clientes: [], config: {}, bs: {}, feriados: [] },
 
   _h() {
     return {
@@ -1657,13 +1689,14 @@ const DB = {
 
   /** Carga todos los datos desde Supabase al cache local. Llamar al iniciar. */
   async cargarTodo() {
-    const [canchas, clientes, turnos, reservas, cfg, bs] = await Promise.all([
+    const [canchas, clientes, turnos, reservas, cfg, bs, feriados] = await Promise.all([
       this._q('/canchas'),
       this._q('/clientes'),
       this._q('/turnos'),
       this._q('/reservas'),
       this._q('/config'),
       this._q('/business_settings'),
+      this._q('/feriados?order=fecha'),
     ]);
     this._cache.canchas  = canchas  || [];
     this._cache.clientes = clientes || [];
@@ -1672,7 +1705,8 @@ const DB = {
     const raw = (cfg || [])[0] || {};
     // Supabase guarda 'nombreComplejo', el resto del código usa 'nombre'
     this._cache.config = raw.nombreComplejo ? { ...raw, nombre: raw.nombreComplejo } : raw;
-    this._cache.bs = (bs || [])[0] || {};
+    this._cache.bs     = (bs || [])[0] || {};
+    this._cache.feriados = feriados || [];
   },
 
   // ─── CANCHAS ──────────────────────────────────────────────────────
@@ -1726,6 +1760,23 @@ const DB = {
     // Solo mandar a Supabase los campos que existen en la tabla
     this._sync(() => this._q('/config?id=eq.1', { method: 'PATCH', body: JSON.stringify(sbCfg) }));
     return this._cache.config;
+  },
+
+  // ─── FERIADOS ──────────────────────────────────────────────────────
+  obtenerFeriados() { return [...this._cache.feriados]; },
+
+  async agregarFeriado(fecha, motivo) {
+    const result = await this._q('/feriados', {
+      method: 'POST', body: JSON.stringify({ fecha, motivo: motivo || null }),
+    });
+    const saved = Array.isArray(result) ? result[0] : result;
+    if (saved) this._cache.feriados.push(saved);
+    return saved;
+  },
+
+  eliminarFeriado(id) {
+    this._cache.feriados = this._cache.feriados.filter(f => f.id !== id);
+    this._sync(() => this._q(`/feriados?id=eq.${id}`, { method: 'DELETE' }));
   },
 
   // ─── BUSINESS SETTINGS ────────────────────────────────────────────
@@ -3747,6 +3798,51 @@ async function acGuardarHorarios() {
   }
 }
 
+/* ── Feriados ───────────────────────────────────────────────────────── */
+function renderFeriadosList() {
+  const container = document.getElementById('feriadosList');
+  if (!container) return;
+  const feriados = DB.obtenerFeriados().sort((a, b) => a.fecha.localeCompare(b.fecha));
+  if (!feriados.length) {
+    container.innerHTML = '<p style="color:var(--secondary);font-size:13px;padding:8px 0">No hay feriados cargados.</p>';
+    return;
+  }
+  container.innerHTML = feriados.map(f => {
+    const d = new Date(f.fecha + 'T12:00:00');
+    const fechaStr = d.toLocaleDateString('es-AR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    return `<div class="feriado-row">
+      <div>
+        <div class="feriado-row__fecha">${fechaStr}</div>
+        ${f.motivo ? `<div class="feriado-row__motivo">${f.motivo}</div>` : ''}
+      </div>
+      <button class="btn btn--danger btn--sm" onclick="acEliminarFeriado('${f.id}')">Eliminar</button>
+    </div>`;
+  }).join('');
+}
+
+async function acAgregarFeriado() {
+  const fecha  = document.getElementById('feriadoFecha').value;
+  const motivo = document.getElementById('feriadoMotivo').value.trim();
+  if (!fecha) { toast('Seleccioná una fecha.', 'warning'); return; }
+  const btn = document.getElementById('btnAgregarFeriado');
+  btn.disabled = true; btn.textContent = 'Guardando…';
+  try {
+    await DB.agregarFeriado(fecha, motivo);
+    document.getElementById('feriadoFecha').value  = '';
+    document.getElementById('feriadoMotivo').value = '';
+    renderFeriadosList();
+    toast('Feriado agregado ✓', 'success');
+  } catch(e) { toast('Error al guardar: ' + e.message, 'error'); }
+  finally    { btn.disabled = false; btn.textContent = '+ Agregar'; }
+}
+
+function acEliminarFeriado(id) {
+  if (!confirm('¿Eliminar este feriado?')) return;
+  DB.eliminarFeriado(id);
+  renderFeriadosList();
+  toast('Feriado eliminado ✓', 'success');
+}
+
 /* ── Guardar: Reglas ────────────────────────────────────────────────── */
 async function acGuardarReglas() {
   const btn         = document.getElementById('btnGuardarReglas');
@@ -3926,6 +4022,7 @@ document.querySelector('.stabs').addEventListener('click', e => {
   document.querySelectorAll('.stab-panel').forEach(p => p.classList.remove('active'));
   btn.classList.add('active');
   document.getElementById('stab-' + btn.dataset.stab).classList.add('active');
+  if (btn.dataset.stab === 'feriados') renderFeriadosList();
 });
 
 // Admin — guardar por sección
@@ -3933,6 +4030,7 @@ document.getElementById('btnGuardarNegocio').addEventListener('click',  acGuarda
 document.getElementById('btnGuardarBranding').addEventListener('click', acGuardarBranding);
 document.getElementById('btnGuardarHorarios').addEventListener('click', acGuardarHorarios);
 document.getElementById('btnGuardarReglas').addEventListener('click',   acGuardarReglas);
+document.getElementById('btnAgregarFeriado').addEventListener('click',  acAgregarFeriado);
 
 // Admin — color pickers ↔ hex inputs sync
 ['Primary','Secondary'].forEach(k => {
