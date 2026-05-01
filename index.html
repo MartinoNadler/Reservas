@@ -284,6 +284,7 @@
       border-radius: 7px; cursor: pointer;
       transition: background .12s, color .12s;
       font-variant-numeric: tabular-nums;
+      outline: none; -webkit-tap-highlight-color: transparent; user-select: none;
     }
     .cal-pop__day:not(.cp-empty):hover { background: var(--surface-2); color: var(--text); }
     .cal-pop__day.cp-empty  { cursor: default; }
@@ -951,6 +952,19 @@
     .feriado-row__motivo { font-size: 12px; color: var(--secondary); margin-top: 2px; }
 
     /* Calendario inline */
+    .dc-toggle {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 14px; border-radius: 10px; cursor: pointer;
+      background: var(--card2); border: 1px solid var(--border);
+      font-size: 13px; font-weight: 600; color: var(--text);
+      user-select: none; margin-bottom: 10px;
+      transition: background .13s;
+    }
+    .dc-toggle:hover { background: var(--sub); }
+    .dc-toggle__icon { font-size: 11px; color: var(--secondary); transition: transform .2s; }
+    .dc-toggle__icon.open { transform: rotate(180deg); }
+    .dc-collapsible { overflow: hidden; transition: max-height .25s ease, opacity .2s; max-height: 0; opacity: 0; }
+    .dc-collapsible.open { max-height: 600px; opacity: 1; }
     .dc-wrap { display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-start; }
     #diasCerradosCal {
       flex: 0 0 auto;
@@ -1508,7 +1522,11 @@
 
               <!-- Panel: Días cerrados -->
               <div class="stab-panel" id="stab-feriados">
-                <p style="font-size:12px;color:var(--secondary);margin:0 0 14px">Hacé clic en un día para marcarlo como cerrado. Clic nuevamente para eliminarlo.</p>
+                <div class="dc-toggle" id="dcToggle">
+                  <span>📅 Seleccionar día cerrado</span>
+                  <span class="dc-toggle__icon" id="dcToggleIcon">▾</span>
+                </div>
+                <div class="dc-collapsible" id="dcCollapsible">
                 <div class="dc-wrap">
                   <div id="diasCerradosCal"></div>
                   <div id="diasCerradosForm" style="display:none">
@@ -1523,6 +1541,7 @@
                     </div>
                   </div>
                 </div>
+                </div><!-- /dc-collapsible -->
                 <div style="margin-top:20px">
                   <div style="font-size:11px;font-weight:700;color:var(--secondary);letter-spacing:.06em;margin-bottom:10px">DÍAS CERRADOS</div>
                   <div id="feriadosList"></div>
@@ -4124,7 +4143,7 @@ document.querySelector('.stabs').addEventListener('click', e => {
   document.querySelectorAll('.stab-panel').forEach(p => p.classList.remove('active'));
   btn.classList.add('active');
   document.getElementById('stab-' + btn.dataset.stab).classList.add('active');
-  if (btn.dataset.stab === 'feriados') { renderCalDiasCerrados(); renderFeriadosList(); }
+  if (btn.dataset.stab === 'feriados') { renderFeriadosList(); }
 });
 
 // Admin — guardar por sección
@@ -4137,6 +4156,13 @@ document.getElementById('btnCancelarFeriado').addEventListener('click', () => {
   CF.selFecha = null;
   document.getElementById('diasCerradosForm').style.display = 'none';
   renderCalDiasCerrados();
+});
+document.getElementById('dcToggle').addEventListener('click', () => {
+  const col  = document.getElementById('dcCollapsible');
+  const icon = document.getElementById('dcToggleIcon');
+  const open = col.classList.toggle('open');
+  icon.classList.toggle('open', open);
+  if (open) renderCalDiasCerrados();
 });
 
 // Admin — color pickers ↔ hex inputs sync
