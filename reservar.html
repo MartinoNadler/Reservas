@@ -1392,7 +1392,7 @@ async function renderSlots() {
   if (feriado) {
     grid.innerHTML = `<div class="slot-feriado">
       <div class="slot-feriado__icon">🗓️</div>
-      <div class="slot-feriado__title">Feriado${feriado.motivo ? ` — ${feriado.motivo}` : ''}</div>
+      <div class="slot-feriado__title">${feriado.motivo || 'Cerrado'}</div>
       <div class="slot-feriado__sub">No hay turnos disponibles para este día.</div>
     </div>`;
     return;

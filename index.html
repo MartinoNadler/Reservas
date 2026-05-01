@@ -940,7 +940,7 @@
     .stab-panel { display: none; padding: 20px; }
     .stab-panel.active { display: block; }
 
-    /* ── Feriados list ───────────────────────────────────────────── */
+    /* ── Días cerrados ───────────────────────────────────────────── */
     .feriado-row {
       display: flex; align-items: center; justify-content: space-between; gap: 12px;
       padding: 10px 14px; border-radius: 8px;
@@ -949,8 +949,29 @@
     }
     .feriado-row__fecha { font-size: 13px; font-weight: 600; color: var(--text); text-transform: capitalize; }
     .feriado-row__motivo { font-size: 12px; color: var(--secondary); margin-top: 2px; }
-    .feriado-add { display: flex; gap: 8px; flex-wrap: wrap; align-items: flex-end; margin-top: 8px; }
-    .feriado-add > div { display: flex; flex-direction: column; gap: 4px; }
+
+    /* Calendario inline */
+    .dc-wrap { display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-start; }
+    #diasCerradosCal {
+      flex: 0 0 auto;
+      background: var(--card2); border: 1px solid var(--border);
+      border-radius: 12px; padding: 14px; min-width: 220px;
+    }
+    #diasCerradosForm {
+      flex: 1; min-width: 200px;
+      background: var(--card2); border: 1px solid var(--border);
+      border-radius: 12px; padding: 16px;
+    }
+    .cal-pop__day.cp-cerrado {
+      background: rgba(249,115,22,.15) !important;
+      color: #f97316 !important; font-weight: 700;
+    }
+    .cal-pop__day.cp-cerrado:hover { background: rgba(249,115,22,.28) !important; }
+    .cal-pop__day.cp-cerrado::after {
+      content: ''; position: absolute; bottom: 2px; left: 50%;
+      transform: translateX(-50%);
+      width: 4px; height: 4px; border-radius: 50%; background: #f97316;
+    }
 
     /* ── Logo upload ────────────────────────────────────────────── */
     .logo-upload { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
@@ -1371,7 +1392,7 @@
                 <button class="stab" data-stab="branding">Branding</button>
                 <button class="stab" data-stab="horarios">Horarios</button>
                 <button class="stab" data-stab="reglas">Reglas</button>
-                <button class="stab" data-stab="feriados">Feriados</button>
+                <button class="stab" data-stab="feriados">Días cerrados</button>
               </div>
 
               <!-- Panel: Negocio -->
@@ -1485,23 +1506,27 @@
                 <button class="btn btn--success" id="btnGuardarReglas">Guardar reglas</button>
               </div>
 
-              <!-- Panel: Feriados -->
+              <!-- Panel: Días cerrados -->
               <div class="stab-panel" id="stab-feriados">
-                <div class="form-group" style="margin-bottom:20px">
-                  <label>Agregar feriado</label>
-                  <div class="feriado-add">
-                    <div style="flex:0 0 auto">
-                      <span style="font-size:11px;color:var(--secondary)">Fecha</span>
-                      <input id="feriadoFecha" type="date" style="width:160px" />
+                <p style="font-size:12px;color:var(--secondary);margin:0 0 14px">Hacé clic en un día para marcarlo como cerrado. Clic nuevamente para eliminarlo.</p>
+                <div class="dc-wrap">
+                  <div id="diasCerradosCal"></div>
+                  <div id="diasCerradosForm" style="display:none">
+                    <div class="form-group">
+                      <label id="dcFormLabel" style="font-size:13px;font-weight:600"></label>
+                      <input id="feriadoMotivo" type="text" placeholder="Cerrado" autocomplete="off" style="margin-top:8px" />
+                      <span style="font-size:11px;color:var(--secondary);display:block;margin-top:4px">Dejá vacío para mostrar "Cerrado"</span>
                     </div>
-                    <div style="flex:1;min-width:180px">
-                      <span style="font-size:11px;color:var(--secondary)">Motivo (opcional)</span>
-                      <input id="feriadoMotivo" type="text" placeholder="Ej: Día de la Independencia" autocomplete="off" />
+                    <div style="display:flex;gap:8px;margin-top:12px">
+                      <button class="btn btn--success" id="btnConfirmarFeriado">Confirmar</button>
+                      <button class="btn" id="btnCancelarFeriado" style="background:var(--card2);color:var(--secondary)">Cancelar</button>
                     </div>
-                    <button class="btn btn--primary" id="btnAgregarFeriado" style="align-self:flex-end">+ Agregar</button>
                   </div>
                 </div>
-                <div id="feriadosList"></div>
+                <div style="margin-top:20px">
+                  <div style="font-size:11px;font-weight:700;color:var(--secondary);letter-spacing:.06em;margin-bottom:10px">DÍAS CERRADOS</div>
+                  <div id="feriadosList"></div>
+                </div>
               </div>
 
             </div>
@@ -3798,49 +3823,126 @@ async function acGuardarHorarios() {
   }
 }
 
-/* ── Feriados ───────────────────────────────────────────────────────── */
+/* ── Días cerrados ──────────────────────────────────────────────────── */
+const CF = { ano: new Date().getFullYear(), mes: new Date().getMonth() + 1, selFecha: null };
+
+function _p2(n) { return String(n).padStart(2,'0'); }
+
+function renderCalDiasCerrados() {
+  const wrap = document.getElementById('diasCerradosCal');
+  if (!wrap) return;
+  const { ano, mes } = CF;
+  const hoy = new Date();
+  const todayStr = `${hoy.getFullYear()}-${_p2(hoy.getMonth()+1)}-${_p2(hoy.getDate())}`;
+  const labelRaw = new Date(ano, mes - 1, 1).toLocaleDateString('es-AR', { month: 'long', year: 'numeric' });
+  const label = labelRaw.charAt(0).toUpperCase() + labelRaw.slice(1);
+  const offset   = (new Date(ano, mes - 1, 1).getDay() + 6) % 7;
+  const daysInMo = new Date(ano, mes, 0).getDate();
+  const cerrados = DB.obtenerFeriados();
+  const WDS = ['L','M','X','J','V','S','D'];
+
+  let cells = '';
+  for (let i = 0; i < offset; i++) cells += `<div class="cal-pop__day cp-empty"></div>`;
+  for (let d = 1; d <= daysInMo; d++) {
+    const f = `${ano}-${_p2(mes)}-${_p2(d)}`;
+    const cerrado = cerrados.find(c => c.fecha === f);
+    const isSelected = CF.selFecha === f && !cerrado;
+    let cls = 'cal-pop__day';
+    if      (cerrado)    cls += ' cp-cerrado';
+    else if (isSelected) cls += ' cp-active';
+    else if (f === todayStr) cls += ' cp-today';
+    cells += `<div class="${cls}" data-fecha="${f}" data-cid="${cerrado?.id||''}">${d}</div>`;
+  }
+
+  wrap.innerHTML = `
+    <div class="cal-pop__header" style="margin-bottom:10px">
+      <button class="cal-pop__nav" id="cfPrev">‹</button>
+      <span class="cal-pop__month">${label}</span>
+      <button class="cal-pop__nav" id="cfNext">›</button>
+    </div>
+    <div class="cal-pop__wdays">${WDS.map(w=>`<div class="cal-pop__wd">${w}</div>`).join('')}</div>
+    <div class="cal-pop__days">${cells}</div>`;
+
+  wrap.querySelector('#cfPrev').onclick = () => {
+    CF.mes === 1 ? (CF.mes=12, CF.ano--) : CF.mes--;
+    CF.selFecha = null;
+    document.getElementById('diasCerradosForm').style.display = 'none';
+    renderCalDiasCerrados();
+  };
+  wrap.querySelector('#cfNext').onclick = () => {
+    CF.mes === 12 ? (CF.mes=1, CF.ano++) : CF.mes++;
+    CF.selFecha = null;
+    document.getElementById('diasCerradosForm').style.display = 'none';
+    renderCalDiasCerrados();
+  };
+
+  wrap.querySelectorAll('.cal-pop__day[data-fecha]').forEach(el => {
+    el.onclick = () => {
+      const fecha = el.dataset.fecha;
+      const cid   = el.dataset.cid;
+      if (cid) {
+        if (!confirm('¿Quitar este día cerrado?')) return;
+        DB.eliminarFeriado(cid);
+        CF.selFecha = null;
+        document.getElementById('diasCerradosForm').style.display = 'none';
+        renderFeriadosList(); renderCalDiasCerrados();
+        toast('Día eliminado ✓', 'success');
+      } else {
+        CF.selFecha = fecha;
+        const d = new Date(fecha + 'T12:00:00');
+        const fl = d.toLocaleDateString('es-AR', { weekday:'long', day:'numeric', month:'long' });
+        document.getElementById('dcFormLabel').textContent = fl.charAt(0).toUpperCase() + fl.slice(1);
+        document.getElementById('feriadoMotivo').value = '';
+        document.getElementById('diasCerradosForm').style.display = '';
+        document.getElementById('feriadoMotivo').focus();
+        renderCalDiasCerrados();
+      }
+    };
+  });
+}
+
 function renderFeriadosList() {
   const container = document.getElementById('feriadosList');
   if (!container) return;
-  const feriados = DB.obtenerFeriados().sort((a, b) => a.fecha.localeCompare(b.fecha));
-  if (!feriados.length) {
-    container.innerHTML = '<p style="color:var(--secondary);font-size:13px;padding:8px 0">No hay feriados cargados.</p>';
+  const lista = DB.obtenerFeriados().sort((a,b) => a.fecha.localeCompare(b.fecha));
+  if (!lista.length) {
+    container.innerHTML = '<p style="color:var(--secondary);font-size:13px;padding:8px 0">No hay días cerrados.</p>';
     return;
   }
-  container.innerHTML = feriados.map(f => {
+  container.innerHTML = lista.map(f => {
     const d = new Date(f.fecha + 'T12:00:00');
-    const fechaStr = d.toLocaleDateString('es-AR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    const fechaStr = d.toLocaleDateString('es-AR', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+    const motivo   = f.motivo || 'Cerrado';
     return `<div class="feriado-row">
       <div>
-        <div class="feriado-row__fecha">${fechaStr}</div>
-        ${f.motivo ? `<div class="feriado-row__motivo">${f.motivo}</div>` : ''}
+        <div class="feriado-row__fecha">${fechaStr.charAt(0).toUpperCase()+fechaStr.slice(1)}</div>
+        <div class="feriado-row__motivo">${motivo}</div>
       </div>
       <button class="btn btn--danger btn--sm" onclick="acEliminarFeriado('${f.id}')">Eliminar</button>
     </div>`;
   }).join('');
 }
 
-async function acAgregarFeriado() {
-  const fecha  = document.getElementById('feriadoFecha').value;
+async function acConfirmarFeriado() {
+  if (!CF.selFecha) return;
   const motivo = document.getElementById('feriadoMotivo').value.trim();
-  if (!fecha) { toast('Seleccioná una fecha.', 'warning'); return; }
-  const btn = document.getElementById('btnAgregarFeriado');
+  const btn = document.getElementById('btnConfirmarFeriado');
   btn.disabled = true; btn.textContent = 'Guardando…';
   try {
-    await DB.agregarFeriado(fecha, motivo);
-    document.getElementById('feriadoFecha').value  = '';
-    document.getElementById('feriadoMotivo').value = '';
-    renderFeriadosList();
-    toast('Feriado agregado ✓', 'success');
+    await DB.agregarFeriado(CF.selFecha, motivo || null);
+    CF.selFecha = null;
+    document.getElementById('diasCerradosForm').style.display = 'none';
+    renderFeriadosList(); renderCalDiasCerrados();
+    toast('Día cerrado agregado ✓', 'success');
   } catch(e) { toast('Error al guardar: ' + e.message, 'error'); }
-  finally    { btn.disabled = false; btn.textContent = '+ Agregar'; }
+  finally    { btn.disabled = false; btn.textContent = 'Confirmar'; }
 }
 
 function acEliminarFeriado(id) {
-  if (!confirm('¿Eliminar este feriado?')) return;
+  if (!confirm('¿Eliminar este día cerrado?')) return;
   DB.eliminarFeriado(id);
-  renderFeriadosList();
-  toast('Feriado eliminado ✓', 'success');
+  renderFeriadosList(); renderCalDiasCerrados();
+  toast('Día eliminado ✓', 'success');
 }
 
 /* ── Guardar: Reglas ────────────────────────────────────────────────── */
@@ -4022,7 +4124,7 @@ document.querySelector('.stabs').addEventListener('click', e => {
   document.querySelectorAll('.stab-panel').forEach(p => p.classList.remove('active'));
   btn.classList.add('active');
   document.getElementById('stab-' + btn.dataset.stab).classList.add('active');
-  if (btn.dataset.stab === 'feriados') renderFeriadosList();
+  if (btn.dataset.stab === 'feriados') { renderCalDiasCerrados(); renderFeriadosList(); }
 });
 
 // Admin — guardar por sección
@@ -4030,7 +4132,12 @@ document.getElementById('btnGuardarNegocio').addEventListener('click',  acGuarda
 document.getElementById('btnGuardarBranding').addEventListener('click', acGuardarBranding);
 document.getElementById('btnGuardarHorarios').addEventListener('click', acGuardarHorarios);
 document.getElementById('btnGuardarReglas').addEventListener('click',   acGuardarReglas);
-document.getElementById('btnAgregarFeriado').addEventListener('click',  acAgregarFeriado);
+document.getElementById('btnConfirmarFeriado').addEventListener('click', acConfirmarFeriado);
+document.getElementById('btnCancelarFeriado').addEventListener('click', () => {
+  CF.selFecha = null;
+  document.getElementById('diasCerradosForm').style.display = 'none';
+  renderCalDiasCerrados();
+});
 
 // Admin — color pickers ↔ hex inputs sync
 ['Primary','Secondary'].forEach(k => {
