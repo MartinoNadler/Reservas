@@ -3960,9 +3960,9 @@ async function acConfirmarFeriado() {
   if (!CF.selFecha) return;
   const fecha = CF.selFecha;
 
-  // Buscar reservas activas para ese día
-  const ACTIVOS = ['pendiente', 'reservado', 'pagado'];
-  const turnosConReserva = DB.obtenerTurnosPorFecha(fecha).filter(t => ACTIVOS.includes(t.estado));
+  // Buscar todos los turnos del día que tengan una reserva activa asociada
+  const turnosConReserva = DB.obtenerTurnosPorFecha(fecha)
+    .filter(t => DB.obtenerReservaPorTurno(t.id) !== null);
 
   if (turnosConReserva.length > 0) {
     const n = turnosConReserva.length;
