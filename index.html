@@ -3960,30 +3960,45 @@ async function acConfirmarFeriado() {
   if (!CF.selFecha) return;
   const fecha = CF.selFecha;
 
-  // Buscar todos los turnos del día que tengan una reserva activa asociada
-  const turnosConReserva = DB.obtenerTurnosPorFecha(fecha)
-    .filter(t => DB.obtenerReservaPorTurno(t.id) !== null);
-
-  if (turnosConReserva.length > 0) {
-    const n = turnosConReserva.length;
-    const msg = `Este día tiene ${n} reserva${n>1?'s':''} activa${n>1?'s':''}.\nAl confirmar se cancelarán todas. ¿Continuar?`;
-    if (!confirm(msg)) return;
-  }
-
   const motivo = document.getElementById('feriadoMotivo').value.trim();
   const btn = document.getElementById('btnConfirmarFeriado');
-  btn.disabled = true; btn.textContent = 'Guardando…';
+  btn.disabled = true; btn.textContent = 'Verificando…';
+
   try {
-    // Cancelar todas las reservas activas del día con mensaje para el cliente
+    // ── Consultar DB directo (el cache puede estar desactualizado si la reserva
+    //    fue hecha desde el cliente sin recargar el panel admin) ──────────────
+    const turnosDelDia = await DB._q(`/turnos?fecha=eq.${fecha}`) || [];
+    const turnoIds = turnosDelDia.map(t => t.id);
+
+    let reservasDelDia = [];
+    if (turnoIds.length > 0) {
+      const todas = await DB._q(`/reservas?turnoId=in.(${turnoIds.join(',')})`) || [];
+      reservasDelDia = todas.filter(r => r.estado !== 'cancelada' && r.estado !== 'rechazada');
+    }
+
+    if (reservasDelDia.length > 0) {
+      const n = reservasDelDia.length;
+      if (!confirm(`Este día tiene ${n} reserva${n>1?'s':''} activa${n>1?'s':''}.\nAl confirmar se cancelarán todas. ¿Continuar?`)) {
+        btn.disabled = false; btn.textContent = 'Confirmar'; return;
+      }
+    }
+
+    btn.textContent = 'Guardando…';
+
+    // Cancelar reservas con mensaje para el cliente
     const fechaDisplay = new Date(fecha + 'T12:00:00')
       .toLocaleDateString('es-AR', { weekday:'long', day:'numeric', month:'long' });
     const mensajeCancel = `Tu reserva fue cancelada ya que nos encontramos cerrados el ${fechaDisplay}${motivo ? ` (${motivo})` : ''}.`;
 
-    turnosConReserva.forEach(t => {
-      const reserva = DB.obtenerReservaPorTurno(t.id);
-      if (reserva) DB.actualizarReserva(reserva.id, { estado: 'rechazada', mensaje: mensajeCancel });
-      DB.eliminarTurno(t.id);
-    });
+    for (const r of reservasDelDia) {
+      await DB._q(`/reservas?id=eq.${r.id}`, {
+        method: 'PATCH', body: JSON.stringify({ estado: 'rechazada', mensaje: mensajeCancel }),
+      });
+    }
+    for (const t of turnosDelDia) {
+      await DB._q(`/turnos?id=eq.${t.id}`, { method: 'DELETE' });
+      DB._cache.turnos = DB._cache.turnos.filter(c => c.id !== t.id);
+    }
 
     await DB.agregarFeriado(fecha, motivo || null);
     CF.selFecha = null;
@@ -3991,8 +4006,9 @@ async function acConfirmarFeriado() {
     renderFeriadosList(); renderCalDiasCerrados();
     if (UI.fechaActual === fecha) renderGrilla();
 
-    const msg = turnosConReserva.length > 0
-      ? `Día cerrado. ${turnosConReserva.length} reserva${turnosConReserva.length>1?'s':''} cancelada${turnosConReserva.length>1?'s':''} ✓`
+    const nc = reservasDelDia.length;
+    const msg = nc > 0
+      ? `Día cerrado. ${nc} reserva${nc>1?'s':''} cancelada${nc>1?'s':''} ✓`
       : 'Día cerrado agregado ✓';
     toast(msg, 'success');
   } catch(e) { toast('Error al guardar: ' + e.message, 'error'); }
